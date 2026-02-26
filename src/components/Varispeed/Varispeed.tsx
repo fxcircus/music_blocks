@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown } from 'react-icons/fa';
+import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 
@@ -10,6 +10,10 @@ interface VarispeedProps {
   setBpm?: (bpm: number) => void;
   keyIdx?: number;
   setKeyIdx?: (keyIdx: number) => void;
+  linkedToGenerator?: boolean;
+  setLinkedToGenerator?: (linked: boolean) => void;
+  generatorBpm?: string;
+  generatorRoot?: string;
 }
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -37,8 +41,36 @@ const VarispeedCard = styled(Card)`
 const VarispeedHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: space-between;
   margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
+  background: ${({ theme, $isLinked }) =>
+    $isLinked ? theme.colors.primary + '30' : theme.colors.background};
+  border: 1px solid ${({ theme, $isLinked }) =>
+    $isLinked ? theme.colors.primary : theme.colors.border};
+  color: ${({ theme, $isLinked }) =>
+    $isLinked ? theme.colors.primary : theme.colors.textSecondary};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${({ theme, $isLinked }) =>
+      $isLinked ? theme.colors.primary + '40' : theme.colors.primary + '10'};
+  }
 `;
 
 const ControlSection = styled.div`
@@ -98,21 +130,26 @@ const BpmInput = styled.input`
   }
 `;
 
-const ControlButton = styled(motion.button)`
+const ControlButton = styled(motion.button)<{ disabled?: boolean }>`
   width: 32px;
   height: 32px;
-  background: ${({ theme }) => theme.colors.primary}20;
-  border: 1px solid ${({ theme }) => theme.colors.primary}60;
-  color: ${({ theme }) => theme.colors.primary};
+  background: ${({ theme, disabled }) =>
+    disabled ? theme.colors.background : `${theme.colors.primary}20`};
+  border: 1px solid ${({ theme, disabled }) =>
+    disabled ? theme.colors.border : `${theme.colors.primary}60`};
+  color: ${({ theme, disabled }) =>
+    disabled ? theme.colors.textSecondary : theme.colors.primary};
   font-size: ${({ theme }) => theme.fontSizes.md};
-  cursor: pointer;
+  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: ${({ disabled }) => disabled ? 0.5 : 1};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary}30;
+    background: ${({ theme, disabled }) =>
+      disabled ? theme.colors.background : `${theme.colors.primary}30`};
   }
 `;
 
@@ -286,7 +323,7 @@ const InfoText = styled.div`
   }
 `;
 
-function KeyPicker({ keyIdx, setKeyIdx }: { keyIdx: number; setKeyIdx: (idx: number) => void }) {
+function KeyPicker({ keyIdx, setKeyIdx, disabled }: { keyIdx: number; setKeyIdx: (idx: number) => void; disabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -306,7 +343,13 @@ function KeyPicker({ keyIdx, setKeyIdx }: { keyIdx: number; setKeyIdx: (idx: num
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <KeyPickerButton onClick={() => setOpen(!open)}>
+      <KeyPickerButton
+        onClick={() => !disabled && setOpen(!open)}
+        style={{
+          opacity: disabled ? 0.5 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer'
+        }}
+      >
         {NOTES[keyIdx]}
         <Icon icon={FaChevronDown} size={10} />
       </KeyPickerButton>
@@ -335,17 +378,35 @@ const Varispeed: FC<VarispeedProps> = ({
   bpm: propBpm = 120,
   setBpm: propSetBpm,
   keyIdx: propKeyIdx = 0,
-  setKeyIdx: propSetKeyIdx
+  setKeyIdx: propSetKeyIdx,
+  linkedToGenerator: propLinked = false,
+  setLinkedToGenerator: propSetLinked,
+  generatorBpm,
+  generatorRoot
 }) => {
   const [localBpm, setLocalBpm] = useState(propBpm);
   const [bpmInput, setBpmInput] = useState(String(propBpm));
   const [localKeyIdx, setLocalKeyIdx] = useState(propKeyIdx);
+  const [localLinked, setLocalLinked] = useState(propLinked);
   const [isMobile, setIsMobile] = useState(false);
 
-  const bpm = propSetBpm ? propBpm : localBpm;
-  const setBpm = propSetBpm || setLocalBpm;
-  const keyIdx = propSetKeyIdx ? propKeyIdx : localKeyIdx;
-  const setKeyIdx = propSetKeyIdx || setLocalKeyIdx;
+  const isLinked = propSetLinked ? propLinked : localLinked;
+  const setIsLinked = propSetLinked || setLocalLinked;
+
+  // Convert generator root note to key index
+  const getKeyIndexFromRoot = useCallback((root: string) => {
+    const index = NOTES.indexOf(root);
+    return index >= 0 ? index : 0;
+  }, []);
+
+  // Use generator values when linked, otherwise use local/prop values
+  const effectiveBpm = isLinked && generatorBpm ? parseInt(generatorBpm, 10) : (propSetBpm ? propBpm : localBpm);
+  const effectiveKeyIdx = isLinked && generatorRoot ? getKeyIndexFromRoot(generatorRoot) : (propSetKeyIdx ? propKeyIdx : localKeyIdx);
+
+  const bpm = effectiveBpm;
+  const keyIdx = effectiveKeyIdx;
+  const setBpm = isLinked ? () => {} : (propSetBpm || setLocalBpm);
+  const setKeyIdx = isLinked ? () => {} : (propSetKeyIdx || setLocalKeyIdx);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -353,6 +414,13 @@ const Varispeed: FC<VarispeedProps> = ({
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Sync bpmInput when linked and generator values change
+  useEffect(() => {
+    if (isLinked && generatorBpm) {
+      setBpmInput(generatorBpm);
+    }
+  }, [isLinked, generatorBpm]);
 
   const handleBpmChange = useCallback((val: number) => {
     const clamped = Math.max(BPM_MIN, Math.min(BPM_MAX, val));
@@ -405,19 +473,32 @@ const Varispeed: FC<VarispeedProps> = ({
       transition={{ duration: 0.5 }}
     >
       <VarispeedHeader>
-        <CardIconWrapper>
-          <Icon icon={FaWaveSquare} size={20} />
-        </CardIconWrapper>
-        <CardTitle>Varispeed Calculator</CardTitle>
+        <HeaderLeft>
+          <CardIconWrapper>
+            <Icon icon={FaWaveSquare} size={20} />
+          </CardIconWrapper>
+          <CardTitle>Varispeed Calculator</CardTitle>
+        </HeaderLeft>
+        <LinkToggle
+          $isLinked={isLinked}
+          onClick={() => setIsLinked(!isLinked)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
+        >
+          <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
+          {isLinked ? "Linked" : "Link"}
+        </LinkToggle>
       </VarispeedHeader>
 
       <ControlSection>
         <ControlGroup>
           <ControlLabel>BPM</ControlLabel>
           <ControlButton
-            onClick={() => handleBpmChange(bpm - 1)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            disabled={isLinked}
+            onClick={() => !isLinked && handleBpmChange(bpm - 1)}
+            whileHover={!isLinked ? { scale: 1.1 } : {}}
+            whileTap={!isLinked ? { scale: 0.95 } : {}}
           >
             <Icon icon={FaMinus} size={12} />
           </ControlButton>
@@ -429,11 +510,14 @@ const Varispeed: FC<VarispeedProps> = ({
             value={bpmInput}
             onChange={handleBpmInput}
             onBlur={handleBpmBlur}
+            disabled={isLinked}
+            style={{ opacity: isLinked ? 0.5 : 1 }}
           />
           <ControlButton
-            onClick={() => handleBpmChange(bpm + 1)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            disabled={isLinked}
+            onClick={() => !isLinked && handleBpmChange(bpm + 1)}
+            whileHover={!isLinked ? { scale: 1.1 } : {}}
+            whileTap={!isLinked ? { scale: 0.95 } : {}}
           >
             <Icon icon={FaPlus} size={12} />
           </ControlButton>
@@ -443,7 +527,7 @@ const Varispeed: FC<VarispeedProps> = ({
 
         <ControlGroup>
           <ControlLabel>Key</ControlLabel>
-          <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} />
+          <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} disabled={isLinked} />
         </ControlGroup>
       </ControlSection>
 

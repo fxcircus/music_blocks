@@ -21,6 +21,7 @@ interface BlockRendererProps {
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   globalBpm?: string; // For BPM synchronization
+  generatorRoot?: string; // For Varispeed linking
 }
 
 /**
@@ -35,7 +36,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   canRemove = true,
   canMoveUp = true,
   canMoveDown = true,
-  globalBpm
+  globalBpm,
+  generatorRoot
 }) => {
   const [animate, setAnimate] = useState(false);
 
@@ -134,13 +136,17 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       break;
 
     case 'varispeed':
-      // Varispeed expects bpm and keyIdx with setters
+      // Varispeed expects bpm and keyIdx with setters, plus linking props
       blockContent = (
         <BlockComponent
           bpm={block.state.bpm || 120}
           setBpm={(bpm: number) => updateBlockState({ bpm })}
           keyIdx={block.state.keyIdx || 0}
           setKeyIdx={(keyIdx: number) => updateBlockState({ keyIdx })}
+          linkedToGenerator={block.state.linkedToGenerator || false}
+          setLinkedToGenerator={(linked: boolean) => updateBlockState({ linkedToGenerator: linked })}
+          generatorBpm={globalBpm}
+          generatorRoot={generatorRoot}
         />
       );
       break;

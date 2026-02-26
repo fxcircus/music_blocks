@@ -199,8 +199,9 @@ const CurrentProject: FC<LoaderProps> = () => {
     // Get list of active block types (for BlockPicker)
     const activeBlockTypes = visibleBlocks.map(block => block.type);
 
-    // Get global BPM for metronome synchronization
+    // Get global values for synchronization
     const globalBpm = inspirationState.bpmEl;
+    const generatorRoot = inspirationState.rootEl;
 
     return (
         <>
@@ -226,6 +227,7 @@ const CurrentProject: FC<LoaderProps> = () => {
                                 canMoveUp={index > 0}
                                 canMoveDown={index < visibleBlocks.length - 1}
                                 globalBpm={globalBpm}
+                                generatorRoot={generatorRoot}
                             />
                         </GridItem>
                     ))}

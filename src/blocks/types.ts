@@ -142,4 +142,5 @@ export interface MusicStructureState {
 export interface VarispeedState {
   bpm: number;
   keyIdx: number;
+  linkedToGenerator?: boolean;
 }
