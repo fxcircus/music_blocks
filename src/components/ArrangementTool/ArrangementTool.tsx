@@ -349,6 +349,15 @@ const EnergyArcChart = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
+const EnergyBar = styled.div<{ $width: number; $height: number; $delay: number; $bg: string; $clip: string }>`
+  width: ${({ $width }) => `${$width}%`};
+  height: ${({ $height }) => `${$height}%`};
+  background: ${({ $bg, $clip }) => `linear-gradient(to top, ${$bg}, ${$clip})`};
+  border-radius: 3px 3px 0 0;
+  animation: ${growUp} 0.5s ease both;
+  animation-delay: ${({ $delay }) => `${$delay}s`};
+`;
+
 // Helper functions
 function getAllTemplates(): Record<string, Template> {
   const all: Record<string, Template> = {};
@@ -554,16 +563,13 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                 const widthPercent = (scene.bars / totalBars) * 100;
                 const heightPercent = (scene.energy / 4) * 100;
                 return (
-                  <div
+                  <EnergyBar
                     key={i}
-                    style={{
-                      width: `${widthPercent}%`,
-                      height: `${heightPercent}%`,
-                      background: `linear-gradient(to top, ${colors.bg}, ${colors.clip})`,
-                      borderRadius: '3px 3px 0 0',
-                      animation: `${growUp} 0.5s ease both`,
-                      animationDelay: `${i * 0.06}s`
-                    }}
+                    $width={widthPercent}
+                    $height={heightPercent}
+                    $bg={colors.bg}
+                    $clip={colors.clip}
+                    $delay={i * 0.06}
                     title={`${scene.name} — ${scene.bars} bars`}
                   />
                 );
