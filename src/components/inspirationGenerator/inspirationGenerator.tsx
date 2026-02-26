@@ -6,6 +6,12 @@ import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaInfoCircle } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
+import {
+  generateDiatonicScale,
+  getChromaticIndex,
+  getCorrectNoteSpelling,
+  normalizeNote
+} from '../../utils/musicTheory';
 
 // Chord quality mapping for different modes
 const chordQualities: Record<string, (string | null)[]> = {
@@ -500,12 +506,26 @@ export default function InspirationGenerator({
     localStorage.setItem('tilesSoundEl', soundEl);
   }, [soundEl]);
 
-  // 12 chromatic notes (using Unicode ♯)
+  // All available root notes including both sharps and flats
+  // Organized by common usage - natural notes first, then common accidentals
   const notes = useMemo(() => [
+    // Natural notes
+    "C", "D", "E", "F", "G", "A", "B",
+    // Common flat keys
+    "B♭", "E♭", "A♭", "D♭", "G♭",
+    // Common sharp keys
+    "F♯", "C♯",
+    // Less common enharmonics (included for completeness)
+    "D♯", "G♯", "A♯",
+    "F♭", "C♭", "E♯", "B♯"
+  ], []);
+
+  // For chromatic calculations, we still need the 12-note chromatic scale
+  const chromaticNotes = useMemo(() => [
     "C", "C♯", "D", "D♯", "E", "F",
     "F♯", "G", "G♯", "A", "A♯", "B",
   ], []);
-  
+
   const roots = notes;
 
   const scales = useMemo(() => [
@@ -570,29 +590,41 @@ export default function InspirationGenerator({
       // Only process valid modes that exist in our scale intervals
       if (mode in scaleIntervals) {
         const intervals = scaleIntervals[mode as keyof typeof scaleIntervals];
-        let idx = notes.indexOf(root);
-        const result = [root];
-        
-        // Generate scale tones based on intervals
-        for (let step of intervals) {
-          idx = (idx + step) % notes.length;
-          result.push(notes[idx]);
+
+        // Use the new music theory function for proper diatonic spelling
+        let scaleNotes = generateDiatonicScale(root, intervals, mode);
+
+        // If generateDiatonicScale failed or returned empty, fall back to chromatic method
+        if (!scaleNotes || scaleNotes.length === 0) {
+          // Fallback to chromatic generation (less accurate but works)
+          const rootIndex = getChromaticIndex(root);
+          if (rootIndex === -1) return ["C", "D", "E", "F", "G", "A", "B", "C"];
+
+          scaleNotes = [root];
+          let currentIndex = rootIndex;
+
+          for (let interval of intervals) {
+            currentIndex = (currentIndex + interval) % 12;
+            // Use getCorrectNoteSpelling for key-aware spelling
+            const note = getCorrectNoteSpelling(currentIndex, root, mode);
+            scaleNotes.push(note);
+          }
         }
-        
+
         // For scales with fewer than 7 notes, only return the actual scale notes
-        // without repeating the octave
         const noteCount = scaleNoteCounts[mode] || 7;
         if (noteCount < 7) {
-          return result.slice(0, noteCount);
+          return scaleNotes.slice(0, noteCount);
         }
-        
-        return result.slice(0, 8); // Return 8 notes for 7-note scales (includes octave)
+
+        // Return notes including octave for 7-note scales
+        return scaleNotes.slice(0, 8);
       }
-      
+
       // Fallback to C Major if mode is invalid
       return ["C", "D", "E", "F", "G", "A", "B", "C"];
     },
-    [notes, scaleIntervals, scaleNoteCounts]
+    [scaleIntervals, scaleNoteCounts]
   );
 
   // initialize to C Major
@@ -615,18 +647,161 @@ export default function InspirationGenerator({
   const minBpm = 75;
 
   
-  const sounds = ["Electric Guitar", "Deep Bass", "Percussion", "Arp", "Acoustic Strums", "Coin-on-Strings", "Lead", "Fuzzy", "Glass Harmonics", "E-Bow Drones", "Frozen Reverb", "Slide Guitar", "Cinematic Piano", "Bow", "Banjo", "Whistling Melody"];
+  const sounds = [
+    "Clean Guitar Plucks",
+    "Muted Electric Guitar",
+    "Ambient Guitar Swells",
+    "Fingerpicked Acoustic",
+    "Tremolo Guitar",
+    "Octave Lead Guitar",
+    "Slide Ambient Guitar",
+    "Harmonic Chime Guitar",
+    "Soft Felt Piano",
+    "Bright Pop Piano",
+    "Detuned Synth Lead",
+    "Analog Pad",
+    "Mono Synth Bass",
+    "Vintage Poly Synth",
+    "Plucky Synth",
+    "Tape Warped Keys",
+    "Warm String Pad",
+    "Bowed Drone",
+    "Shimmer Pad",
+    "Reverse Swells",
+    "Granular Texture",
+    "Lo-Fi Warble",
+    "Distant Choir",
+    "Airy Vocal Pad",
+    "Sub Bass",
+    "Driving Pick Bass",
+    "Fretless Bass",
+    "Synth Pulse Bass",
+    "Distorted Bass",
+    "Whistle Lead",
+    "Bell Melody",
+    "Glassy Arp",
+    "Music Box",
+    "Dreamy Flute",
+    "Marimba Pattern",
+    "Kalimba Plucks",
+    "Syncopated Pluck",
+    "Gated Pad",
+    "Rhythmic Stabs",
+    "Chorus Clean Guitar",
+    "Palm Muted Riff",
+    "Acoustic Harmonics",
+    "Reverb Drenched Guitar",
+    "12-String Jangle",
+    "Electric Piano Rhodes",
+    "Dark Upright Piano",
+    "Tape Piano",
+    "Ambient Piano Swells",
+    "House Piano Chords",
+    "FM Bell Keys",
+    "Soft Organ Pad",
+    "Vintage Organ",
+    "Wurlitzer Keys",
+    "Analog Brass Synth",
+    "Wide Supersaw",
+    "Soft Square Lead",
+    "Resonant Filter Sweep",
+    "Modulated Pad",
+    "Slow Attack Pad",
+    "Detuned Pad Stack",
+    "Synth Choir",
+    "Low String Ensemble",
+    "High String Ensemble",
+    "Cinematic Strings",
+    "Plucked Strings",
+    "Hybrid Orchestral Hit",
+    "Subby 808 Bass",
+    "Warm Analog Bass",
+    "Rubber Bass",
+    "Deep Moog Bass",
+    "Saturated Bassline",
+    "Falsetto Vocal Chop",
+    "Vocal Texture Pad",
+    "Breathy Vox Lead",
+    "Layered Harmonies",
+    "Filtered Vocal Loop",
+    "Soft Clarinet",
+    "Oboe Lead",
+    "Muted Trumpet",
+    "French Horn Swell",
+    "Cinematic Brass",
+    "Harp Gliss",
+    "Harp Plucks",
+    "Celesta",
+    "Vibraphone",
+    "Steel Drums",
+    "Handpan",
+    "Mallet Arpeggio",
+    "Percussive Piano",
+    "Staccato Strings",
+    "Short Synth Stab",
+    "Sync Arp",
+    "Triplet Arpeggio",
+    "Evolving Soundscape",
+    "Noisy Texture Layer",
+    "Reverse Piano",
+    "Ambient Noise Bed",
+    "Jangly 12-String Guitar",
+    "Sitar",
+    "Bowed Cello",
+    "Plucked Cello",
+    "Plucked Violin",
+    "Violin Arpeggio",
+    "Violin Gliss",
+    "Violin Plucks",
+    "P-Bass with Pick",
+    "Motown-Style Bass Groove",
+    "Walking Bass",
+    "Psychedelic Fuzz",
+    "Rotary Organ",
+    "Harpsichord",
+    "Mellotron Flutes",
+    "Mellotron Strings",
+    "Tape-Reversed Guitar",
+    "Surf Guitar"
+  ];
 
   const getRandomIndex = (n: number) => Math.floor(Math.random() * n);
 
   const getRandomValueDifferentFromCurrent = (array: string[], current: string): string => {
     if (array.length <= 1) return current; // If only one option, we can't change
-    
+
+    // For root notes, prefer common keys (weighted random)
+    if (array === roots) {
+      // Define common keys (more likely to be selected)
+      const commonKeys = ["C", "D", "E", "F", "G", "A", "B", "B♭", "E♭", "A♭", "F♯"];
+      const lessCommonKeys = ["D♭", "G♭", "C♯", "D♯", "G♯", "A♯"];
+      const rareKeys = ["F♭", "C♭", "E♯", "B♯"];
+
+      // Weight: 70% common, 25% less common, 5% rare
+      let pool: string[] = [];
+      const rand = Math.random();
+
+      if (rand < 0.70 && commonKeys.includes(current) === false) {
+        pool = commonKeys;
+      } else if (rand < 0.95 && lessCommonKeys.includes(current) === false) {
+        pool = [...commonKeys, ...lessCommonKeys];
+      } else {
+        pool = array;
+      }
+
+      // Filter out current value and get random from pool
+      const available = pool.filter(key => key !== current);
+      if (available.length === 0) return current;
+
+      return available[getRandomIndex(available.length)];
+    }
+
+    // For other arrays, use standard random selection
     let newValue;
     do {
       newValue = array[getRandomIndex(array.length)];
     } while (newValue === current && array.length > 1);
-    
+
     return newValue;
   };
   

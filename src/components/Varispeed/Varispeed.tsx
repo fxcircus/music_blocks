@@ -16,9 +16,26 @@ interface VarispeedProps {
   generatorRoot?: string;
 }
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const SHARP_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const FLAT_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+// Notes for chromatic scale display (using Unicode ♯ and ♭)
+const NOTES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const SHARP_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const FLAT_NAMES = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+
+// Map note names to chromatic index for proper linking
+const NOTE_TO_INDEX: Record<string, number> = {
+  'C': 0, 'B♯': 0,
+  'C♯': 1, 'C#': 1, 'D♭': 1, 'Db': 1,
+  'D': 2,
+  'D♯': 3, 'D#': 3, 'E♭': 3, 'Eb': 3,
+  'E': 4, 'F♭': 4, 'Fb': 4,
+  'F': 5, 'E♯': 5, 'E#': 5,
+  'F♯': 6, 'F#': 6, 'G♭': 6, 'Gb': 6,
+  'G': 7,
+  'G♯': 8, 'G#': 8, 'A♭': 8, 'Ab': 8,
+  'A': 9,
+  'A♯': 10, 'A#': 10, 'B♭': 10, 'Bb': 10,
+  'B': 11, 'C♭': 11, 'Cb': 11
+};
 
 const NOTE_COLORS: { [key: number]: string } = {
   0: "#e8a849", 1: "#d4834e", 2: "#c96b5a", 3: "#b85565",
@@ -318,7 +335,7 @@ const InfoText = styled.div`
   }
 `;
 
-function KeyPicker({ keyIdx, setKeyIdx, disabled }: { keyIdx: number; setKeyIdx: (idx: number) => void; disabled?: boolean }) {
+function KeyPicker({ keyIdx, setKeyIdx, disabled, displayKey }: { keyIdx: number; setKeyIdx: (idx: number) => void; disabled?: boolean; displayKey?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -345,7 +362,7 @@ function KeyPicker({ keyIdx, setKeyIdx, disabled }: { keyIdx: number; setKeyIdx:
           cursor: disabled ? 'not-allowed' : 'pointer'
         }}
       >
-        {NOTES[keyIdx]}
+        {displayKey || NOTES[keyIdx]}
         <Icon icon={FaChevronDown} size={10} />
       </KeyPickerButton>
 
@@ -390,10 +407,9 @@ const Varispeed: FC<VarispeedProps> = ({
 
   // Convert generator root note to key index
   const getKeyIndexFromRoot = useCallback((root: string) => {
-    // Normalize Unicode sharp (♯) to ASCII sharp (#) - use global replace for safety
-    const normalizedRoot = root.replace(/♯/g, '#');
-    const index = NOTES.indexOf(normalizedRoot);
-    return index >= 0 ? index : 0;
+    // Use the NOTE_TO_INDEX mapping for proper enharmonic handling
+    const index = NOTE_TO_INDEX[root];
+    return index !== undefined ? index : 0;
   }, []);
 
   // Use generator values when linked, otherwise use local/prop values
@@ -404,6 +420,9 @@ const Varispeed: FC<VarispeedProps> = ({
   const keyIdx = effectiveKeyIdx;
   const setBpm = isLinked ? () => {} : (propSetBpm || setLocalBpm);
   const setKeyIdx = isLinked ? () => {} : (propSetKeyIdx || setLocalKeyIdx);
+
+  // When linked, use the actual generator root for display (preserves enharmonic spelling)
+  const displayKey = isLinked && generatorRoot ? generatorRoot : NOTES[keyIdx];
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -449,15 +468,21 @@ const Varispeed: FC<VarispeedProps> = ({
 
   const calculations = useMemo(() => {
     const result = [];
+
+    // When linked and we have a flat root, use flats for the display
+    const useFlats = isLinked && generatorRoot && generatorRoot.includes('♭');
+
     for (let st = -6; st <= 5; st++) {
       const noteIdx = ((keyIdx + st) % 12 + 12) % 12;
-      const name = st < 0 ? FLAT_NAMES[noteIdx] : SHARP_NAMES[noteIdx];
+      // If linked with a flat root, use flats throughout
+      // Otherwise use flats for downward transpositions, sharps for upward
+      const name = useFlats ? FLAT_NAMES[noteIdx] : (st < 0 ? FLAT_NAMES[noteIdx] : SHARP_NAMES[noteIdx]);
       const targetBpm = bpm * Math.pow(2, st / 12);
       const ratio = targetBpm / bpm;
       result.push({ name, noteIdx, semitones: st, targetBpm, ratio });
     }
     return result;
-  }, [bpm, keyIdx]);
+  }, [bpm, keyIdx, isLinked, generatorRoot]);
 
   const maxBpm = Math.max(...calculations.map(c => c.targetBpm));
 
@@ -512,7 +537,7 @@ const Varispeed: FC<VarispeedProps> = ({
 
         <ControlGroup>
           <ControlLabel>Key</ControlLabel>
-          <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} disabled={isLinked} />
+          <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} disabled={isLinked} displayKey={displayKey} />
         </ControlGroup>
 
         <Divider $mobile={isMobile} />
