@@ -7,9 +7,29 @@
  */
 
 import React, { useState } from 'react';
+import styled from 'styled-components';
 import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCard from '../components/common/ToolCard';
+
+// Special wrapper for Notes block to override centering from ToolCard
+const NotesWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+`;
+
+// Special ToolCard for Notes that doesn't center its content
+const NotesToolCard = styled(ToolCard)`
+  align-items: stretch;
+  text-align: left;
+
+  & > * {
+    width: 100%;
+  }
+`;
 
 interface BlockRendererProps {
   block: BlockInstance;
@@ -129,10 +149,12 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     case 'notes':
       // Notepad expects notes and setNotes
       blockContent = (
-        <BlockComponent
-          notes={block.state.notes || ''}
-          setNotes={(notes: string) => updateBlockState({ notes })}
-        />
+        <NotesWrapper>
+          <BlockComponent
+            notes={block.state.notes || ''}
+            setNotes={(notes: string) => updateBlockState({ notes })}
+          />
+        </NotesWrapper>
       );
       break;
 
@@ -174,8 +196,10 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   } else if (hasOwnHeader) {
     // Blocks with their own header styling (inspirationGenerator, notes)
     // Wrap with ToolCard but hide the header to avoid duplication
+    // Use special NotesToolCard for Notes block to avoid centering
+    const CardComponent = block.type === 'notes' ? NotesToolCard : ToolCard;
     return (
-      <ToolCard
+      <CardComponent
         title=""
         icon={blockType.icon}
         onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
@@ -187,7 +211,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         hideHeader={true}
       >
         {blockContent}
-      </ToolCard>
+      </CardComponent>
     );
   } else {
     // Standard blocks without any built-in styling

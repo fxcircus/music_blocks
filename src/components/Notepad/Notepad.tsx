@@ -11,25 +11,29 @@ interface NotesProps {
 }
 
 const NotesCard = styled(Card)`
-  max-width: 100%;
+  width: 100%;
   padding: ${({ theme }) => theme.spacing.md};
   display: flex;
   flex-direction: column;
   flex: 1;
-  
+  text-align: left;
+  align-items: stretch;
+
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.spacing.sm};
   }
 `;
 
 const StyledTextArea = styled(TextArea)`
-  min-height: 150px;
+  min-height: 200px;
   flex: 1;
+  width: 100%;
   font-family: 'Inter', 'Roboto', sans-serif;
   padding: ${({ theme }) => theme.spacing.md};
-  
+  resize: none; /* Disable resizing to remove drag handle */
+
   @media (max-width: 768px) {
-    min-height: 120px;
+    min-height: 150px;
     padding: ${({ theme }) => theme.spacing.sm};
   }
 `;
