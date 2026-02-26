@@ -121,6 +121,15 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
         keyIdx: 0,
       },
     },
+    {
+      instanceId: 'arrangementTool',
+      type: 'arrangementTool',
+      order: 5,
+      visible: true,
+      state: {
+        selectedTemplate: 'Two Peaks',
+      },
+    },
   ];
 
   const migratedState: AppState = {

@@ -64,7 +64,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
   const hasOwnToolCard = blocksWithOwnToolCard.includes(block.type);
 
   // Blocks that have their own header styling (don't need ToolCard wrapper)
-  const blocksWithOwnHeader = ['inspirationGenerator', 'notes', 'varispeed'];
+  const blocksWithOwnHeader = ['inspirationGenerator', 'notes', 'varispeed', 'arrangementTool'];
   const hasOwnHeader = blocksWithOwnHeader.includes(block.type);
 
   // Render the block content
@@ -150,6 +150,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
           generatorRoot={generatorRoot}
         />
       );
+      break;
+
+    case 'arrangementTool':
+      // ArrangementTool is self-contained, doesn't need state management
+      blockContent = <BlockComponent />;
       break;
 
     default:

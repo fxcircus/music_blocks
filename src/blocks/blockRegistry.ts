@@ -13,10 +13,11 @@ import InspirationGenerator from '../components/inspirationGenerator/inspiration
 import Metronome from '../components/Metronome/Metronome';
 import Notepad from '../components/Notepad/Notepad';
 import Varispeed from '../components/Varispeed';
+import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
 
 // Import icons
 import { GiTomato, GiMetronome } from 'react-icons/gi';
-import { FaDice, FaWaveSquare } from 'react-icons/fa';
+import { FaDice, FaWaveSquare, FaMusic } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
 
 /**
@@ -95,6 +96,17 @@ export const BLOCK_REGISTRY: BlockType[] = [
     },
     category: 'music',
     description: 'Calculate pitch and tempo changes for varispeed effects',
+  },
+  {
+    id: 'arrangementTool',
+    name: 'Arrangement Tool',
+    icon: FaMusic,
+    component: ArrangementTool,
+    defaultState: {
+      selectedTemplate: 'Two Peaks',
+    },
+    category: 'music',
+    description: 'Song structure templates and arrangement patterns',
   },
 ];
 

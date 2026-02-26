@@ -144,3 +144,7 @@ export interface VarispeedState {
   keyIdx: number;
   linkedToGenerator?: boolean;
 }
+
+export interface ArrangementToolState {
+  selectedTemplate: string;
+}
