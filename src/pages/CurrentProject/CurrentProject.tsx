@@ -5,8 +5,11 @@ import { Container } from '../../components/common/StyledComponents';
 import { TilesState } from "../../utils/types";
 import { decodeURLToState, hasStateParams } from "../../utils/urlSharing";
 import { AppState } from "../../blocks/types";
-import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil } from "../../utils/blockStorage";
+import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil, removeBlock, moveBlock, addBlock } from "../../utils/blockStorage";
 import BlockRenderer from "../../blocks/BlockRenderer";
+import BlockPicker from "../../components/BlockPicker/BlockPicker";
+import { FaPlus } from 'react-icons/fa';
+import { Button } from '../../components/common/StyledComponents';
 
 interface LoaderProps {
     result?: string;
@@ -59,9 +62,31 @@ const GridItem = styled(motion.div)<{ $order?: number, $desktopOrder?: number }>
   }
 `;
 
+const AddBlockButton = styled(Button)`
+  position: fixed;
+  bottom: ${({ theme }) => theme.spacing.xl};
+  right: ${({ theme }) => theme.spacing.xl};
+  width: 60px;
+  height: 60px;
+  border-radius: ${({ theme }) => theme.borderRadius.round};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  z-index: 100;
+
+  @media (max-width: 768px) {
+    bottom: ${({ theme }) => theme.spacing.md};
+    right: ${({ theme }) => theme.spacing.md};
+    width: 50px;
+    height: 50px;
+  }
+`;
+
 const CurrentProject: FC<LoaderProps> = () => {
     // Load block-based state (with automatic migration from old format)
     const [blockState, setBlockState] = useState<AppState>(loadBlockState());
+    const [showBlockPicker, setShowBlockPicker] = useState(false);
 
     // Helper to get a specific block's state
     const getBlockState = (instanceId: string): any => {
@@ -137,36 +162,95 @@ const CurrentProject: FC<LoaderProps> = () => {
         saveBlockState(updatedBlockState);
     };
 
+    // Handler for removing a block
+    const handleRemoveBlock = (instanceId: string) => {
+        const updatedBlockState = removeBlock(blockState, instanceId);
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
+    };
+
+    // Handler for moving a block up
+    const handleMoveBlockUp = (instanceId: string) => {
+        const updatedBlockState = moveBlock(blockState, instanceId, 'up');
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
+    };
+
+    // Handler for moving a block down
+    const handleMoveBlockDown = (instanceId: string) => {
+        const updatedBlockState = moveBlock(blockState, instanceId, 'down');
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
+    };
+
+    // Handler for adding a new block
+    const handleAddBlock = (blockTypeId: string) => {
+        const updatedBlockState = addBlock(blockState, blockTypeId);
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
+    };
+
     // Get visible blocks sorted by order
     const visibleBlocks = blockState.blocks
         .filter(block => block.visible)
         .sort((a, b) => a.order - b.order);
 
+    // Get list of active block types (for BlockPicker)
+    const activeBlockTypes = visibleBlocks.map(block => block.type);
+
     // Get global BPM for metronome synchronization
     const globalBpm = inspirationState.bpmEl;
 
     return (
-        <PageContainer as={motion.div}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <TwoColumnGrid>
-                {visibleBlocks.map((block) => (
-                    <GridItem
-                        key={block.instanceId}
-                        variants={itemVariants}
-                        $order={block.order}
-                    >
-                        <BlockRenderer
-                            block={block}
-                            onUpdateState={handleBlockStateUpdate}
-                            globalBpm={globalBpm}
-                        />
-                    </GridItem>
-                ))}
-            </TwoColumnGrid>
-        </PageContainer>
+        <>
+            <PageContainer as={motion.div}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                <TwoColumnGrid>
+                    {visibleBlocks.map((block, index) => (
+                        <GridItem
+                            key={block.instanceId}
+                            variants={itemVariants}
+                            $order={block.order}
+                        >
+                            <BlockRenderer
+                                block={block}
+                                onUpdateState={handleBlockStateUpdate}
+                                onRemove={visibleBlocks.length > 1 ? () => handleRemoveBlock(block.instanceId) : undefined}
+                                onMoveUp={index > 0 ? () => handleMoveBlockUp(block.instanceId) : undefined}
+                                onMoveDown={index < visibleBlocks.length - 1 ? () => handleMoveBlockDown(block.instanceId) : undefined}
+                                canRemove={visibleBlocks.length > 1}
+                                canMoveUp={index > 0}
+                                canMoveDown={index < visibleBlocks.length - 1}
+                                globalBpm={globalBpm}
+                            />
+                        </GridItem>
+                    ))}
+                </TwoColumnGrid>
+            </PageContainer>
+
+            {/* Add Block Button - Only show if there are blocks available to add */}
+            {activeBlockTypes.length < 4 && (
+                <AddBlockButton
+                    onClick={() => setShowBlockPicker(true)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Add block"
+                >
+                    <FaPlus size={24} />
+                </AddBlockButton>
+            )}
+
+            {/* Block Picker Modal */}
+            <BlockPicker
+                isOpen={showBlockPicker}
+                onClose={() => setShowBlockPicker(false)}
+                onSelectBlock={handleAddBlock}
+                activeBlockTypes={activeBlockTypes}
+            />
+        </>
     );
 }
 
