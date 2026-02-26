@@ -389,7 +389,9 @@ const Varispeed: FC<VarispeedProps> = ({
 
   // Convert generator root note to key index
   const getKeyIndexFromRoot = useCallback((root: string) => {
-    const index = NOTES.indexOf(root);
+    // Normalize Unicode sharp (♯) to ASCII sharp (#) - use global replace for safety
+    const normalizedRoot = root.replace(/♯/g, '#');
+    const index = NOTES.indexOf(normalizedRoot);
     return index >= 0 ? index : 0;
   }, []);
 
