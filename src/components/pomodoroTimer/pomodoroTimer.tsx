@@ -59,7 +59,23 @@ const IconWrapper = styled.span`
   justify-content: center;
 `;
 
-export default function PomodoroTimer() {
+interface PomodoroTimerProps {
+  onRemove?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canRemove?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+}
+
+export default function PomodoroTimer({
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  canRemove,
+  canMoveUp,
+  canMoveDown
+}: PomodoroTimerProps = {}) {
   const [time, setTime] = useState(1500);
   const [isCounting, setIsCounting] = useState(false);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
@@ -111,7 +127,16 @@ export default function PomodoroTimer() {
   }, [isCounting, time]);
 
   return (
-    <ToolCard title="Flow Timer" icon={GiTomato}>
+    <ToolCard
+      title="Flow Timer"
+      icon={GiTomato}
+      onRemove={onRemove}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
+      canRemove={canRemove}
+      canMoveUp={canMoveUp}
+      canMoveDown={canMoveDown}
+    >
       <TimerDisplay
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}

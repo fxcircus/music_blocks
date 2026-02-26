@@ -2,14 +2,15 @@ import React, { FC, useState, useEffect } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
-import { TilesState } from "../../utils/types";
 import { decodeURLToState, hasStateParams } from "../../utils/urlSharing";
 import { AppState } from "../../blocks/types";
+import { getAllBlockTypes } from "../../blocks/blockRegistry";
 import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil, removeBlock, moveBlock, addBlock } from "../../utils/blockStorage";
 import BlockRenderer from "../../blocks/BlockRenderer";
 import BlockPicker from "../../components/BlockPicker/BlockPicker";
-import { FaPlus } from 'react-icons/fa';
 import { Button } from '../../components/common/StyledComponents';
+import { Icon } from '../../utils/IconHelper';
+import { FaPlus } from 'react-icons/fa';
 
 interface LoaderProps {
     result?: string;
@@ -232,14 +233,14 @@ const CurrentProject: FC<LoaderProps> = () => {
             </PageContainer>
 
             {/* Add Block Button - Only show if there are blocks available to add */}
-            {activeBlockTypes.length < 4 && (
+            {activeBlockTypes.length < getAllBlockTypes().length && (
                 <AddBlockButton
                     onClick={() => setShowBlockPicker(true)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     title="Add block"
                 >
-                    <FaPlus size={24} />
+                    <Icon icon={FaPlus} size={24} />
                 </AddBlockButton>
             )}
 

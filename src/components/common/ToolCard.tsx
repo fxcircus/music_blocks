@@ -16,6 +16,8 @@ interface ToolCardProps {
   canRemove?: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  hideHeader?: boolean;
+  showControlsOnly?: boolean;
 }
 
 const StyledToolCard = styled(Card)`
@@ -114,7 +116,9 @@ const ToolCard: React.FC<ToolCardProps> = ({
   onMoveDown,
   canRemove = true,
   canMoveUp = true,
-  canMoveDown = true
+  canMoveDown = true,
+  hideHeader = false,
+  showControlsOnly = false
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -192,14 +196,16 @@ const ToolCard: React.FC<ToolCardProps> = ({
         </RemoveConfirmation>
       )}
 
-      <CardHeader>
-        <CardIconWrapper>
-          <Icon icon={icon} size={20} />
-        </CardIconWrapper>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
+      {!hideHeader && (
+        <CardHeader>
+          <CardIconWrapper>
+            <Icon icon={icon} size={20} />
+          </CardIconWrapper>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+      )}
 
-      {children}
+      {!showControlsOnly && children}
     </StyledToolCard>
   );
 };

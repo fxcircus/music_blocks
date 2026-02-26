@@ -12,10 +12,11 @@ import PomodoroTimer from '../components/pomodoroTimer/pomodoroTimer';
 import InspirationGenerator from '../components/inspirationGenerator/inspirationGenerator';
 import Metronome from '../components/Metronome/Metronome';
 import Notepad from '../components/Notepad/Notepad';
+import Varispeed from '../components/Varispeed';
 
 // Import icons
 import { GiTomato, GiMetronome } from 'react-icons/gi';
-import { FaDice } from 'react-icons/fa';
+import { FaDice, FaWaveSquare } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
 
 /**
@@ -82,6 +83,18 @@ export const BLOCK_REGISTRY: BlockType[] = [
     },
     category: 'utility',
     description: 'Write down lyrics, ideas, and thoughts',
+  },
+  {
+    id: 'varispeed',
+    name: 'Varispeed',
+    icon: FaWaveSquare,
+    component: Varispeed,
+    defaultState: {
+      bpm: 120,
+      keyIdx: 0,
+    },
+    category: 'music',
+    description: 'Calculate pitch and tempo changes for varispeed effects',
   },
 ];
 

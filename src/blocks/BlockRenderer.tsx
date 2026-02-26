@@ -57,18 +57,30 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     onUpdateState(block.instanceId, updates);
   };
 
-  // Blocks that already use ToolCard internally
-  const blocksWithToolCard = ['flowTimer', 'metronome'];
-  const hasToolCard = blocksWithToolCard.includes(block.type);
+  // Blocks that already have their own ToolCard built in
+  const blocksWithOwnToolCard = ['flowTimer', 'metronome'];
+  const hasOwnToolCard = blocksWithOwnToolCard.includes(block.type);
+
+  // Blocks that have their own header styling (don't need ToolCard wrapper)
+  const blocksWithOwnHeader = ['inspirationGenerator', 'notes', 'varispeed'];
+  const hasOwnHeader = blocksWithOwnHeader.includes(block.type);
 
   // Render the block content
   let blockContent: React.ReactNode;
 
   switch (block.type) {
     case 'flowTimer':
-      // PomodoroTimer doesn't need any props (manages its own state internally)
-      // It already has ToolCard built in
-      blockContent = <BlockComponent />;
+      // PomodoroTimer has ToolCard built in, pass control props
+      blockContent = (
+        <BlockComponent
+          onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
+          onMoveUp={onMoveUp ? () => onMoveUp(block.instanceId) : undefined}
+          onMoveDown={onMoveDown ? () => onMoveDown(block.instanceId) : undefined}
+          canRemove={canRemove}
+          canMoveUp={canMoveUp}
+          canMoveDown={canMoveDown}
+        />
+      );
       break;
 
     case 'inspirationGenerator':
@@ -97,8 +109,18 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       // Metronome expects BPM as a number prop
       // Use globalBpm if provided (for synchronization), otherwise use block state
       const bpm = globalBpm ? parseInt(globalBpm, 10) : (block.state.bpm || 100);
-      // It already has ToolCard built in
-      blockContent = <BlockComponent bpm={bpm} />;
+      // It already has ToolCard built in, pass control props
+      blockContent = (
+        <BlockComponent
+          bpm={bpm}
+          onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
+          onMoveUp={onMoveUp ? () => onMoveUp(block.instanceId) : undefined}
+          onMoveDown={onMoveDown ? () => onMoveDown(block.instanceId) : undefined}
+          canRemove={canRemove}
+          canMoveUp={canMoveUp}
+          canMoveDown={canMoveDown}
+        />
+      );
       break;
 
     case 'notes':
@@ -107,6 +129,18 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
         <BlockComponent
           notes={block.state.notes || ''}
           setNotes={(notes: string) => updateBlockState({ notes })}
+        />
+      );
+      break;
+
+    case 'varispeed':
+      // Varispeed expects bpm and keyIdx with setters
+      blockContent = (
+        <BlockComponent
+          bpm={block.state.bpm || 120}
+          setBpm={(bpm: number) => updateBlockState({ bpm })}
+          keyIdx={block.state.keyIdx || 0}
+          setKeyIdx={(keyIdx: number) => updateBlockState({ keyIdx })}
         />
       );
       break;
@@ -120,22 +154,39 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       );
   }
 
-  // If the block already has ToolCard, just add the control props via a wrapper div
-  // Otherwise, wrap it with ToolCard
-  if (hasToolCard) {
-    // For blocks with built-in ToolCard, we need to clone and pass props
-    // This is a bit tricky, so for now we'll just return them as-is
-    // TODO: Update PomodoroTimer and Metronome to accept control props
+  // Determine how to render the block based on its styling
+  if (hasOwnToolCard) {
+    // Blocks with built-in ToolCard (flowTimer, metronome)
+    // Control props are passed directly to the component
     return <>{blockContent}</>;
+  } else if (hasOwnHeader) {
+    // Blocks with their own header styling (inspirationGenerator, notes)
+    // Wrap with ToolCard but hide the header to avoid duplication
+    return (
+      <ToolCard
+        title=""
+        icon={blockType.icon}
+        onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
+        onMoveUp={onMoveUp ? () => onMoveUp(block.instanceId) : undefined}
+        onMoveDown={onMoveDown ? () => onMoveDown(block.instanceId) : undefined}
+        canRemove={canRemove}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
+        hideHeader={true}
+      >
+        {blockContent}
+      </ToolCard>
+    );
   } else {
-    // Wrap blocks without ToolCard
+    // Standard blocks without any built-in styling
+    // Wrap with ToolCard and add controls
     return (
       <ToolCard
         title={blockType.name}
         icon={blockType.icon}
-        onRemove={onRemove}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
+        onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
+        onMoveUp={onMoveUp ? () => onMoveUp(block.instanceId) : undefined}
+        onMoveDown={onMoveDown ? () => onMoveDown(block.instanceId) : undefined}
         canRemove={canRemove}
         canMoveUp={canMoveUp}
         canMoveDown={canMoveDown}

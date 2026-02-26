@@ -111,6 +111,16 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
         notes: oldState.notes || DEFAULT_STATE.notes,
       },
     },
+    {
+      instanceId: 'varispeed',
+      type: 'varispeed',
+      order: 4,
+      visible: true,
+      state: {
+        bpm: 120,
+        keyIdx: 0,
+      },
+    },
   ];
 
   const migratedState: AppState = {

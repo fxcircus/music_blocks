@@ -8,6 +8,12 @@ import config from '../../config';
 
 interface LoaderProps {
     bpm: number;
+    onRemove?: () => void;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
+    canRemove?: boolean;
+    canMoveUp?: boolean;
+    canMoveDown?: boolean;
 }
 
 const MetronomeDisplay = styled.div`
@@ -325,7 +331,15 @@ class MetronomeEngine {
   }
 }
 
-const Metronome: FC<LoaderProps> = ({ bpm: initialBpm }) => {
+const Metronome: FC<LoaderProps> = ({
+    bpm: initialBpm,
+    onRemove,
+    onMoveUp,
+    onMoveDown,
+    canRemove,
+    canMoveUp,
+    canMoveDown
+}) => {
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
     const [muteSound, setMuteSound] = useState(false);
@@ -544,7 +558,16 @@ const Metronome: FC<LoaderProps> = ({ bpm: initialBpm }) => {
     };
 
     return (
-        <ToolCard title="Metronome" icon={FaDrum}>
+        <ToolCard
+            title="Metronome"
+            icon={FaDrum}
+            onRemove={onRemove}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            canRemove={canRemove}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
+        >
             {config.DEBUG_MODE && (
                 <DebugButton onClick={toggleDebug} aria-label="Toggle debug panel">
                     <Icon icon={FaBug} size={16} />

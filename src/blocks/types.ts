@@ -140,6 +140,6 @@ export interface MusicStructureState {
 }
 
 export interface VarispeedState {
-  // To be defined when integrating from Claude Desktop artifact
-  [key: string]: any;
+  bpm: number;
+  keyIdx: number;
 }
