@@ -26,7 +26,7 @@ export const DEFAULT_STATE: TilesState = {
   tonesEl: 'T - T - S - T - T - T - S',
   tonesArrEl: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'],
   bpmEl: '100',
-  soundEl: 'Guitar',
+  soundEl: 'Electric Guitar',
 };
 
 /**

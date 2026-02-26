@@ -41,14 +41,8 @@ const VarispeedCard = styled(Card)`
 const VarispeedHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
-
-const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
 const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
@@ -473,22 +467,10 @@ const Varispeed: FC<VarispeedProps> = ({
       transition={{ duration: 0.5 }}
     >
       <VarispeedHeader>
-        <HeaderLeft>
-          <CardIconWrapper>
-            <Icon icon={FaWaveSquare} size={20} />
-          </CardIconWrapper>
-          <CardTitle>Varispeed Calculator</CardTitle>
-        </HeaderLeft>
-        <LinkToggle
-          $isLinked={isLinked}
-          onClick={() => setIsLinked(!isLinked)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
-        >
-          <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
-          {isLinked ? "Linked" : "Link"}
-        </LinkToggle>
+        <CardIconWrapper>
+          <Icon icon={FaWaveSquare} size={20} />
+        </CardIconWrapper>
+        <CardTitle>Varispeed Calculator</CardTitle>
       </VarispeedHeader>
 
       <ControlSection>
@@ -529,6 +511,19 @@ const Varispeed: FC<VarispeedProps> = ({
           <ControlLabel>Key</ControlLabel>
           <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} disabled={isLinked} />
         </ControlGroup>
+
+        <Divider $mobile={isMobile} />
+
+        <LinkToggle
+          $isLinked={isLinked}
+          onClick={() => setIsLinked(!isLinked)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
+        >
+          <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
+          {isLinked ? "Linked" : "Link"}
+        </LinkToggle>
       </ControlSection>
 
       <div>

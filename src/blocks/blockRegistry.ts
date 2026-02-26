@@ -55,7 +55,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
       tonesEl: 'T - T - S - T - T - T - S',
       tonesArrEl: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'],
       bpmEl: '100',
-      soundEl: 'Guitar',
+      soundEl: 'Electric Guitar',
     },
     category: 'music',
     description: 'Generate random musical ideas and parameters',

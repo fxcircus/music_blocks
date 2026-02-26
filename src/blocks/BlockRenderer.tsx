@@ -101,8 +101,9 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
           setTonesArrEl={(tonesArrEl: string[]) => updateBlockState({ tonesArrEl })}
           bpmEl={block.state.bpmEl || '100'}
           setBpmEl={(bpmEl: string) => updateBlockState({ bpmEl })}
-          soundEl={block.state.soundEl || 'Guitar'}
+          soundEl={block.state.soundEl || 'Electric Guitar'}
           setSoundEl={(soundEl: string) => updateBlockState({ soundEl })}
+          onBatchUpdate={(updates: Record<string, any>) => updateBlockState(updates)}
         />
       );
       break;

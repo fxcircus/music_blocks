@@ -463,7 +463,8 @@ export default function InspirationGenerator({
   setBpmEl,
   soundEl,
   setSoundEl,
-}: componentProps) {
+  onBatchUpdate,
+}: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const [locked, setLocked] = useState<LockedState>({
     root: false,
     scale: false,
@@ -644,39 +645,67 @@ export default function InspirationGenerator({
   };
 
   const rollDice = () => {
+    console.log('Rolling dice...', { locked, currentValues: { rootEl, scaleEl, bpmEl, soundEl } });
     setAnimate(false);
+
+    // Collect all updates to batch them
+    const updates: Record<string, any> = {};
+
+    // Generate new random values
+    let newRoot = rootEl;
+    let newScale = scaleEl;
+    let newSound = soundEl;
+    let newBpm = bpmEl;
 
     // ROOT
     if (!locked.root) {
-      const newRoot = getRandomValueDifferentFromCurrent(roots, rootEl);
-      setRootEl(newRoot);
+      newRoot = getRandomValueDifferentFromCurrent(roots, rootEl);
+      console.log('New root:', newRoot, 'Old root:', rootEl);
+      updates.rootEl = newRoot;
     }
 
     // SCALE + original pattern
     if (!locked.scale) {
-      const newScale = getRandomValueDifferentFromCurrent(scales, scaleEl);
-      setScaleEl(newScale);
-      setTonesEl(scalePatterns[newScale as keyof typeof scalePatterns]);
+      newScale = getRandomValueDifferentFromCurrent(scales, scaleEl);
+      console.log('New scale:', newScale, 'Old scale:', scaleEl);
+      updates.scaleEl = newScale;
+      updates.tonesEl = scalePatterns[newScale as keyof typeof scalePatterns];
     }
 
-    // COMPUTED scale tones with dashes/spaces
-    const newRoot = locked.root ? rootEl : getRandomValueDifferentFromCurrent(roots, rootEl);
-    const newScale = locked.scale ? scaleEl : getRandomValueDifferentFromCurrent(scales, scaleEl);
+    // COMPUTED scale tones with dashes/spaces (use the new values)
     const tonesArr = generateScaleTonesMemoized(newRoot, newScale);
-    setComputedScaleNotes(tonesArr.join(" - "));
-    setTonesArrEl(tonesArr);
+    updates.tonesArrEl = tonesArr;
 
     // SOUND
     if (!locked.sound) {
-      const newSound = getRandomValueDifferentFromCurrent(sounds, soundEl);
-      setSoundEl(newSound);
+      newSound = getRandomValueDifferentFromCurrent(sounds, soundEl);
+      console.log('New sound:', newSound, 'Old sound:', soundEl);
+      updates.soundEl = newSound;
     }
 
     // BPM
     if (!locked.bpm) {
-      const newBpm = getRandomBpmDifferentFromCurrent(minBpm, maxBpm, bpmEl);
-      setBpmEl(newBpm);
+      newBpm = getRandomBpmDifferentFromCurrent(minBpm, maxBpm, bpmEl);
+      console.log('New BPM:', newBpm, 'Old BPM:', bpmEl);
+      updates.bpmEl = newBpm;
     }
+
+    // Apply all updates at once if batch update function is available
+    if (onBatchUpdate && Object.keys(updates).length > 0) {
+      console.log('Batching updates:', updates);
+      onBatchUpdate(updates);
+    } else {
+      // Fallback to individual updates
+      if (updates.rootEl) setRootEl(updates.rootEl);
+      if (updates.scaleEl) setScaleEl(updates.scaleEl);
+      if (updates.tonesEl) setTonesEl(updates.tonesEl);
+      if (updates.tonesArrEl) setTonesArrEl(updates.tonesArrEl);
+      if (updates.soundEl) setSoundEl(updates.soundEl);
+      if (updates.bpmEl) setBpmEl(updates.bpmEl);
+    }
+
+    // Update computed notes separately since it's local state
+    setComputedScaleNotes(tonesArr.join(" - "));
 
     setAnimate(true);
   };
