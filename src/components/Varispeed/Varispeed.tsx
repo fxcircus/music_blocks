@@ -41,6 +41,7 @@ const VarispeedCard = styled(Card)`
 const VarispeedHeader = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;

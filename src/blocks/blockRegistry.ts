@@ -17,7 +17,7 @@ import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
 
 // Import icons
 import { GiTomato, GiMetronome } from 'react-icons/gi';
-import { FaDice, FaWaveSquare, FaMusic } from 'react-icons/fa';
+import { FaDice, FaWaveSquare, FaChartBar } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
 
 /**
@@ -99,8 +99,8 @@ export const BLOCK_REGISTRY: BlockType[] = [
   },
   {
     id: 'arrangementTool',
-    name: 'Arrangement Tool',
-    icon: FaMusic,
+    name: 'Arrangement',
+    icon: FaChartBar,
     component: ArrangementTool,
     defaultState: {
       selectedTemplate: 'Two Peaks',
