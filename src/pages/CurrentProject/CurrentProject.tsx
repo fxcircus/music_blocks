@@ -9,6 +9,8 @@ import Metronome from "../../components/Metronome/Metronome";
 import { TilesState } from "../../utils/types";
 import { loadAppState, saveAppState } from "../../utils/storageService";
 import { decodeURLToState, hasStateParams } from "../../utils/urlSharing";
+import { AppState } from "../../blocks/types";
+import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil } from "../../utils/blockStorage";
 
 interface LoaderProps {
     result?: string;
@@ -62,33 +64,108 @@ const GridItem = styled(motion.div)<{ $order?: number, $desktopOrder?: number }>
 `;
 
 const CurrentProject: FC<LoaderProps> = () => {
-    const [state, setState] = useState<TilesState>(loadAppState());
+    // NEW: Load block-based state (with automatic migration from old format)
+    const [blockState, setBlockState] = useState<AppState>(loadBlockState());
     const [animate, setAnimate] = useState(false);
 
-    // Check for URL parameters on mount
+    // COMPATIBILITY: Extract old TilesState format from block state for existing components
+    // This allows us to keep using the old component props while transitioning
+    const getBlockState = (instanceId: string): any => {
+        const block = blockState.blocks.find(b => b.instanceId === instanceId);
+        return block?.state || {};
+    };
+
+    const inspirationState = getBlockState('inspirationGenerator');
+    const notesState = getBlockState('notes');
+    const metronomeState = getBlockState('metronome');
+
+    const state: TilesState = {
+        notes: notesState.notes || '',
+        rootEl: inspirationState.rootEl || 'C',
+        scaleEl: inspirationState.scaleEl || 'Major',
+        tonesEl: inspirationState.tonesEl || 'T - T - S - T - T - T - S',
+        tonesArrEl: inspirationState.tonesArrEl || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'],
+        bpmEl: inspirationState.bpmEl || '100',
+        soundEl: inspirationState.soundEl || 'Guitar',
+    };
+
+    // Check for URL parameters on mount (keep old URL format support for now)
     useEffect(() => {
         if (hasStateParams(window.location.href)) {
             const urlState = decodeURLToState(window.location.href);
-            
+
             // If URL has valid state parameters, update state with them
             if (Object.keys(urlState).length > 0) {
-                // Merge with existing state to ensure we have all required fields
-                setState(prevState => {
-                    const updatedState = { ...prevState, ...urlState };
-                    saveAppState(updatedState);
-                    return updatedState;
+                // Convert old URL state to block updates
+                setBlockState(prevState => {
+                    let updatedBlockState = prevState;
+
+                    // Update inspiration generator state
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'inspirationGenerator', {
+                        rootEl: urlState.rootEl,
+                        scaleEl: urlState.scaleEl,
+                        tonesEl: urlState.tonesEl,
+                        tonesArrEl: urlState.tonesArrEl,
+                        bpmEl: urlState.bpmEl,
+                        soundEl: urlState.soundEl,
+                    });
+
+                    // Update notes state
+                    if (urlState.notes !== undefined) {
+                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'notes', {
+                            notes: urlState.notes,
+                        });
+                    }
+
+                    // Update metronome state
+                    if (urlState.bpmEl) {
+                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'metronome', {
+                            bpm: parseInt(urlState.bpmEl, 10),
+                        });
+                    }
+
+                    saveBlockState(updatedBlockState);
+                    return updatedBlockState;
                 });
             }
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run on mount
 
     // Update state and save to localStorage whenever a component of state changes
+    // This maintains the old interface but updates the new block-based storage
     const updateState = (newState: Partial<TilesState>) => {
-        setState(prevState => {
-            const updatedState = { ...prevState, ...newState };
-            saveAppState(updatedState);
-            return updatedState;
-        });
+        let updatedBlockState = blockState;
+
+        // Map old state updates to block updates
+        if (newState.notes !== undefined) {
+            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'notes', {
+                notes: newState.notes,
+            });
+        }
+
+        // Update inspiration generator block
+        const inspirationUpdates: any = {};
+        if (newState.rootEl !== undefined) inspirationUpdates.rootEl = newState.rootEl;
+        if (newState.scaleEl !== undefined) inspirationUpdates.scaleEl = newState.scaleEl;
+        if (newState.tonesEl !== undefined) inspirationUpdates.tonesEl = newState.tonesEl;
+        if (newState.tonesArrEl !== undefined) inspirationUpdates.tonesArrEl = newState.tonesArrEl;
+        if (newState.bpmEl !== undefined) inspirationUpdates.bpmEl = newState.bpmEl;
+        if (newState.soundEl !== undefined) inspirationUpdates.soundEl = newState.soundEl;
+
+        if (Object.keys(inspirationUpdates).length > 0) {
+            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'inspirationGenerator', inspirationUpdates);
+        }
+
+        // Update metronome if BPM changed
+        if (newState.bpmEl !== undefined) {
+            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'metronome', {
+                bpm: parseInt(newState.bpmEl, 10),
+            });
+        }
+
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
     };
 
     // Component variants for animations
