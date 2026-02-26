@@ -167,6 +167,35 @@ const CATEGORY_COLORS: Record<string, string> = {
   "BRIAN ENO": "#40B0A0",
 };
 
+// Animations (must be defined before usage)
+const fadeSlideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const fillIn = keyframes`
+  from {
+    width: 0%;
+  }
+`;
+
+const growUp = keyframes`
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+`;
+
 // Styled Components
 const ArrangementCard = styled(Card)`
   background: ${({ theme }) => theme.colors.card};
@@ -254,7 +283,7 @@ const TemplateOption = styled.button<{ $isSelected?: boolean }>`
   width: 100%;
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} 20px`};
   background: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.backgroundHover : 'transparent'};
+    $isSelected ? `${theme.colors.primary}22` : 'transparent'};
   border: none;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   cursor: pointer;
@@ -263,7 +292,7 @@ const TemplateOption = styled.button<{ $isSelected?: boolean }>`
   transition: background 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.backgroundHover};
+    background: ${({ theme }) => `${theme.colors.primary}11`};
   }
 `;
 
@@ -318,35 +347,6 @@ const EnergyArcChart = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.small};
   padding: ${({ theme }) => theme.spacing.md};
   border: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-// Animations
-const fadeSlideIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const fillIn = keyframes`
-  from {
-    width: 0%;
-  }
-`;
-
-const growUp = keyframes`
-  from {
-    transform: scaleY(0);
-    transform-origin: bottom;
-  }
-  to {
-    transform: scaleY(1);
-    transform-origin: bottom;
-  }
 `;
 
 // Helper functions
