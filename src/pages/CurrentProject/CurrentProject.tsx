@@ -2,15 +2,11 @@ import React, { FC, useState, useEffect } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
-import PomodoroTimer from "../../components/pomodoroTimer/pomodoroTimer";
-import InspirationGenerator from "../../components/inspirationGenerator/inspirationGenerator";
-import NotePad from "../../components/Notepad/Notepad";
-import Metronome from "../../components/Metronome/Metronome";
 import { TilesState } from "../../utils/types";
-import { loadAppState, saveAppState } from "../../utils/storageService";
 import { decodeURLToState, hasStateParams } from "../../utils/urlSharing";
 import { AppState } from "../../blocks/types";
 import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil } from "../../utils/blockStorage";
+import BlockRenderer from "../../blocks/BlockRenderer";
 
 interface LoaderProps {
     result?: string;
@@ -64,30 +60,16 @@ const GridItem = styled(motion.div)<{ $order?: number, $desktopOrder?: number }>
 `;
 
 const CurrentProject: FC<LoaderProps> = () => {
-    // NEW: Load block-based state (with automatic migration from old format)
+    // Load block-based state (with automatic migration from old format)
     const [blockState, setBlockState] = useState<AppState>(loadBlockState());
-    const [animate, setAnimate] = useState(false);
 
-    // COMPATIBILITY: Extract old TilesState format from block state for existing components
-    // This allows us to keep using the old component props while transitioning
+    // Helper to get a specific block's state
     const getBlockState = (instanceId: string): any => {
         const block = blockState.blocks.find(b => b.instanceId === instanceId);
         return block?.state || {};
     };
 
     const inspirationState = getBlockState('inspirationGenerator');
-    const notesState = getBlockState('notes');
-    const metronomeState = getBlockState('metronome');
-
-    const state: TilesState = {
-        notes: notesState.notes || '',
-        rootEl: inspirationState.rootEl || 'C',
-        scaleEl: inspirationState.scaleEl || 'Major',
-        tonesEl: inspirationState.tonesEl || 'T - T - S - T - T - T - S',
-        tonesArrEl: inspirationState.tonesArrEl || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'],
-        bpmEl: inspirationState.bpmEl || '100',
-        soundEl: inspirationState.soundEl || 'Guitar',
-    };
 
     // Check for URL parameters on mount (keep old URL format support for now)
     useEffect(() => {
@@ -132,42 +114,6 @@ const CurrentProject: FC<LoaderProps> = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Only run on mount
 
-    // Update state and save to localStorage whenever a component of state changes
-    // This maintains the old interface but updates the new block-based storage
-    const updateState = (newState: Partial<TilesState>) => {
-        let updatedBlockState = blockState;
-
-        // Map old state updates to block updates
-        if (newState.notes !== undefined) {
-            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'notes', {
-                notes: newState.notes,
-            });
-        }
-
-        // Update inspiration generator block
-        const inspirationUpdates: any = {};
-        if (newState.rootEl !== undefined) inspirationUpdates.rootEl = newState.rootEl;
-        if (newState.scaleEl !== undefined) inspirationUpdates.scaleEl = newState.scaleEl;
-        if (newState.tonesEl !== undefined) inspirationUpdates.tonesEl = newState.tonesEl;
-        if (newState.tonesArrEl !== undefined) inspirationUpdates.tonesArrEl = newState.tonesArrEl;
-        if (newState.bpmEl !== undefined) inspirationUpdates.bpmEl = newState.bpmEl;
-        if (newState.soundEl !== undefined) inspirationUpdates.soundEl = newState.soundEl;
-
-        if (Object.keys(inspirationUpdates).length > 0) {
-            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'inspirationGenerator', inspirationUpdates);
-        }
-
-        // Update metronome if BPM changed
-        if (newState.bpmEl !== undefined) {
-            updatedBlockState = updateBlockStateUtil(updatedBlockState, 'metronome', {
-                bpm: parseInt(newState.bpmEl, 10),
-            });
-        }
-
-        setBlockState(updatedBlockState);
-        saveBlockState(updatedBlockState);
-    };
-
     // Component variants for animations
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -184,46 +130,41 @@ const CurrentProject: FC<LoaderProps> = () => {
         visible: { opacity: 1, y: 0 }
     };
 
+    // Handler for block state updates from BlockRenderer
+    const handleBlockStateUpdate = (instanceId: string, newState: Record<string, any>) => {
+        const updatedBlockState = updateBlockStateUtil(blockState, instanceId, newState);
+        setBlockState(updatedBlockState);
+        saveBlockState(updatedBlockState);
+    };
+
+    // Get visible blocks sorted by order
+    const visibleBlocks = blockState.blocks
+        .filter(block => block.visible)
+        .sort((a, b) => a.order - b.order);
+
+    // Get global BPM for metronome synchronization
+    const globalBpm = inspirationState.bpmEl;
+
     return (
-        <PageContainer as={motion.div} 
+        <PageContainer as={motion.div}
             variants={containerVariants}
             initial="hidden"
             animate="visible"
         >
             <TwoColumnGrid>
-                <GridItem variants={itemVariants} $order={4} $desktopOrder={3}>
-                    <PomodoroTimer />
-                </GridItem>
-                
-                <GridItem variants={itemVariants} $order={1}>
-                    <InspirationGenerator 
-                        animate={animate}
-                        setAnimate={setAnimate}
-                        rootEl={state.rootEl}
-                        setRootEl={(rootEl) => updateState({ rootEl })}
-                        scaleEl={state.scaleEl}
-                        setScaleEl={(scaleEl) => updateState({ scaleEl })}
-                        tonesEl={state.tonesEl}
-                        setTonesEl={(tonesEl) => updateState({ tonesEl })}
-                        tonesArrEl={state.tonesArrEl}
-                        setTonesArrEl={(tonesArrEl) => updateState({ tonesArrEl })}
-                        bpmEl={state.bpmEl}
-                        setBpmEl={(bpmEl) => updateState({ bpmEl })}
-                        soundEl={state.soundEl}
-                        setSoundEl={(soundEl) => updateState({ soundEl })}
-                    />
-                </GridItem>
-                
-                <GridItem variants={itemVariants} $order={3} $desktopOrder={4}>
-                    <NotePad 
-                        notes={state.notes} 
-                        setNotes={(notes) => updateState({ notes })} 
-                    />
-                </GridItem>
-                
-                <GridItem variants={itemVariants} $order={2}>
-                    <Metronome bpm={parseInt(state.bpmEl, 10)} />
-                </GridItem>
+                {visibleBlocks.map((block) => (
+                    <GridItem
+                        key={block.instanceId}
+                        variants={itemVariants}
+                        $order={block.order}
+                    >
+                        <BlockRenderer
+                            block={block}
+                            onUpdateState={handleBlockStateUpdate}
+                            globalBpm={globalBpm}
+                        />
+                    </GridItem>
+                ))}
             </TwoColumnGrid>
         </PageContainer>
     );
