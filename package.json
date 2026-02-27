@@ -2,7 +2,7 @@
   "name": "ai-music-producer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://fxcircus.github.io/music-tools-studio",
+  "homepage": "https://fxcircus.github.io/music_blocks",
   "dependencies": {
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
