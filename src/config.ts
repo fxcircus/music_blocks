@@ -1,10 +1,10 @@
-// Configuration options for the Tiles application
+// Configuration options for the Blocks application
 const config = {
   // Set to true to enable debug features like the debug button in the metronome
   DEBUG_MODE: false,
-  
+
   // App information
-  APP_NAME: "Tiles",
+  APP_NAME: "Blocks",
   APP_VERSION: "1.0.0",
   APP_URL: "https://fxcircus.github.io/music-tools-studio",
   

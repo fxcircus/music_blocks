@@ -359,6 +359,7 @@ export const AppWrapper = styled.div`
   color: ${({ theme }) => theme.colors.text};
   transition: all ${({ theme }) => theme.transitions.normal};
   font-family: 'Inter', 'Roboto', sans-serif;
+  padding-top: 70px; /* Space for fixed navbar */
 `;
 
 // Create a consistent header component for all cards

@@ -16,18 +16,26 @@ const STORAGE_VERSION_KEY = 'tilesStorageVersion';
 const CURRENT_STORAGE_VERSION = 2; // Version 1 = old flat state, Version 2 = block-based state
 
 /**
- * Default AppState with all blocks visible
+ * Default AppState with specific block order and visibility
  * This is used for new users or after clearing data
  */
 export const getDefaultAppState = (): AppState => {
-  const allBlockTypes = getAllBlockTypes();
+  // Define default block configuration with specific order and visibility
+  const defaultBlockConfig = [
+    { id: 'inspirationGenerator', order: 0, visible: true },  // First row left
+    { id: 'metronome', order: 1, visible: true },            // First row right
+    { id: 'flowTimer', order: 2, visible: true },            // Second row left
+    { id: 'notes', order: 3, visible: true },                // Second row right
+    { id: 'arrangementTool', order: 4, visible: false },     // Third row left (hidden)
+    { id: 'varispeed', order: 5, visible: false },           // Third row right (hidden)
+  ];
 
-  const blocks: BlockInstance[] = allBlockTypes.map((blockType, index) => ({
-    instanceId: blockType.id, // Use block type ID as instance ID (e.g., 'flowTimer')
-    type: blockType.id,
-    order: index,
-    visible: true,
-    state: { ...getDefaultBlockState(blockType.id) },
+  const blocks: BlockInstance[] = defaultBlockConfig.map(config => ({
+    instanceId: config.id,
+    type: config.id,
+    order: config.order,
+    visible: config.visible,
+    state: { ...getDefaultBlockState(config.id) },
   }));
 
   return {
@@ -65,22 +73,12 @@ export const getDefaultAppState = (): AppState => {
 export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
   console.log('[Migration] Converting old state to block-based format:', oldState);
 
-  // Create block instances with migrated state
+  // Create block instances with migrated state (using new default order)
   const blocks: BlockInstance[] = [
-    {
-      instanceId: 'flowTimer',
-      type: 'flowTimer',
-      order: 0,
-      visible: true,
-      state: {
-        time: 1500, // Default 25 minutes
-        isCounting: false,
-      },
-    },
     {
       instanceId: 'inspirationGenerator',
       type: 'inspirationGenerator',
-      order: 1,
+      order: 0,
       visible: true,
       state: {
         rootEl: oldState.rootEl || DEFAULT_STATE.rootEl,
@@ -94,12 +92,22 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'metronome',
       type: 'metronome',
-      order: 2,
+      order: 1,
       visible: true,
       state: {
         bpm: parseInt(oldState.bpmEl || DEFAULT_STATE.bpmEl, 10),
         isRunning: false,
         isMuted: false,
+      },
+    },
+    {
+      instanceId: 'flowTimer',
+      type: 'flowTimer',
+      order: 2,
+      visible: true,
+      state: {
+        time: 1500, // Default 25 minutes
+        isCounting: false,
       },
     },
     {
@@ -112,22 +120,22 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
       },
     },
     {
-      instanceId: 'varispeed',
-      type: 'varispeed',
+      instanceId: 'arrangementTool',
+      type: 'arrangementTool',
       order: 4,
-      visible: true,
+      visible: false, // Hidden by default
       state: {
-        bpm: 120,
-        keyIdx: 0,
+        selectedTemplate: 'Two Peaks',
       },
     },
     {
-      instanceId: 'arrangementTool',
-      type: 'arrangementTool',
+      instanceId: 'varispeed',
+      type: 'varispeed',
       order: 5,
-      visible: true,
+      visible: false, // Hidden by default
       state: {
-        selectedTemplate: 'Two Peaks',
+        bpm: 120,
+        keyIdx: 0,
       },
     },
   ];

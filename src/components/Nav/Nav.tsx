@@ -29,9 +29,11 @@ const NavContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.card};
   box-shadow: ${({ theme }) => theme.shadows.medium};
   padding: ${({ theme }) => theme.spacing.md};
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 9999;
   backdrop-filter: blur(10px);
   transition: all ${({ theme }) => theme.transitions.normal};
 `;
@@ -293,7 +295,7 @@ const Nav: FC = () => {
     const currentProject = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      app: "Tiles",
+      app: "Blocks",
       appVersion: "1.0.0",
       appURL: "https://fxcircus.github.io/music-tools-studio",
       notes,
@@ -377,7 +379,7 @@ const Nav: FC = () => {
           
           // Verify it's a valid project file
           if (!jsonData.rootEl || !jsonData.scaleEl) {
-            throw new Error("This doesn't appear to be a valid Tiles project file.");
+            throw new Error("This doesn't appear to be a valid Blocks project file.");
           }
           
           // Save all project data to localStorage
@@ -446,7 +448,7 @@ const Nav: FC = () => {
           >
             🎵
           </motion.span>
-          Tiles
+          Blocks
         </NavBrand>
         
         <motion.div
