@@ -1294,15 +1294,26 @@ export default function InspirationGenerator({
         await playNote(frequency, 250);
       }
     } else {
-      // Play full scale - already ascending
+      // Play full scale - ensure ascending order
+      let prevChromatic = -1;
+      let currentOctave = 4;
+
       for (let i = 0; i < noteCount; i++) {
         if (!isPlayingRef.current) break;
 
         const note = tonesArrEl[i];
         if (!note) continue;
 
+        const noteChromatic = getNoteChromatic(note);
+
+        // If this note is lower than or equal to the previous, we need next octave
+        if (i > 0 && noteChromatic <= prevChromatic) {
+          currentOctave++;
+        }
+
+        prevChromatic = noteChromatic;
         setPlayingNoteIndex(i);
-        const frequency = noteToFrequency(note);
+        const frequency = noteToFrequency(note, currentOctave);
         await playNote(frequency, 250);
       }
     }
