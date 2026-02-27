@@ -590,7 +590,25 @@ const Varispeed: FC<VarispeedProps> = ({
         title="How to Use the Varispeed Calculator"
         content={
           <>
-            <h3>How to use</h3>
+            <h3>The Magic of Varispeed Recording</h3>
+            <p>
+              Varispeed recording is a classic studio technique pioneered by 1960s artists like The Beatles. By changing the tape machine's playback speed during recording, you can achieve unique tonal qualities that are impossible to recreate with digital pitch shifting alone.
+            </p>
+
+            <h3>Famous Example: "Strawberry Fields Forever"</h3>
+            <p>
+              The Beatles' <strong>"Strawberry Fields Forever"</strong> (1967) is perhaps the most famous use of varispeed. Producer George Martin combined two different takes recorded in different keys and tempos:
+            </p>
+            <ul>
+              <li>Take 7 was recorded in C major at a slower tempo</li>
+              <li>Take 26 was recorded in A major at a faster tempo</li>
+              <li>By speeding up Take 7 and slowing down Take 26, Martin matched both the pitch and tempo, creating the song's distinctive, dreamlike quality</li>
+            </ul>
+            <p>
+              The result? That slightly "wobbly," ethereal sound that makes the track so memorable. The formant shifts from varispeed give John Lennon's voice its unique character on the recording.
+            </p>
+
+            <h3>Using This Calculator</h3>
             <p>
               <strong>To pitch down:</strong> Set your DAW to the target BPM (faster), record your part, then slow playback to your original BPM.
             </p>
@@ -598,7 +616,7 @@ const Varispeed: FC<VarispeedProps> = ({
               <strong>To pitch up:</strong> Set your DAW to the target BPM (slower), record your part, then speed playback to your original BPM.
             </p>
             <p>
-              <em>Each semitone ≈ 5.95% speed change.</em>
+              <em>Each semitone equals approximately 5.95% speed change — the same ratio used on analog tape machines.</em>
             </p>
           </>
         }
