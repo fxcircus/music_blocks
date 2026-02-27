@@ -229,6 +229,7 @@ const ClickableValueCell = styled(ValueCell)<{ $isLocked?: boolean }>`
   cursor: ${({ $isLocked }) => $isLocked ? 'not-allowed' : 'pointer'};
   opacity: ${({ $isLocked }) => $isLocked ? 1 : 1};
   transition: color ${({ theme }) => theme.transitions.fast};
+  overflow: visible; /* Override parent's overflow: hidden to show dropdowns */
 
   &:hover {
     color: ${({ theme, $isLocked }) =>
@@ -706,6 +707,23 @@ export default function InspirationGenerator({
   useEffect(() => {
     localStorage.setItem('tilesSoundEl', soundEl);
   }, [soundEl]);
+
+  // Click outside handler to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   // All available root notes including both sharps and flats
   // Organized by common usage - natural notes first, then common accidentals
@@ -1587,17 +1605,24 @@ export default function InspirationGenerator({
               <LabelCell>Root</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.root}
-                onClick={() => !locked.root && setOpenDropdown(openDropdown === 'root' ? null : 'root')}
+                onClick={(e) => {
+                  if (!locked.root && !e.defaultPrevented) {
+                    setOpenDropdown(openDropdown === 'root' ? null : 'root');
+                  }
+                }}
                 ref={openDropdown === 'root' ? dropdownRef : undefined}
               >
                 {rootEl}
                 {openDropdown === 'root' && (
-                  <RootDropdown>
+                  <RootDropdown
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {notes.map((note) => (
                       <DropdownOption
                         key={note}
                         $isSelected={rootEl === note}
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           handleRootSelect(note);
                         }}
@@ -1632,17 +1657,24 @@ export default function InspirationGenerator({
               <LabelCell>Scale</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.scale}
-                onClick={() => !locked.scale && setOpenDropdown(openDropdown === 'scale' ? null : 'scale')}
+                onClick={(e) => {
+                  if (!locked.scale && !e.defaultPrevented) {
+                    setOpenDropdown(openDropdown === 'scale' ? null : 'scale');
+                  }
+                }}
                 ref={openDropdown === 'scale' ? dropdownRef : undefined}
               >
                 {scaleEl}
                 {openDropdown === 'scale' && (
-                  <ScaleDropdown>
+                  <ScaleDropdown
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {scales.map((scale) => (
                       <DropdownOption
                         key={scale}
                         $isSelected={scaleEl === scale}
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           handleScaleSelect(scale);
                         }}
