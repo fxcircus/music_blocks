@@ -840,12 +840,6 @@ export default function InspirationGenerator({
     [scaleIntervals, scaleNoteCounts]
   );
 
-  // Update computed scale tones whenever root or scale changes
-  useEffect(() => {
-    const tonesArr = generateScaleTonesMemoized(rootEl, scaleEl);
-    setTonesArrEl(tonesArr);
-  }, [rootEl, scaleEl, generateScaleTonesMemoized, setTonesArrEl]);
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
@@ -1108,13 +1102,8 @@ export default function InspirationGenerator({
 
   // Handler for selecting a root note from dropdown
   const handleRootSelect = (newRoot: string) => {
-    console.log('handleRootSelect called with:', newRoot);
-    if (locked.root) {
-      console.log('Root is locked, returning');
-      return;
-    }
+    if (locked.root) return;
 
-    console.log('Setting root to:', newRoot);
     setRootEl(newRoot);
     const tonesArr = generateScaleTonesMemoized(newRoot, scaleEl);
     setTonesArrEl(tonesArr);
@@ -1127,13 +1116,8 @@ export default function InspirationGenerator({
 
   // Handler for selecting a scale from dropdown
   const handleScaleSelect = (newScale: string) => {
-    console.log('handleScaleSelect called with:', newScale);
-    if (locked.scale) {
-      console.log('Scale is locked, returning');
-      return;
-    }
+    if (locked.scale) return;
 
-    console.log('Setting scale to:', newScale);
     setScaleEl(newScale);
     setTonesEl(scalePatterns[newScale as keyof typeof scalePatterns]);
     const tonesArr = generateScaleTonesMemoized(rootEl, newScale);
