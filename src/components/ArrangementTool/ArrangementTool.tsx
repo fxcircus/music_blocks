@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FC } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaChartBar } from 'react-icons/fa';
+import { FaChartBar, FaDice } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
@@ -508,6 +508,41 @@ const SelectorButton = styled.button<{ $isOpen?: boolean }>`
   }
 `;
 
+const RandomButton = styled.button`
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.primary};
+  padding: ${({ theme }) => theme.spacing.sm};
+  font-size: ${({ theme }) => theme.fontSizes.md};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  transition: all 0.2s;
+  position: relative;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => `${theme.colors.primary}11`};
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: rotate(15deg);
+  }
+`;
+
 const Dropdown = styled.div`
   position: absolute;
   top: calc(100% + 4px);
@@ -663,6 +698,17 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   const template = ALL_TEMPLATES[selected];
   const totalBars = template.scenes.reduce((a, s) => a + s.bars, 0);
 
+  const handleRandomTemplate = () => {
+    const templateNames = Object.keys(ALL_TEMPLATES);
+    const currentIndex = templateNames.indexOf(selected);
+    // Filter out the current selection to ensure we always get a different template
+    const availableTemplates = templateNames.filter((_, index) => index !== currentIndex);
+    const randomIndex = Math.floor(Math.random() * availableTemplates.length);
+    const randomTemplate = availableTemplates[randomIndex];
+    setSelected(randomTemplate);
+    setIsOpen(false);
+  };
+
   useEffect(() => {
     setAnimKey((k) => k + 1);
   }, [selected]);
@@ -682,7 +728,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
             }}>
               TEMPLATE
             </div>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', display: 'flex', gap: '8px', alignItems: 'center' }}>
               <SelectorButton onClick={() => setIsOpen(!isOpen)} $isOpen={isOpen}>
                 <span style={{
                   width: '6px',
@@ -703,6 +749,17 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                   {isOpen ? '▲' : '▼'}
                 </span>
               </SelectorButton>
+
+              <RandomButton
+                onClick={handleRandomTemplate}
+                title="Random template"
+                style={{
+                  background: `linear-gradient(135deg, ${CATEGORY_COLORS['BEATLES']}22, ${CATEGORY_COLORS['BRIAN ENO']}22)`,
+                  borderColor: CATEGORY_COLORS['BEATLES'] + '44'
+                }}
+              >
+                <Icon icon={FaDice} size={20} />
+              </RandomButton>
 
               {isOpen && (
                 <Dropdown>
