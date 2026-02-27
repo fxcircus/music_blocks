@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
@@ -454,8 +454,50 @@ const SeventhToggleButton = styled.button<{ $isActive: boolean }>`
   }
 `;
 
-// Update ScaleToneNote to support seventh highlighting
-const ScaleToneNoteUpdated = styled.div<{ $highlight: 'root' | 'chord' | 'seventh' | 'none' }>`
+// Play button for audio playback
+const PlayButton = styled.button<{ $isPlaying: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background-color: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.primary : 'transparent'};
+  color: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.buttonText : theme.colors.textSecondary};
+  border: 2px solid ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.primary : theme.colors.border};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+
+  &:hover:not(:disabled) {
+    transform: scale(1.1);
+    background-color: ${({ $isPlaying, theme }) =>
+      $isPlaying ? theme.colors.primary : `${theme.colors.primary}22`};
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  svg {
+    animation: ${({ $isPlaying }) => $isPlaying ? 'pulse 1s infinite' : 'none'};
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+`;
+
+// Update ScaleToneNote to support seventh highlighting and playback
+const ScaleToneNoteUpdated = styled.div<{
+  $highlight: 'root' | 'chord' | 'seventh' | 'none';
+  $isPlaying?: boolean;
+}>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -480,6 +522,9 @@ const ScaleToneNoteUpdated = styled.div<{ $highlight: 'root' | 'chord' | 'sevent
   height: 100%;
   min-height: 48px;
   justify-content: center;
+  transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1.1)' : 'scale(1)'};
+  box-shadow: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.shadows.medium : 'none'};
 
   @media (max-width: 768px) {
     min-width: 100%;
@@ -517,6 +562,12 @@ export default function InspirationGenerator({
 
   // Add state for seventh chord mode
   const [isSeventhMode, setIsSeventhMode] = useState<boolean>(false);
+
+  // Add state for audio playback
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [playingNoteIndex, setPlayingNoteIndex] = useState<number>(-1);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const isPlayingRef = useRef<boolean>(false);
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -1105,9 +1156,117 @@ export default function InspirationGenerator({
       Mixolydian: [2, 2, 1, 2, 2, 1, 2],
       Locrian: [1, 2, 2, 1, 2, 2, 2],
     };
-    
+
     return intervalMap[scaleType as keyof typeof intervalMap] || [2, 2, 1, 2, 2, 2, 1];
   };
+
+  // Note to frequency mapping (equal temperament, A4 = 440Hz)
+  const noteToFrequency = (note: string, octave: number = 4): number => {
+    const noteMap: Record<string, number> = {
+      'C': -9, 'C♯': -8, 'C#': -8, 'D♭': -8,
+      'D': -7, 'D♯': -6, 'D#': -6, 'E♭': -6,
+      'E': -5, 'F♭': -5, 'E♯': -4, 'E#': -4,
+      'F': -4, 'F♯': -3, 'F#': -3, 'G♭': -3,
+      'G': -2, 'G♯': -1, 'G#': -1, 'A♭': -1,
+      'A': 0, 'A♯': 1, 'A#': 1, 'B♭': 1,
+      'B': 2, 'C♭': 2, 'B♯': -9, 'B#': -9
+    };
+
+    const semitoneOffset = noteMap[note] || 0;
+    const a4Frequency = 440;
+    const semitonesFromA4 = (octave - 4) * 12 + semitoneOffset;
+    return a4Frequency * Math.pow(2, semitonesFromA4 / 12);
+  };
+
+  // Create and play a note using Web Audio API
+  const playNote = useCallback(async (frequency: number, duration: number = 200): Promise<void> => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+
+    const ctx = audioContextRef.current;
+    const currentTime = ctx.currentTime;
+
+    // Create oscillator and gain nodes
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    // Configure oscillator
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+
+    // Configure envelope (ADSR)
+    gainNode.gain.setValueAtTime(0, currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.01); // Attack
+    gainNode.gain.linearRampToValueAtTime(0.2, currentTime + 0.05); // Decay
+    gainNode.gain.linearRampToValueAtTime(0.15, currentTime + duration / 1000 - 0.05); // Sustain
+    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + duration / 1000); // Release
+
+    // Connect nodes
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // Start and stop oscillator
+    oscillator.start(currentTime);
+    oscillator.stop(currentTime + duration / 1000 + 0.05);
+
+    // Wait for the note to finish
+    return new Promise(resolve => {
+      setTimeout(resolve, duration);
+    });
+  }, []);
+
+  // Play scale or chord arpeggio
+  const playSequence = useCallback(async () => {
+    if (isPlayingRef.current) {
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      setPlayingNoteIndex(-1);
+      return;
+    }
+
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    const noteCount = scaleNoteCounts[scaleEl] || 7;
+    let notesToPlay: number[] = [];
+
+    if (selectedChord !== null) {
+      // Play selected chord notes
+      notesToPlay = [selectedChord];
+
+      const thirdIndex = (selectedChord + 2) % noteCount;
+      const fifthIndex = (selectedChord + 4) % noteCount;
+      notesToPlay.push(thirdIndex, fifthIndex);
+
+      if (isSeventhMode && noteCount >= 7) {
+        const seventhIndex = (selectedChord + 6) % 7;
+        notesToPlay.push(seventhIndex);
+      }
+
+      // Sort notes to play them in ascending order
+      notesToPlay.sort((a, b) => a - b);
+    } else {
+      // Play full scale
+      notesToPlay = Array.from({ length: noteCount }, (_, i) => i);
+    }
+
+    // Play each note
+    for (let i = 0; i < notesToPlay.length; i++) {
+      if (!isPlayingRef.current) break; // Check if stopped
+
+      const noteIndex = notesToPlay[i];
+      const note = tonesArrEl[noteIndex];
+      if (!note) continue;
+
+      setPlayingNoteIndex(noteIndex);
+      const frequency = noteToFrequency(note);
+      await playNote(frequency, 250);
+    }
+
+    isPlayingRef.current = false;
+    setIsPlaying(false);
+    setPlayingNoteIndex(-1);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote]);
 
   return (
     <div style={{ overflow: 'visible' }}>
@@ -1284,10 +1443,18 @@ export default function InspirationGenerator({
               </SeparatorCell>
             </tr>
             
-            {/* Scale Tones integrated into the table - with empty TableHeader for alignment */}
+            {/* Scale Tones integrated into the table - with play button in TableHeader */}
             <TableRow className="chord-scale-row">
               <SpacerCell />
-              <TableHeader />
+              <TableHeader>
+                <PlayButton
+                  $isPlaying={isPlaying}
+                  onClick={playSequence}
+                  title={isPlaying ? "Stop playback" : "Play scale/chord"}
+                >
+                  <Icon icon={isPlaying ? FaStop : FaVolumeUp} size={14} />
+                </PlayButton>
+              </TableHeader>
               <LabelCell>
                 Scale<br />Tones
               </LabelCell>
@@ -1309,6 +1476,7 @@ export default function InspirationGenerator({
                       <ItemWrapper key={index} $isSeventhMode={isSeventhMode}>
                         <ScaleToneNoteUpdated
                           $highlight={getHighlightType(index)}
+                          $isPlaying={playingNoteIndex === index}
                         >
                           {note}
                           {shouldShowInterval && interval !== null && (
