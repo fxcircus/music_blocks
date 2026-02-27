@@ -78,7 +78,7 @@ const HeaderControls = styled.div`
 
 const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   background: ${({ theme, $isLinked }) =>
-    $isLinked ? theme.colors.primary + '30' : theme.colors.background};
+    $isLinked ? theme.colors.primary + '30' : theme.colors.card};
   border: 1px solid ${({ theme, $isLinked }) =>
     $isLinked ? theme.colors.primary : theme.colors.border};
   color: ${({ theme, $isLinked }) =>
@@ -106,7 +106,7 @@ const ControlSection = styled.div`
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => `${theme.colors.background}44`}; /* Semi-transparent background */
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
 
@@ -159,7 +159,7 @@ const ControlButton = styled(motion.button)<{ disabled?: boolean }>`
   width: 32px;
   height: 32px;
   background: ${({ theme, disabled }) =>
-    disabled ? theme.colors.background : `${theme.colors.primary}20`};
+    disabled ? theme.colors.card : `${theme.colors.primary}20`};
   border: 1px solid ${({ theme, disabled }) =>
     disabled ? theme.colors.border : `${theme.colors.primary}60`};
   color: ${({ theme, disabled }) =>
@@ -174,7 +174,7 @@ const ControlButton = styled(motion.button)<{ disabled?: boolean }>`
 
   &:hover {
     background: ${({ theme, disabled }) =>
-      disabled ? theme.colors.background : `${theme.colors.primary}30`};
+      disabled ? theme.colors.card : `${theme.colors.primary}30`};
   }
 `;
 
@@ -218,7 +218,7 @@ const KeyPickerDropdown = styled.div`
 const KeyOption = styled.button<{ $isSelected: boolean }>`
   height: 36px;
   background: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.primary + '30' : theme.colors.background};
+    $isSelected ? theme.colors.primary + '30' : `${theme.colors.background}44`};
   border: 1px solid ${({ theme, $isSelected }) =>
     $isSelected ? theme.colors.primary : theme.colors.border};
   color: ${({ theme, $isSelected }) =>
@@ -281,7 +281,7 @@ const BpmBar = styled.div<{ $isSource?: boolean }>`
   flex: 1;
   height: ${({ $isSource }) => ($isSource ? '34px' : '22px')};
   position: relative;
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => `${theme.colors.background}44`};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   overflow: hidden;
   border: 1px solid ${({ theme, $isSource }) =>
