@@ -253,7 +253,7 @@ const ValueDropdown = styled.div`
   display: grid;
   gap: 4px;
   z-index: 1000;
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  box-shadow: none;
   min-width: 200px;
   max-height: 320px;
   overflow-y: auto;
@@ -322,7 +322,7 @@ const Tooltip = styled.div`
   color: ${({ theme }) => theme.colors.text};
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: none;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   white-space: nowrap;
   z-index: 1000;
@@ -425,7 +425,7 @@ const ChordDegree = styled.div<{ $isSelected: boolean }>`
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.small};
+    box-shadow: none;
   }
   
   @media (max-width: 768px) {
@@ -643,8 +643,7 @@ const ScaleToneNoteUpdated = styled.div<{
   min-height: 48px;
   justify-content: center;
   transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1.1)' : 'scale(1)'};
-  box-shadow: ${({ $isPlaying, theme }) =>
-    $isPlaying ? theme.shadows.medium : 'none'};
+  box-shadow: none;
 
   @media (max-width: 768px) {
     min-width: 100%;

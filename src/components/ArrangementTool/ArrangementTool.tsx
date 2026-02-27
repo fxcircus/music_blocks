@@ -558,7 +558,7 @@ const Dropdown = styled.div`
   max-height: 60vh;
   overflow-y: scroll;
   overflow-x: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  box-shadow: none;
 
   /* Custom scrollbar styling */
   &::-webkit-scrollbar {

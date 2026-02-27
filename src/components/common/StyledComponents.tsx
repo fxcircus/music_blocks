@@ -12,7 +12,7 @@ export const Container = styled.div`
 export const Card = styled(motion.div)`
   background-color: ${({ theme }) => theme.colors.card};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: none;
   padding: ${({ theme }) => theme.spacing.md};
   margin-bottom: 0;
   transition: all ${({ theme }) => theme.transitions.normal};
@@ -20,10 +20,10 @@ export const Card = styled(motion.div)`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
+
   &:hover {
-    box-shadow: ${({ theme }) => theme.shadows.large};
-    transform: translateY(-2px);
+    box-shadow: none;
+    transform: none;
   }
   
   @media (max-width: 768px) {

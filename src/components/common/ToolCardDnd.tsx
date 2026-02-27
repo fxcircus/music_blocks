@@ -104,7 +104,7 @@ const RemoveConfirmation = styled.div`
   background: ${({ theme }) => theme.colors.card};
   padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  box-shadow: none;
   z-index: 20;
   text-align: center;
   min-width: 200px;

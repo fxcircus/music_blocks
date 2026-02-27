@@ -211,7 +211,7 @@ const KeyPickerDropdown = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   z-index: 100;
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  box-shadow: none;
   min-width: 180px;
 `;
 
