@@ -1178,6 +1178,20 @@ export default function InspirationGenerator({
     return a4Frequency * Math.pow(2, semitonesFromA4 / 12);
   };
 
+  // Get the chromatic position of a note for comparison
+  const getNoteChromatic = useCallback((note: string): number => {
+    const noteMap: Record<string, number> = {
+      'C': 0, 'C♯': 1, 'C#': 1, 'D♭': 1,
+      'D': 2, 'D♯': 3, 'D#': 3, 'E♭': 3,
+      'E': 4, 'F♭': 4, 'E♯': 5, 'E#': 5,
+      'F': 5, 'F♯': 6, 'F#': 6, 'G♭': 6,
+      'G': 7, 'G♯': 8, 'G#': 8, 'A♭': 8,
+      'A': 9, 'A♯': 10, 'A#': 10, 'B♭': 10,
+      'B': 11, 'C♭': 11, 'B♯': 0, 'B#': 0
+    };
+    return noteMap[note] || 0;
+  }, []);
+
   // Create and play a note using Web Audio API
   const playNote = useCallback(async (frequency: number, duration: number = 200): Promise<void> => {
     if (!audioContextRef.current) {
@@ -1228,45 +1242,75 @@ export default function InspirationGenerator({
     isPlayingRef.current = true;
     setIsPlaying(true);
     const noteCount = scaleNoteCounts[scaleEl] || 7;
-    let notesToPlay: number[] = [];
 
     if (selectedChord !== null) {
-      // Play selected chord notes
-      notesToPlay = [selectedChord];
+      // Play selected chord notes in proper chord order (root -> 3rd -> 5th -> 7th)
+      const chordNotes: { index: number; octaveAdjust: number }[] = [];
 
+      // Root note - always in base octave
+      chordNotes.push({ index: selectedChord, octaveAdjust: 0 });
+
+      // Track the chromatic position of the root for ascending order
+      const rootNote = tonesArrEl[selectedChord];
+      const rootChromatic = getNoteChromatic(rootNote);
+
+      // Third (2 scale degrees up)
       const thirdIndex = (selectedChord + 2) % noteCount;
-      const fifthIndex = (selectedChord + 4) % noteCount;
-      notesToPlay.push(thirdIndex, fifthIndex);
+      const thirdNote = tonesArrEl[thirdIndex];
+      const thirdChromatic = getNoteChromatic(thirdNote);
+      // If third is lower chromatically than root, it needs to be in next octave
+      const thirdOctave = thirdChromatic <= rootChromatic ? 1 : 0;
+      chordNotes.push({ index: thirdIndex, octaveAdjust: thirdOctave });
 
+      // Fifth (4 scale degrees up)
+      const fifthIndex = (selectedChord + 4) % noteCount;
+      const fifthNote = tonesArrEl[fifthIndex];
+      const fifthChromatic = getNoteChromatic(fifthNote);
+      // Compare with previous note to ensure ascending
+      const prevChromatic = thirdOctave > 0 ? thirdChromatic + 12 : thirdChromatic;
+      const fifthOctave = fifthChromatic <= (prevChromatic % 12) ? 1 : thirdOctave;
+      chordNotes.push({ index: fifthIndex, octaveAdjust: fifthOctave });
+
+      // Seventh (if enabled and scale supports it)
       if (isSeventhMode && noteCount >= 7) {
         const seventhIndex = (selectedChord + 6) % 7;
-        notesToPlay.push(seventhIndex);
+        const seventhNote = tonesArrEl[seventhIndex];
+        const seventhChromatic = getNoteChromatic(seventhNote);
+        // Compare with fifth to ensure ascending
+        const fifthAdjustedChromatic = fifthOctave > 0 ? fifthChromatic + 12 : fifthChromatic;
+        const seventhOctave = seventhChromatic <= (fifthAdjustedChromatic % 12) ? 1 : fifthOctave;
+        chordNotes.push({ index: seventhIndex, octaveAdjust: seventhOctave });
       }
 
-      // Sort notes to play them in ascending order
-      notesToPlay.sort((a, b) => a - b);
+      // Play chord notes in order
+      for (const { index, octaveAdjust } of chordNotes) {
+        if (!isPlayingRef.current) break;
+
+        const note = tonesArrEl[index];
+        if (!note) continue;
+
+        setPlayingNoteIndex(index);
+        const frequency = noteToFrequency(note, 4 + octaveAdjust);
+        await playNote(frequency, 250);
+      }
     } else {
-      // Play full scale
-      notesToPlay = Array.from({ length: noteCount }, (_, i) => i);
-    }
+      // Play full scale - already ascending
+      for (let i = 0; i < noteCount; i++) {
+        if (!isPlayingRef.current) break;
 
-    // Play each note
-    for (let i = 0; i < notesToPlay.length; i++) {
-      if (!isPlayingRef.current) break; // Check if stopped
+        const note = tonesArrEl[i];
+        if (!note) continue;
 
-      const noteIndex = notesToPlay[i];
-      const note = tonesArrEl[noteIndex];
-      if (!note) continue;
-
-      setPlayingNoteIndex(noteIndex);
-      const frequency = noteToFrequency(note);
-      await playNote(frequency, 250);
+        setPlayingNoteIndex(i);
+        const frequency = noteToFrequency(note);
+        await playNote(frequency, 250);
+      }
     }
 
     isPlayingRef.current = false;
     setIsPlaying(false);
     setPlayingNoteIndex(-1);
-  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote]);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic]);
 
   return (
     <div style={{ overflow: 'visible' }}>
