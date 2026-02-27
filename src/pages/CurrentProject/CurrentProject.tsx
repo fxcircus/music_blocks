@@ -86,7 +86,10 @@ const AddBlockButton = styled(Button)`
 
 const CurrentProject: FC<LoaderProps> = () => {
     // Load block-based state (with automatic migration from old format)
-    const [blockState, setBlockState] = useState<AppState>(loadBlockState());
+    const [blockState, setBlockState] = useState<AppState>(() => {
+        console.log('[CurrentProject] Component mounting, loading initial state');
+        return loadBlockState();
+    });
     const [showBlockPicker, setShowBlockPicker] = useState(false);
 
     // Helper to get a specific block's state

@@ -192,6 +192,13 @@ export const loadBlockState = (): AppState => {
       if (storedState) {
         const parsedState = JSON.parse(storedState) as AppState;
         console.log('[Storage] Loaded block-based state from localStorage');
+
+        // Debug: log what was loaded
+        const inspirationBlock = parsedState.blocks?.find(b => b.type === 'inspirationGenerator');
+        if (inspirationBlock) {
+          console.log('[Storage] Loaded rootEl:', inspirationBlock.state.rootEl);
+        }
+
         return parsedState;
       }
     }
@@ -229,9 +236,18 @@ export const loadBlockState = (): AppState => {
  */
 export const saveBlockState = (state: AppState): void => {
   try {
-    localStorage.setItem(BLOCK_STORAGE_KEY, JSON.stringify(state));
+    const stateString = JSON.stringify(state);
+    localStorage.setItem(BLOCK_STORAGE_KEY, stateString);
     localStorage.setItem(STORAGE_VERSION_KEY, String(CURRENT_STORAGE_VERSION));
     console.log('[Storage] Saved block-based state to localStorage');
+
+    // Debug: verify what was actually saved
+    const savedState = localStorage.getItem(BLOCK_STORAGE_KEY);
+    const parsed = savedState ? JSON.parse(savedState) : null;
+    const inspirationBlock = parsed?.blocks?.find((b: any) => b.type === 'inspirationGenerator');
+    if (inspirationBlock) {
+      console.log('[Storage] Verified saved rootEl:', inspirationBlock.state.rootEl);
+    }
   } catch (error) {
     console.error('[Storage] Error saving state:', error);
   }
