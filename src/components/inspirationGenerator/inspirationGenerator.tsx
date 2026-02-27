@@ -11,6 +11,7 @@ import {
   getChromaticIndex,
   getCorrectNoteSpelling
 } from '../../utils/musicTheory';
+import NotesVisualizer from '../NotesVisualizer';
 
 // Chord quality mapping for different modes
 const chordQualities: Record<string, (string | null)[]> = {
@@ -454,6 +455,51 @@ const SeventhToggleButton = styled.button<{ $isActive: boolean }>`
   }
 `;
 
+// Inversion control buttons
+const InversionControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin-left: ${({ theme }) => theme.spacing.sm};
+`;
+
+const InversionButton = styled.button<{ $disabled?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background-color: ${({ $disabled }) => $disabled ? 'transparent' : 'transparent'};
+  color: ${({ $disabled, theme }) =>
+    $disabled ? theme.colors.border : theme.colors.textSecondary};
+  border: 2px solid ${({ $disabled, theme }) =>
+    $disabled ? theme.colors.border : theme.colors.border};
+  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: bold;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.1);
+    background-color: ${({ theme }) => `${theme.colors.primary}22`};
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:disabled {
+    opacity: 0.3;
+  }
+`;
+
+const InversionDisplay = styled.div`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 500;
+  min-width: 60px;
+  text-align: center;
+`;
+
 // Play button for audio playback
 const PlayButton = styled.button<{ $isPlaying: boolean }>`
   display: flex;
@@ -562,6 +608,9 @@ export default function InspirationGenerator({
 
   // Add state for seventh chord mode
   const [isSeventhMode, setIsSeventhMode] = useState<boolean>(false);
+
+  // Add state for chord inversions
+  const [inversionIndex, setInversionIndex] = useState<number>(0);
 
   // Add state for audio playback
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -968,6 +1017,46 @@ export default function InspirationGenerator({
     return noteCount >= 7;
   };
 
+  // Handle inversion cycling
+  const cycleInversion = (direction: 'next' | 'prev') => {
+    if (selectedChord === null) return;
+
+    const maxInversions = isSeventhMode && canUseSeventhChords() ? 4 : 3;
+
+    if (direction === 'next') {
+      setInversionIndex((prev) => (prev + 1) % maxInversions);
+    } else {
+      setInversionIndex((prev) => (prev - 1 + maxInversions) % maxInversions);
+    }
+  };
+
+  // Get the bass note for the current inversion
+  const getBassNote = (chordIndex: number, inversion: number): string => {
+    if (!tonesArrEl || tonesArrEl.length === 0) return '';
+
+    const noteCount = scaleNoteCounts[scaleEl] || 7;
+    let bassIndex = chordIndex;
+
+    // Calculate bass note based on inversion
+    if (inversion === 1) {
+      // First inversion - third in bass
+      bassIndex = (chordIndex + 2) % noteCount;
+    } else if (inversion === 2) {
+      // Second inversion - fifth in bass
+      bassIndex = (chordIndex + 4) % noteCount;
+    } else if (inversion === 3 && isSeventhMode) {
+      // Third inversion (seventh chords only) - seventh in bass
+      bassIndex = (chordIndex + 6) % 7;
+    }
+
+    return tonesArrEl[bassIndex] || '';
+  };
+
+  // Reset inversion when chord changes
+  useEffect(() => {
+    setInversionIndex(0);
+  }, [selectedChord]);
+
   // Function to get seventh chord quality suffix
   const getSeventhChordSuffix = (index: number, baseQuality: string | null): string => {
     if (!baseQuality) return 'maj7';  // Default major 7th
@@ -1021,7 +1110,7 @@ export default function InspirationGenerator({
       }
 
       // Generate chord name based on mode (triad or seventh)
-      const baseChordName = `${tonesArrEl[index]}${qualities[index] || ''}`;
+      let chordName = `${tonesArrEl[index]}${qualities[index] || ''}`;
 
       // If in seventh mode and scale supports it, add seventh chord suffix
       if (isSeventhMode && noteCount >= 7) {
@@ -1029,22 +1118,28 @@ export default function InspirationGenerator({
         // Replace base quality with seventh quality
         if (qualities[index] === '') {
           // Major chord - replace with appropriate seventh
-          return `${tonesArrEl[index]}${seventhSuffix}`;
+          chordName = `${tonesArrEl[index]}${seventhSuffix}`;
         } else if (qualities[index] === 'm') {
           // Minor chord
-          return `${tonesArrEl[index]}m7`;
+          chordName = `${tonesArrEl[index]}m7`;
         } else if (qualities[index] === 'dim') {
           // Diminished
-          return `${tonesArrEl[index]}dim7`;
+          chordName = `${tonesArrEl[index]}dim7`;
         } else if (qualities[index] === 'aug') {
           // Augmented
-          return `${tonesArrEl[index]}maj7♯5`;
-        } else {
-          return baseChordName;
+          chordName = `${tonesArrEl[index]}maj7♯5`;
         }
       }
 
-      return baseChordName;
+      // Add inversion notation if this is the selected chord and we have an inversion
+      if (selectedChord === index && inversionIndex > 0) {
+        const bassNote = getBassNote(index, inversionIndex);
+        if (bassNote) {
+          chordName = `${chordName}/${bassNote}`;
+        }
+      }
+
+      return chordName;
     });
   };
 
@@ -1244,42 +1339,52 @@ export default function InspirationGenerator({
     const noteCount = scaleNoteCounts[scaleEl] || 7;
 
     if (selectedChord !== null) {
-      // Play selected chord notes in proper chord order (root -> 3rd -> 5th -> 7th)
+      // Build chord notes based on inversion
       const chordNotes: { index: number; octaveAdjust: number }[] = [];
 
-      // Root note - always in base octave
-      chordNotes.push({ index: selectedChord, octaveAdjust: 0 });
-
-      // Track the chromatic position of the root for ascending order
-      const rootNote = tonesArrEl[selectedChord];
-      const rootChromatic = getNoteChromatic(rootNote);
-
-      // Third (2 scale degrees up)
+      // Define the chord tones indices
+      const rootIndex = selectedChord;
       const thirdIndex = (selectedChord + 2) % noteCount;
-      const thirdNote = tonesArrEl[thirdIndex];
-      const thirdChromatic = getNoteChromatic(thirdNote);
-      // If third is lower chromatically than root, it needs to be in next octave
-      const thirdOctave = thirdChromatic <= rootChromatic ? 1 : 0;
-      chordNotes.push({ index: thirdIndex, octaveAdjust: thirdOctave });
-
-      // Fifth (4 scale degrees up)
       const fifthIndex = (selectedChord + 4) % noteCount;
-      const fifthNote = tonesArrEl[fifthIndex];
-      const fifthChromatic = getNoteChromatic(fifthNote);
-      // Compare with previous note to ensure ascending
-      const prevChromatic = thirdOctave > 0 ? thirdChromatic + 12 : thirdChromatic;
-      const fifthOctave = fifthChromatic <= (prevChromatic % 12) ? 1 : thirdOctave;
-      chordNotes.push({ index: fifthIndex, octaveAdjust: fifthOctave });
+      const seventhIndex = isSeventhMode && noteCount >= 7 ? (selectedChord + 6) % 7 : -1;
 
-      // Seventh (if enabled and scale supports it)
-      if (isSeventhMode && noteCount >= 7) {
-        const seventhIndex = (selectedChord + 6) % 7;
-        const seventhNote = tonesArrEl[seventhIndex];
-        const seventhChromatic = getNoteChromatic(seventhNote);
-        // Compare with fifth to ensure ascending
-        const fifthAdjustedChromatic = fifthOctave > 0 ? fifthChromatic + 12 : fifthChromatic;
-        const seventhOctave = seventhChromatic <= (fifthAdjustedChromatic % 12) ? 1 : fifthOctave;
-        chordNotes.push({ index: seventhIndex, octaveAdjust: seventhOctave });
+      // Build chord based on inversion
+      let noteOrder: number[] = [];
+
+      if (inversionIndex === 0) {
+        // Root position: root -> third -> fifth (-> seventh)
+        noteOrder = [rootIndex, thirdIndex, fifthIndex];
+        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
+      } else if (inversionIndex === 1) {
+        // First inversion: third -> fifth -> (seventh ->) root
+        noteOrder = [thirdIndex, fifthIndex];
+        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
+        noteOrder.push(rootIndex);
+      } else if (inversionIndex === 2) {
+        // Second inversion: fifth -> (seventh ->) root -> third
+        noteOrder = [fifthIndex];
+        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
+        noteOrder.push(rootIndex, thirdIndex);
+      } else if (inversionIndex === 3 && seventhIndex !== -1) {
+        // Third inversion (sevenths only): seventh -> root -> third -> fifth
+        noteOrder = [seventhIndex, rootIndex, thirdIndex, fifthIndex];
+      }
+
+      // Calculate octave adjustments to ensure ascending notes
+      let prevChromatic = -1;
+      let currentOctave = 0;
+
+      for (const noteIndex of noteOrder) {
+        const note = tonesArrEl[noteIndex];
+        const noteChromatic = getNoteChromatic(note);
+
+        // If this note is lower than or equal to previous, move to next octave
+        if (prevChromatic !== -1 && noteChromatic <= prevChromatic) {
+          currentOctave = 1;
+        }
+
+        chordNotes.push({ index: noteIndex, octaveAdjust: currentOctave });
+        prevChromatic = noteChromatic + (currentOctave * 12);
       }
 
       // Play chord notes in order
@@ -1321,7 +1426,7 @@ export default function InspirationGenerator({
     isPlayingRef.current = false;
     setIsPlaying(false);
     setPlayingNoteIndex(-1);
-  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic]);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, inversionIndex]);
 
   return (
     <div style={{ overflow: 'visible' }}>
@@ -1451,7 +1556,7 @@ export default function InspirationGenerator({
               <LabelCell>
                 Chord<br />Degrees
               </LabelCell>
-              <ExtendedInfoCell>
+              <ExtendedInfoCell style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <ChordDegreesContainer $noteCount={scaleNoteCounts[scaleEl] || 7} $isSeventhMode={isSeventhMode}>
                   {romanNumerals.slice(0, 7).map((numeral, index) => {
                     const noteCount = scaleNoteCounts[scaleEl] || 7;
@@ -1488,6 +1593,32 @@ export default function InspirationGenerator({
                     );
                   })}
                 </ChordDegreesContainer>
+
+                {/* Inversion Controls - show only when a chord is selected */}
+                {selectedChord !== null && (
+                  <InversionControls>
+                    <InversionButton
+                      onClick={() => cycleInversion('prev')}
+                      disabled={false}
+                      title="Previous inversion"
+                    >
+                      ←
+                    </InversionButton>
+                    <InversionDisplay>
+                      {inversionIndex === 0 ? 'Root' :
+                       inversionIndex === 1 ? '1st Inv' :
+                       inversionIndex === 2 ? '2nd Inv' :
+                       inversionIndex === 3 ? '3rd Inv' : 'Root'}
+                    </InversionDisplay>
+                    <InversionButton
+                      onClick={() => cycleInversion('next')}
+                      disabled={false}
+                      title="Next inversion"
+                    >
+                      →
+                    </InversionButton>
+                  </InversionControls>
+                )}
               </ExtendedInfoCell>
             </TableRow>
             
@@ -1561,6 +1692,18 @@ export default function InspirationGenerator({
             </tr>
           </tbody>
         </StyledTable>
+
+        {/* Notes Visualizer - Piano and Guitar */}
+        <NotesVisualizer
+          activeNotes={tonesArrEl}
+          scaleNotes={tonesArrEl}
+          selectedChord={selectedChord}
+          root={rootEl}
+          scale={scaleEl}
+          isSeventhMode={isSeventhMode}
+          visualizerType="both"
+          playingNoteIndex={playingNoteIndex}
+        />
       </InspirationCard>
     </div>
   );
