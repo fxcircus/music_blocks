@@ -1107,9 +1107,14 @@ export default function InspirationGenerator({
     setLocked((s) => ({ ...s, [param]: !s[param] }));
 
   // Handler for selecting a root note from dropdown
-  const handleRootSelect = useCallback((newRoot: string) => {
-    if (locked.root) return;
+  const handleRootSelect = (newRoot: string) => {
+    console.log('handleRootSelect called with:', newRoot);
+    if (locked.root) {
+      console.log('Root is locked, returning');
+      return;
+    }
 
+    console.log('Setting root to:', newRoot);
     setRootEl(newRoot);
     const tonesArr = generateScaleTonesMemoized(newRoot, scaleEl);
     setTonesArrEl(tonesArr);
@@ -1118,12 +1123,17 @@ export default function InspirationGenerator({
     // Reset selected chord when root changes
     setSelectedChord(null);
     setInversionIndex(0);
-  }, [locked.root, scaleEl, generateScaleTonesMemoized, setRootEl, setTonesArrEl]);
+  };
 
   // Handler for selecting a scale from dropdown
-  const handleScaleSelect = useCallback((newScale: string) => {
-    if (locked.scale) return;
+  const handleScaleSelect = (newScale: string) => {
+    console.log('handleScaleSelect called with:', newScale);
+    if (locked.scale) {
+      console.log('Scale is locked, returning');
+      return;
+    }
 
+    console.log('Setting scale to:', newScale);
     setScaleEl(newScale);
     setTonesEl(scalePatterns[newScale as keyof typeof scalePatterns]);
     const tonesArr = generateScaleTonesMemoized(rootEl, newScale);
@@ -1139,7 +1149,7 @@ export default function InspirationGenerator({
     if (noteCount < 7) {
       setIsSeventhMode(false);
     }
-  }, [locked.scale, rootEl, generateScaleTonesMemoized, scalePatterns, scaleNoteCounts, setScaleEl, setTonesEl, setTonesArrEl]);
+  };
 
   const getValueCellClass = (value: string): string => {
     if (value.length > 30) return 'very-long-content';
@@ -1605,8 +1615,8 @@ export default function InspirationGenerator({
               <LabelCell>Root</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.root}
-                onClick={(e) => {
-                  if (!locked.root && !e.defaultPrevented) {
+                onClick={() => {
+                  if (!locked.root) {
                     setOpenDropdown(openDropdown === 'root' ? null : 'root');
                   }
                 }}
@@ -1614,16 +1624,13 @@ export default function InspirationGenerator({
               >
                 {rootEl}
                 {openDropdown === 'root' && (
-                  <RootDropdown
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <RootDropdown onClick={(e) => e.stopPropagation()}>
                     {notes.map((note) => (
                       <DropdownOption
                         key={note}
                         $isSelected={rootEl === note}
-                        onClick={(e) => {
+                        onMouseDown={(e) => {
                           e.preventDefault();
-                          e.stopPropagation();
                           handleRootSelect(note);
                         }}
                       >
@@ -1657,8 +1664,8 @@ export default function InspirationGenerator({
               <LabelCell>Scale</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.scale}
-                onClick={(e) => {
-                  if (!locked.scale && !e.defaultPrevented) {
+                onClick={() => {
+                  if (!locked.scale) {
                     setOpenDropdown(openDropdown === 'scale' ? null : 'scale');
                   }
                 }}
@@ -1666,16 +1673,13 @@ export default function InspirationGenerator({
               >
                 {scaleEl}
                 {openDropdown === 'scale' && (
-                  <ScaleDropdown
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <ScaleDropdown onClick={(e) => e.stopPropagation()}>
                     {scales.map((scale) => (
                       <DropdownOption
                         key={scale}
                         $isSelected={scaleEl === scale}
-                        onClick={(e) => {
+                        onMouseDown={(e) => {
                           e.preventDefault();
-                          e.stopPropagation();
                           handleScaleSelect(scale);
                         }}
                       >
