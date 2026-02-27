@@ -158,7 +158,9 @@ const CurrentProject: FC<LoaderProps> = () => {
 
     // Handler for block state updates from BlockRenderer
     const handleBlockStateUpdate = (instanceId: string, newState: Record<string, any>) => {
+        console.log('[CurrentProject] Received state update for', instanceId, ':', newState);
         const updatedBlockState = updateBlockStateUtil(blockState, instanceId, newState);
+        console.log('[CurrentProject] Updated block state:', updatedBlockState);
         setBlockState(updatedBlockState);
         saveBlockState(updatedBlockState);
     };

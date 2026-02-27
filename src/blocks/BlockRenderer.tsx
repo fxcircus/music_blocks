@@ -76,6 +76,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
 
   // Helper to update block state
   const updateBlockState = (updates: Record<string, any>) => {
+    console.log('[BlockRenderer] Updating state for', block.type, ':', updates);
     onUpdateState(block.instanceId, updates);
   };
 
@@ -107,14 +108,21 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
 
     case 'inspirationGenerator':
       // InspirationGenerator expects individual state setters
+      console.log('[BlockRenderer] Rendering InspirationGenerator with state:', block.state);
       blockContent = (
         <BlockComponent
           animate={animate}
           setAnimate={setAnimate}
           rootEl={block.state.rootEl || 'C'}
-          setRootEl={(rootEl: string) => updateBlockState({ rootEl })}
+          setRootEl={(rootEl: string) => {
+            console.log('[BlockRenderer] setRootEl called with:', rootEl);
+            updateBlockState({ rootEl });
+          }}
           scaleEl={block.state.scaleEl || 'Major'}
-          setScaleEl={(scaleEl: string) => updateBlockState({ scaleEl })}
+          setScaleEl={(scaleEl: string) => {
+            console.log('[BlockRenderer] setScaleEl called with:', scaleEl);
+            updateBlockState({ scaleEl });
+          }}
           tonesEl={block.state.tonesEl || 'T - T - S - T - T - T - S'}
           setTonesEl={(tonesEl: string) => updateBlockState({ tonesEl })}
           tonesArrEl={block.state.tonesArrEl || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']}
