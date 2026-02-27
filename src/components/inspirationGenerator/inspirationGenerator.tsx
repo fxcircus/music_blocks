@@ -1,6 +1,6 @@
 // src/components/Generator/Generator.tsx
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop } from 'react-icons/fa';
