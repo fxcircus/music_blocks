@@ -177,56 +177,120 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
 
   const pianoKeys = useMemo(() => {
     const keys: PianoKey[] = [];
-    const startOctave = 4;
 
-    // Create one octave of keys (C to B)
+    // Create 2 octaves of keys
     const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const blackNotePositions: Record<string, number> = {
       'C♯': 1, 'E♭': 3, 'F♯': 6, 'A♭': 8, 'B♭': 10
     };
 
-    // Create white keys
-    whiteNotes.forEach((note, index) => {
-      const chromatic = getNoteChromatic(note);
-      const isActive = activeNotes.some(n => getNoteChromatic(n) === chromatic);
-      const noteIndex = activeNotes.findIndex(n => getNoteChromatic(n) === chromatic);
+    // Find the chromatic position of the root note
+    const rootChromatic = getNoteChromatic(rootNote);
 
-      keys.push({
-        note,
-        isBlack: false,
-        position: chromatic,
-        isHighlighted: isActive,
-        highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
-        isPlaying: playingNoteIndex === noteIndex
+    // Determine which octave to start highlighting from
+    // We want to show the scale starting from the first occurrence of the root
+    let scaleStartOctave = 0;
+    if (rootChromatic > 0) { // If root is not C, we might need to start from octave 0
+      scaleStartOctave = 0;
+    }
+
+    // Create 2 octaves worth of keys
+    for (let octave = 0; octave < 2; octave++) {
+      // Create white keys for this octave
+      whiteNotes.forEach((note) => {
+        const chromatic = getNoteChromatic(note);
+        const absolutePosition = chromatic + (octave * 12);
+
+        // Check if this note should be highlighted
+        let isActive = false;
+        let noteIndex = -1;
+
+        // Find if this note is part of our scale
+        const scaleIndex = activeNotes.findIndex(n => getNoteChromatic(n) === chromatic);
+
+        if (scaleIndex !== -1) {
+          // We highlight notes in a single octave span starting from the first occurrence of the root
+          if (octave === 0 && chromatic >= rootChromatic) {
+            // First octave, notes from root onwards
+            isActive = true;
+            noteIndex = scaleIndex;
+          } else if (octave === 1 && chromatic < rootChromatic) {
+            // Second octave, notes before the root (completing the octave span)
+            isActive = true;
+            noteIndex = scaleIndex;
+          } else if (octave === 1 && chromatic === rootChromatic && scaleIndex === 0) {
+            // The root note in the second octave (completing the scale)
+            isActive = true;
+            noteIndex = scaleIndex;
+          }
+        }
+
+        keys.push({
+          note,
+          isBlack: false,
+          position: absolutePosition,
+          isHighlighted: isActive,
+          highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
+          isPlaying: playingNoteIndex === noteIndex
+        });
       });
-    });
 
-    // Create black keys
-    Object.entries(blackNotePositions).forEach(([note, position]) => {
-      const chromatic = getNoteChromatic(note);
-      const isActive = activeNotes.some(n => getNoteChromatic(n) === chromatic);
-      const noteIndex = activeNotes.findIndex(n => getNoteChromatic(n) === chromatic);
+      // Create black keys for this octave
+      Object.entries(blackNotePositions).forEach(([note, position]) => {
+        const chromatic = getNoteChromatic(note);
+        const absolutePosition = chromatic + (octave * 12);
 
-      keys.push({
-        note,
-        isBlack: true,
-        position: chromatic,
-        isHighlighted: isActive,
-        highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
-        isPlaying: playingNoteIndex === noteIndex
+        // Check if this note should be highlighted
+        let isActive = false;
+        let noteIndex = -1;
+
+        // Find if this note is part of our scale
+        const scaleIndex = activeNotes.findIndex(n => getNoteChromatic(n) === chromatic);
+
+        if (scaleIndex !== -1) {
+          // We highlight notes in a single octave span starting from the first occurrence of the root
+          if (octave === 0 && chromatic >= rootChromatic) {
+            // First octave, notes from root onwards
+            isActive = true;
+            noteIndex = scaleIndex;
+          } else if (octave === 1 && chromatic < rootChromatic) {
+            // Second octave, notes before the root (completing the octave span)
+            isActive = true;
+            noteIndex = scaleIndex;
+          }
+        }
+
+        keys.push({
+          note,
+          isBlack: true,
+          position: absolutePosition,
+          isHighlighted: isActive,
+          highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
+          isPlaying: playingNoteIndex === noteIndex
+        });
       });
-    });
+    }
 
     return keys.sort((a, b) => a.position - b.position);
-  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode]);
+  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord]);
 
-  // Calculate black key positions
-  const blackKeyOffsets: Record<string, number> = {
+  // Calculate black key positions for 2 octaves
+  // Each white key is 28px + 2px margin = 30px total
+  const whiteKeyTotalWidth = 30;
+
+  // Base offsets for black keys within one octave
+  const baseBlackKeyOffsets: Record<string, number> = {
     'C♯': 22,  // Between C and D
     'E♭': 52,  // Between D and E
     'F♯': 108, // Between F and G
     'A♭': 138, // Between G and A
     'B♭': 168  // Between A and B
+  };
+
+  // Calculate the actual offset for each black key based on its octave
+  const calculateBlackKeyOffset = (key: PianoKey): number => {
+    const octaveOffset = Math.floor(key.position / 12) * 7 * whiteKeyTotalWidth;
+    return (baseBlackKeyOffsets[key.note] || 0) + octaveOffset;
   };
 
   const whiteKeys = pianoKeys.filter(key => !key.isBlack);
@@ -238,7 +302,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
         {/* Render white keys */}
         {whiteKeys.map((key, index) => (
           <WhiteKey
-            key={`white-${key.note}`}
+            key={`white-${key.note}-${index}`}
             $isHighlighted={key.isHighlighted}
             $highlightType={key.highlightType}
             $isPlaying={key.isPlaying}
@@ -247,13 +311,13 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
         ))}
 
         {/* Render black keys */}
-        {blackKeys.map((key) => (
+        {blackKeys.map((key, index) => (
           <BlackKey
-            key={`black-${key.note}`}
+            key={`black-${key.note}-${index}`}
             $isHighlighted={key.isHighlighted}
             $highlightType={key.highlightType}
             $isPlaying={key.isPlaying}
-            $leftOffset={blackKeyOffsets[key.note] || 0}
+            $leftOffset={calculateBlackKeyOffset(key)}
             title={key.note}
           />
         ))}
