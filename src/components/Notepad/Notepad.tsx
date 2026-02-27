@@ -69,13 +69,6 @@ export default function Notes({ notes, setNotes }: NotesProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <CardHeader>
-        <CardIconWrapper>
-          <Icon icon={FaStickyNote} size={20} />
-        </CardIconWrapper>
-        <CardTitle>Notes</CardTitle>
-      </CardHeader>
-      
       <StyledTextArea
         name="newText"
         onChange={handleChange}

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaDrum, FaBug } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
-import ToolCard from '../common/ToolCard';
+import ToolCardDnd from '../common/ToolCardDnd';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
 import config from '../../config';
@@ -11,11 +11,9 @@ import config from '../../config';
 interface LoaderProps {
     bpm: number;
     onRemove?: () => void;
-    onMoveUp?: () => void;
-    onMoveDown?: () => void;
     canRemove?: boolean;
-    canMoveUp?: boolean;
-    canMoveDown?: boolean;
+    dragHandleProps?: any;
+    isRecentlyDragged?: boolean;
 }
 
 const MetronomeDisplay = styled.div`
@@ -336,11 +334,9 @@ class MetronomeEngine {
 const Metronome: FC<LoaderProps> = ({
     bpm: initialBpm,
     onRemove,
-    onMoveUp,
-    onMoveDown,
     canRemove,
-    canMoveUp,
-    canMoveDown
+    dragHandleProps,
+    isRecentlyDragged
 }) => {
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
@@ -561,15 +557,13 @@ const Metronome: FC<LoaderProps> = ({
     };
 
     return (
-        <ToolCard
+        <ToolCardDnd
             title="Metronome"
             icon={FaDrum}
             onRemove={onRemove}
-            onMoveUp={onMoveUp}
-            onMoveDown={onMoveDown}
             canRemove={canRemove}
-            canMoveUp={canMoveUp}
-            canMoveDown={canMoveDown}
+            dragHandleProps={dragHandleProps}
+            isRecentlyDragged={isRecentlyDragged}
             additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
         >
             {config.DEBUG_MODE && (
@@ -698,7 +692,7 @@ const Metronome: FC<LoaderProps> = ({
                     </>
                 }
             />
-        </ToolCard>
+        </ToolCardDnd>
     );
 };
 

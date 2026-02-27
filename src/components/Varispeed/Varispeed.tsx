@@ -6,6 +6,7 @@ import { Icon } from '../../utils/IconHelper';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
+import DragHandle from '../common/DragHandle';
 
 interface VarispeedProps {
   bpm?: number;
@@ -16,6 +17,8 @@ interface VarispeedProps {
   setLinkedToGenerator?: (linked: boolean) => void;
   generatorBpm?: string;
   generatorRoot?: string;
+  dragHandleProps?: any;
+  isRecentlyDragged?: boolean;
 }
 
 // Notes for chromatic scale display (using Unicode ♯ and ♭)
@@ -374,7 +377,9 @@ const Varispeed: FC<VarispeedProps> = ({
   linkedToGenerator: propLinked = false,
   setLinkedToGenerator: propSetLinked,
   generatorBpm,
-  generatorRoot
+  generatorRoot,
+  dragHandleProps,
+  isRecentlyDragged
 }) => {
   const [localBpm, setLocalBpm] = useState(propBpm);
   const [bpmInput, setBpmInput] = useState(String(propBpm));
@@ -477,6 +482,7 @@ const Varispeed: FC<VarispeedProps> = ({
       transition={{ duration: 0.5 }}
     >
       <VarispeedHeader>
+        <DragHandle dragHandleProps={dragHandleProps} />
         <CardIconWrapper>
           <Icon icon={FaWaveSquare} size={20} />
         </CardIconWrapper>

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaUndo, FaPlay, FaPause, FaCoffee } from 'react-icons/fa';
 import { GiTomato } from 'react-icons/gi';
-import ToolCard from '../common/ToolCard';
+import ToolCardDnd from '../common/ToolCardDnd';
 import { Icon } from '../../utils/IconHelper';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
@@ -63,20 +63,16 @@ const IconWrapper = styled.span`
 
 interface PomodoroTimerProps {
   onRemove?: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
   canRemove?: boolean;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
+  dragHandleProps?: any;
+  isRecentlyDragged?: boolean;
 }
 
 export default function PomodoroTimer({
   onRemove,
-  onMoveUp,
-  onMoveDown,
   canRemove,
-  canMoveUp,
-  canMoveDown
+  dragHandleProps,
+  isRecentlyDragged
 }: PomodoroTimerProps = {}) {
   const [time, setTime] = useState(1500);
   const [isCounting, setIsCounting] = useState(false);
@@ -130,15 +126,13 @@ export default function PomodoroTimer({
   }, [isCounting, time]);
 
   return (
-    <ToolCard
+    <ToolCardDnd
       title="Flow Timer"
       icon={GiTomato}
       onRemove={onRemove}
-      onMoveUp={onMoveUp}
-      onMoveDown={onMoveDown}
+      dragHandleProps={dragHandleProps}
+      isRecentlyDragged={isRecentlyDragged}
       canRemove={canRemove}
-      canMoveUp={canMoveUp}
-      canMoveDown={canMoveDown}
       additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
     >
       <TimerDisplay
@@ -202,6 +196,6 @@ export default function PomodoroTimer({
           </>
         }
       />
-    </ToolCard>
+    </ToolCardDnd>
   );
 }

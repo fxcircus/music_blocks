@@ -14,6 +14,7 @@ import {
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
+import DragHandle from '../common/DragHandle';
 
 // Chord quality mapping for different modes
 const chordQualities: Record<string, (string | null)[]> = {
@@ -78,6 +79,8 @@ interface componentProps {
   setBpmEl: (bpmEl: string) => void;
   soundEl: string;
   setSoundEl: (soundEl: string) => void;
+  dragHandleProps?: any;
+  isRecentlyDragged?: boolean;
 }
 
 // Styled components
@@ -666,6 +669,8 @@ export default function InspirationGenerator({
   soundEl,
   setSoundEl,
   onBatchUpdate,
+  dragHandleProps,
+  isRecentlyDragged,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const [locked, setLocked] = useState<LockedState>({
     root: false,
@@ -1604,6 +1609,7 @@ export default function InspirationGenerator({
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <InspirationCardHeader>
+          <DragHandle dragHandleProps={dragHandleProps} />
           <CardIconWrapper>
             <Icon icon={FaMusic} size={20} />
           </CardIconWrapper>

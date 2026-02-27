@@ -657,15 +657,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
 
   return (
     <ArrangementCard>
-      <Header>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <CardIconWrapper>
-            <Icon icon={FaChartBar} />
-          </CardIconWrapper>
-          <CardTitle>Arrangement</CardTitle>
-        </div>
-      </Header>
-
       <TemplateSelector>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
