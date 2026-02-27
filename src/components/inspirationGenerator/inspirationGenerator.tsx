@@ -197,18 +197,18 @@ const ValueCell = styled.td`
   color: ${({ theme }) => theme.colors.text};
   font-weight: 600;
   text-align: right;
-  max-width: 40%; 
+  max-width: 40%;
   white-space: nowrap;
   overflow: hidden;
   vertical-align: middle;
   height: 100%;
   padding-right: ${({ theme }) => theme.spacing.lg};
-  
+
   // Dynamically adjust font size for long content
   &.long-content {
     font-size: ${({ theme }) => theme.fontSizes.sm};
   }
-  
+
   &.very-long-content {
     font-size: ${({ theme }) => theme.fontSizes.xs};
   }
@@ -224,6 +224,66 @@ const ValueCell = styled.td`
   }
 `;
 
+const ClickableValueCell = styled(ValueCell)<{ $isLocked?: boolean }>`
+  position: relative;
+  cursor: ${({ $isLocked }) => $isLocked ? 'not-allowed' : 'pointer'};
+  opacity: ${({ $isLocked }) => $isLocked ? 1 : 1};
+  transition: color ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    color: ${({ theme, $isLocked }) =>
+      $isLocked ? theme.colors.text : theme.colors.primary};
+  }
+`;
+
+const ValueDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  z-index: 1000;
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+`;
+
+const RootDropdown = styled(ValueDropdown)`
+  grid-template-columns: repeat(3, 1fr);
+  width: 280px;
+`;
+
+const ScaleDropdown = styled(ValueDropdown)`
+  grid-template-columns: repeat(2, 1fr);
+  width: 320px;
+`;
+
+const DropdownOption = styled.button<{ $isSelected: boolean }>`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
+  background: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary + '30' : theme.colors.background};
+  border: 1px solid ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : theme.colors.border};
+  color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : theme.colors.text};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  text-align: center;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary}20;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
 
 const ExtendedInfoCell = styled.td`
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
@@ -618,6 +678,10 @@ export default function InspirationGenerator({
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef<boolean>(false);
 
+  // Add state for dropdown menus
+  const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
+  const dropdownRef = useRef<HTMLTableCellElement>(null);
+
   // Update localStorage whenever values change
   useEffect(() => {
     localStorage.setItem('tilesRootEl', rootEl);
@@ -763,6 +827,25 @@ export default function InspirationGenerator({
     const tonesArr = generateScaleTonesMemoized(rootEl, scaleEl);
     setTonesArrEl(tonesArr);
   }, [rootEl, scaleEl, generateScaleTonesMemoized, setTonesArrEl]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   const maxBpm = 140;
   const minBpm = 75;
@@ -1004,6 +1087,41 @@ export default function InspirationGenerator({
 
   const toggleLock = (param: keyof LockedState) =>
     setLocked((s) => ({ ...s, [param]: !s[param] }));
+
+  // Handler for selecting a root note from dropdown
+  const handleRootSelect = useCallback((newRoot: string) => {
+    if (locked.root) return;
+
+    setRootEl(newRoot);
+    const tonesArr = generateScaleTonesMemoized(newRoot, scaleEl);
+    setTonesArrEl(tonesArr);
+    setOpenDropdown(null);
+
+    // Reset selected chord when root changes
+    setSelectedChord(null);
+    setInversionIndex(0);
+  }, [locked.root, scaleEl, generateScaleTonesMemoized, setRootEl, setTonesArrEl]);
+
+  // Handler for selecting a scale from dropdown
+  const handleScaleSelect = useCallback((newScale: string) => {
+    if (locked.scale) return;
+
+    setScaleEl(newScale);
+    setTonesEl(scalePatterns[newScale as keyof typeof scalePatterns]);
+    const tonesArr = generateScaleTonesMemoized(rootEl, newScale);
+    setTonesArrEl(tonesArr);
+    setOpenDropdown(null);
+
+    // Reset selected chord and seventh mode when scale changes
+    setSelectedChord(null);
+    setInversionIndex(0);
+
+    // Only keep seventh mode if the new scale supports it
+    const noteCount = scaleNoteCounts[newScale] || 7;
+    if (noteCount < 7) {
+      setIsSeventhMode(false);
+    }
+  }, [locked.scale, rootEl, generateScaleTonesMemoized, scalePatterns, scaleNoteCounts, setScaleEl, setTonesEl, setTonesArrEl]);
 
   const getValueCellClass = (value: string): string => {
     if (value.length > 30) return 'very-long-content';
@@ -1467,7 +1585,29 @@ export default function InspirationGenerator({
                 </LockIconWrapper>
               </TableHeader>
               <LabelCell>Root</LabelCell>
-              <ValueCell>{rootEl}</ValueCell>
+              <ClickableValueCell
+                $isLocked={locked.root}
+                onClick={() => !locked.root && setOpenDropdown(openDropdown === 'root' ? null : 'root')}
+                ref={openDropdown === 'root' ? dropdownRef : undefined}
+              >
+                {rootEl}
+                {openDropdown === 'root' && (
+                  <RootDropdown>
+                    {notes.map((note) => (
+                      <DropdownOption
+                        key={note}
+                        $isSelected={rootEl === note}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRootSelect(note);
+                        }}
+                      >
+                        {note}
+                      </DropdownOption>
+                    ))}
+                  </RootDropdown>
+                )}
+              </ClickableValueCell>
             </TableRow>
             
             {/* Separator after Root row */}
@@ -1490,7 +1630,29 @@ export default function InspirationGenerator({
                 </LockIconWrapper>
               </TableHeader>
               <LabelCell>Scale</LabelCell>
-              <ValueCell>{scaleEl}</ValueCell>
+              <ClickableValueCell
+                $isLocked={locked.scale}
+                onClick={() => !locked.scale && setOpenDropdown(openDropdown === 'scale' ? null : 'scale')}
+                ref={openDropdown === 'scale' ? dropdownRef : undefined}
+              >
+                {scaleEl}
+                {openDropdown === 'scale' && (
+                  <ScaleDropdown>
+                    {scales.map((scale) => (
+                      <DropdownOption
+                        key={scale}
+                        $isSelected={scaleEl === scale}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleScaleSelect(scale);
+                        }}
+                      >
+                        {scale}
+                      </DropdownOption>
+                    ))}
+                  </ScaleDropdown>
+                )}
+              </ClickableValueCell>
             </TableRow>
 
             {/* Separator after Scale row */}
