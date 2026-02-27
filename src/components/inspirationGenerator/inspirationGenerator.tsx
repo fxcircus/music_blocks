@@ -1104,9 +1104,20 @@ export default function InspirationGenerator({
   const handleRootSelect = (newRoot: string) => {
     if (locked.root) return;
 
-    setRootEl(newRoot);
     const tonesArr = generateScaleTonesMemoized(newRoot, scaleEl);
-    setTonesArrEl(tonesArr);
+
+    // Use batch update to update both values atomically
+    if (onBatchUpdate) {
+      onBatchUpdate({
+        rootEl: newRoot,
+        tonesArrEl: tonesArr
+      });
+    } else {
+      // Fallback to individual updates if batch not available
+      setRootEl(newRoot);
+      setTonesArrEl(tonesArr);
+    }
+
     setOpenDropdown(null);
 
     // Reset selected chord when root changes
@@ -1118,10 +1129,23 @@ export default function InspirationGenerator({
   const handleScaleSelect = (newScale: string) => {
     if (locked.scale) return;
 
-    setScaleEl(newScale);
-    setTonesEl(scalePatterns[newScale as keyof typeof scalePatterns]);
+    const newTonesPattern = scalePatterns[newScale as keyof typeof scalePatterns];
     const tonesArr = generateScaleTonesMemoized(rootEl, newScale);
-    setTonesArrEl(tonesArr);
+
+    // Use batch update to update all values atomically
+    if (onBatchUpdate) {
+      onBatchUpdate({
+        scaleEl: newScale,
+        tonesEl: newTonesPattern,
+        tonesArrEl: tonesArr
+      });
+    } else {
+      // Fallback to individual updates if batch not available
+      setScaleEl(newScale);
+      setTonesEl(newTonesPattern);
+      setTonesArrEl(tonesArr);
+    }
+
     setOpenDropdown(null);
 
     // Reset selected chord and seventh mode when scale changes
