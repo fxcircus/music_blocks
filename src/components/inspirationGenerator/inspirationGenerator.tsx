@@ -695,6 +695,7 @@ export default function InspirationGenerator({
   const [playingNoteIndex, setPlayingNoteIndex] = useState<number>(-1);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef<boolean>(false);
+  const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
 
   // Add state for dropdown menus
   const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
@@ -1468,6 +1469,13 @@ export default function InspirationGenerator({
     }
 
     const ctx = audioContextRef.current;
+
+    // Resume audio context if it's suspended (prevents timing issues)
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    // Always use fresh current time to prevent note buildup
     const currentTime = ctx.currentTime;
 
     // Create oscillator and gain nodes
@@ -1493,6 +1501,17 @@ export default function InspirationGenerator({
     oscillator.start(currentTime);
     oscillator.stop(currentTime + duration / 1000 + 0.05);
 
+    // Track the oscillator for cleanup
+    activeOscillatorsRef.current.push(oscillator);
+
+    // Remove from active oscillators when stopped
+    oscillator.onended = () => {
+      const index = activeOscillatorsRef.current.indexOf(oscillator);
+      if (index > -1) {
+        activeOscillatorsRef.current.splice(index, 1);
+      }
+    };
+
     // Wait for the note to finish
     return new Promise(resolve => {
       setTimeout(resolve, duration);
@@ -1501,6 +1520,16 @@ export default function InspirationGenerator({
 
   // Play scale or chord arpeggio
   const playSequence = useCallback(async () => {
+    // Stop any active oscillators first to prevent overlap
+    activeOscillatorsRef.current.forEach(osc => {
+      try {
+        osc.stop();
+      } catch (e) {
+        // Oscillator might already be stopped
+      }
+    });
+    activeOscillatorsRef.current = [];
+
     if (isPlayingRef.current) {
       isPlayingRef.current = false;
       setIsPlaying(false);

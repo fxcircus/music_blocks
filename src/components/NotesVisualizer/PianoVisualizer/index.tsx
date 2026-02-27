@@ -8,7 +8,6 @@ const PianoContainer = styled.div`
   background: ${({ theme }) => theme.colors.background};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   padding: ${({ theme }) => theme.spacing.sm};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
   overflow: hidden;
   min-height: 120px;
 `;
@@ -26,7 +25,8 @@ const WhiteKey = styled.div<{
 }>`
   width: 28px;
   height: 100px;
-  background: ${({ $isHighlighted, $highlightType, theme }) => {
+  background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
+    if ($isPlaying) return '#dc2626';  // Solid red when playing
     if (!$isHighlighted) return '#ffffff';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue for root notes
@@ -43,11 +43,11 @@ const WhiteKey = styled.div<{
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1, 0.98)' : 'scale(1, 1)'};
-  box-shadow: ${({ $isPlaying, theme }) =>
-    $isPlaying ? `0 0 10px ${theme.colors.primary}` : '0 2px 4px rgba(0,0,0,0.1)'};
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 
   &:hover {
-    background: ${({ $isHighlighted, $highlightType, theme }) => {
+    background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
+      if ($isPlaying) return '#dc2626';  // Stay red when playing
       if (!$isHighlighted) return '#f5f5f5';
       switch ($highlightType) {
         case 'root': return '#006699';  // Darker blue on hover for root
@@ -81,7 +81,8 @@ const BlackKey = styled.div<{
 }>`
   width: 20px;
   height: 65px;
-  background: ${({ $isHighlighted, $highlightType, theme }) => {
+  background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
+    if ($isPlaying) return '#dc2626';  // Solid red when playing
     if (!$isHighlighted) return '#2a2a2a';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue for root notes (black keys)
@@ -98,11 +99,11 @@ const BlackKey = styled.div<{
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1, 0.98)' : 'scale(1, 1)'};
-  box-shadow: ${({ $isPlaying, theme }) =>
-    $isPlaying ? `0 0 10px ${theme.colors.primary}` : '0 2px 6px rgba(0,0,0,0.3)'};
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 
   &:hover {
-    background: ${({ $isHighlighted, $highlightType, theme }) => {
+    background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
+      if ($isPlaying) return '#dc2626';  // Stay red when playing
       if (!$isHighlighted) return '#3a3a3a';
       switch ($highlightType) {
         case 'root': return '#006699';  // Darker blue on hover for root (black keys)
@@ -231,7 +232,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
           position: absolutePosition,
           isHighlighted: isActive,
           highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
-          isPlaying: playingNoteIndex === noteIndex
+          isPlaying: playingNoteIndex !== undefined && playingNoteIndex >= 0 && playingNoteIndex === noteIndex && isActive
         });
       });
 
@@ -266,7 +267,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
           position: absolutePosition,
           isHighlighted: isActive,
           highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, note),
-          isPlaying: playingNoteIndex === noteIndex
+          isPlaying: playingNoteIndex !== undefined && playingNoteIndex >= 0 && playingNoteIndex === noteIndex && isActive
         });
       });
     }
