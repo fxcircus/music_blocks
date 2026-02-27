@@ -11,6 +11,8 @@ import styled from 'styled-components';
 import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCardDnd from '../components/common/ToolCardDnd';
+import TipsModal from '../components/common/TipsModal';
+import HelpButton from '../components/common/HelpButton';
 
 // Special wrapper for Notes block to override centering from ToolCard
 const NotesWrapper = styled.div`
@@ -56,6 +58,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   isRecentlyDragged = false,
 }) => {
   const [animate, setAnimate] = useState(false);
+  const [showArrangementHelp, setShowArrangementHelp] = useState(false);
 
   // Get the component and type info for this block
   const BlockComponent = getBlockComponent(block.type);
@@ -178,8 +181,55 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
       break;
 
     case 'arrangementTool':
-      // ArrangementTool is self-contained, doesn't need state management
-      blockContent = <BlockComponent />;
+      // ArrangementTool with help modal support
+      blockContent = (
+        <>
+          <BlockComponent />
+          {/* Render the TipsModal here since ToolCardDnd will trigger it */}
+          <TipsModal
+            isOpen={showArrangementHelp}
+            onClose={() => setShowArrangementHelp(false)}
+            title="About the Arrangement Tool"
+            content={
+              <>
+                <h3>Get Inspired by Song Structures</h3>
+                <p>
+                  The Arrangement tool is designed to help you break out of the "4-bar loop trap" and start thinking about complete song structures. Each template represents a different arrangement approach used by famous artists across various genres.
+                </p>
+
+                <h3>How It Works</h3>
+                <p>
+                  <strong>Templates:</strong> Each template shows a complete song structure with different sections (Intro, Verse, Chorus, Bridge, Outro). The numbers indicate how many bars each section lasts.
+                </p>
+                <p>
+                  <strong>Energy Levels:</strong> The colored bars show the energy level of each section — from low (purple/blue) to high (orange/red). This helps you visualize the dynamic flow of the arrangement.
+                </p>
+                <p>
+                  <strong>Energy Arc:</strong> The bottom chart shows the overall energy curve of the song, helping you understand how tension and release work across the entire arrangement.
+                </p>
+
+                <h3>Tips for Using Templates</h3>
+                <ul>
+                  <li>Use the <strong>random button</strong> (dice icon) to quickly explore different arrangement ideas</li>
+                  <li>The templates are starting points — feel free to modify them for your own songs</li>
+                  <li>Pay attention to how different genres structure their songs differently</li>
+                  <li>Notice how energy builds and releases throughout successful arrangements</li>
+                </ul>
+
+                <h3>Breaking the Loop</h3>
+                <p>
+                  When you have a good 4 or 8-bar loop, use these templates to imagine how it could work as a verse, chorus, or bridge. Consider:
+                </p>
+                <ul>
+                  <li>What would a stripped-down version sound like for verses?</li>
+                  <li>How can you make the chorus pop with added energy?</li>
+                  <li>Where would a bridge take the song harmonically or rhythmically?</li>
+                </ul>
+              </>
+            }
+          />
+        </>
+      );
       break;
 
     default:
@@ -226,6 +276,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         canRemove={canRemove}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
+        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : undefined}
       >
         {blockContent}
       </ToolCardDnd>

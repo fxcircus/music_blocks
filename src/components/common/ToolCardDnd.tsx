@@ -5,6 +5,7 @@ import { Icon } from '../../utils/IconHelper';
 import { IconType } from 'react-icons';
 import { FaTimes } from 'react-icons/fa';
 import DragHandle from './DragHandle';
+import HelpButton from './HelpButton';
 
 interface ToolCardDndProps {
   title: string;
@@ -18,6 +19,7 @@ interface ToolCardDndProps {
   additionalControls?: ReactNode;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
+  onShowHelp?: () => void;
 }
 
 const StyledToolCard = styled(Card)`
@@ -143,7 +145,8 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   showControlsOnly = false,
   additionalControls,
   dragHandleProps,
-  isRecentlyDragged = false
+  isRecentlyDragged = false,
+  onShowHelp
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -180,9 +183,15 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Control buttons for remove */}
-      {(onRemove || additionalControls) && (
+      {/* Control buttons for help and remove */}
+      {(onRemove || additionalControls || onShowHelp) && (
         <ControlButtons>
+          {onShowHelp && (
+            <HelpButton
+              onClick={onShowHelp}
+              className="tool-card-help"
+            />
+          )}
           {additionalControls}
           {onRemove && (
             <ControlButton

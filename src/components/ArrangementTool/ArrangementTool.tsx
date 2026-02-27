@@ -3,8 +3,6 @@ import styled, { keyframes } from 'styled-components';
 import { FaChartBar, FaDice } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
-import TipsModal from '../common/TipsModal';
-import HelpButton from '../common/HelpButton';
 
 interface Scene {
   name: string;
@@ -468,10 +466,6 @@ const ArrangementCard = styled(Card)`
   @media (max-width: 768px) {
     height: 550px; /* Increased by 10% from 500px */
   }
-
-  &:hover .help-button {
-    opacity: 1;
-  }
 `;
 
 const Header = styled.div`
@@ -700,7 +694,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   const [selected, setSelected] = useState("Two Peaks");
   const [isOpen, setIsOpen] = useState(false);
   const [animKey, setAnimKey] = useState(0);
-  const [showTips, setShowTips] = useState(false);
 
   const template = ALL_TEMPLATES[selected];
   const totalBars = template.scenes.reduce((a, s) => a + s.bars, 0);
@@ -722,20 +715,9 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
 
   return (
     <ThemeAwareWrapper>
-      <ArrangementCard>
+      <ArrangementCard className="arrangement-card">
         <TemplateSelector>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', position: 'relative' }}>
-          <HelpButton
-            onClick={() => setShowTips(true)}
-            className="help-button"
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              opacity: 0,
-              transition: 'opacity 0.2s'
-            }}
-          />
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
             <div style={{
               fontSize: '9px',
@@ -935,48 +917,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
         </EnergyArcContainer>
       </SceneList>
     </ArrangementCard>
-    <TipsModal
-      isOpen={showTips}
-      onClose={() => setShowTips(false)}
-      title="About the Arrangement Tool"
-      content={
-        <>
-          <h3>Get Inspired by Song Structures</h3>
-          <p>
-            The Arrangement tool is designed to help you break out of the "4-bar loop trap" and start thinking about complete song structures. Each template represents a different arrangement approach used by famous artists across various genres.
-          </p>
-
-          <h3>How It Works</h3>
-          <p>
-            <strong>Templates:</strong> Each template shows a complete song structure with different sections (Intro, Verse, Chorus, Bridge, Outro). The numbers indicate how many bars each section lasts.
-          </p>
-          <p>
-            <strong>Energy Levels:</strong> The colored bars show the energy level of each section — from low (purple/blue) to high (orange/red). This helps you visualize the dynamic flow of the arrangement.
-          </p>
-          <p>
-            <strong>Energy Arc:</strong> The bottom chart shows the overall energy curve of the song, helping you understand how tension and release work across the entire arrangement.
-          </p>
-
-          <h3>Tips for Using Templates</h3>
-          <ul>
-            <li>Use the <strong>random button</strong> (dice icon) to quickly explore different arrangement ideas</li>
-            <li>The templates are starting points — feel free to modify them for your own songs</li>
-            <li>Pay attention to how different genres structure their songs differently</li>
-            <li>Notice how energy builds and releases throughout successful arrangements</li>
-          </ul>
-
-          <h3>Breaking the Loop</h3>
-          <p>
-            When you have a good 4 or 8-bar loop, use these templates to imagine how it could work as a verse, chorus, or bridge. Consider:
-          </p>
-          <ul>
-            <li>What would a stripped-down version sound like for verses?</li>
-            <li>How can you make the chorus pop with added energy?</li>
-            <li>Where would a bridge take the song harmonically or rhythmically?</li>
-          </ul>
-        </>
-      }
-    />
     </ThemeAwareWrapper>
   );
 };

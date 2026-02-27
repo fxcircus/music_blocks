@@ -25,6 +25,7 @@ const StyledHelpButton = styled.button`
   .tool-card:hover &,
   .inspiration-card:hover &,
   .varispeed-card:hover &,
+  .arrangement-card:hover &,
   &:focus {
     opacity: 1;
   }
