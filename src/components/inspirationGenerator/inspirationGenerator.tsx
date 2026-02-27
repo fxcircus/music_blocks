@@ -3,14 +3,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaInfoCircle } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
   generateDiatonicScale,
   getChromaticIndex,
-  getCorrectNoteSpelling,
-  normalizeNote
+  getCorrectNoteSpelling
 } from '../../utils/musicTheory';
 
 // Chord quality mapping for different modes
@@ -224,11 +223,6 @@ const ValueCell = styled.td`
   }
 `;
 
-// Keep this definition if needed for any remaining references
-const EmptyTableCell = styled(TableCell)`
-  width: 1px;
-  padding: 0;
-`;
 
 const ExtendedInfoCell = styled.td`
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
@@ -277,38 +271,42 @@ const Tooltip = styled.div`
 `;
 
 // Update the ChordDegreesContainer to handle dynamic spacing
-const ChordDegreesContainer = styled.div<{ $noteCount: number }>`
+const ChordDegreesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
   display: flex;
   justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
-  gap: ${({ theme, $noteCount }) => $noteCount < 6 ? theme.spacing.md : theme.spacing.xs};
+  gap: ${({ theme, $noteCount, $isSeventhMode }) =>
+    $isSeventhMode ? theme.spacing.xs : $noteCount < 6 ? theme.spacing.md : theme.spacing.sm};
   overflow-x: visible;
   padding-right: ${({ theme }) => theme.spacing.sm};
   width: fit-content;
   position: relative;
   z-index: 10;
-  
+
   @media (max-width: 768px) {
     justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
     padding-right: ${({ theme }) => theme.spacing.xs};
-    gap: ${({ theme, $noteCount }) => $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
+    gap: ${({ theme, $noteCount, $isSeventhMode }) =>
+      $isSeventhMode ? '4px' : $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
   }
 `;
 
 // Update the ScaleTonesContainer to handle dynamic spacing
-const ScaleTonesContainer = styled.div<{ $noteCount: number }>`
+const ScaleTonesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
   display: flex;
   justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
-  gap: ${({ theme, $noteCount }) => $noteCount < 6 ? theme.spacing.md : theme.spacing.xs};
+  gap: ${({ theme, $noteCount, $isSeventhMode }) =>
+    $isSeventhMode ? theme.spacing.xs : $noteCount < 6 ? theme.spacing.md : theme.spacing.sm};
   overflow-x: visible;
   padding-right: ${({ theme }) => theme.spacing.sm};
   width: fit-content;
   position: relative;
   z-index: 10;
-  
+
   @media (max-width: 768px) {
     justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
     padding-right: ${({ theme }) => theme.spacing.xs};
-    gap: ${({ theme, $noteCount }) => $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
+    gap: ${({ theme, $noteCount, $isSeventhMode }) =>
+      $isSeventhMode ? '4px' : $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
   }
 `;
 
@@ -323,12 +321,6 @@ const LockIconWrapper = styled.div<{ $isLocked: boolean }>`
   }
 `;
 
-const SubtitleText = styled.p`
-  text-align: center;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
 
 const IconWrapper = styled.span`
   display: inline-flex;
@@ -367,49 +359,21 @@ const ChordDegree = styled.div<{ $isSelected: boolean }>`
   }
 `;
 
-const ChordName = styled.div<{ $isSelected: boolean }>`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ $isSelected, theme }) => 
+const ChordName = styled.div<{ $isSelected: boolean; $isSeventhMode?: boolean }>`
+  font-size: ${({ theme, $isSeventhMode }) =>
+    $isSeventhMode ? theme.fontSizes.xs : theme.fontSizes.sm};
+  color: ${({ $isSelected, theme }) =>
     $isSelected ? theme.colors.primary : theme.colors.textSecondary};
   text-align: center;
   margin-top: ${({ theme }) => theme.spacing.xs};
   font-weight: ${({ $isSelected }) => ($isSelected ? '600' : '400')};
-  
+  white-space: nowrap;
+
   @media (max-width: 768px) {
     font-size: ${({ theme }) => theme.fontSizes.xs};
   }
 `;
 
-const ScaleToneNote = styled.div<{ $highlight: 'root' | 'chord' | 'none' }>`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.sm}`};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  background-color: ${({ $highlight, theme }) => 
-    $highlight === 'root' 
-      ? theme.colors.primary 
-      : $highlight === 'chord' 
-        ? `${theme.colors.secondary}88` 
-        : `${theme.colors.primary}22`};
-  color: ${({ $highlight, theme }) => 
-    $highlight === 'root' || $highlight === 'chord'
-      ? theme.colors.buttonText 
-      : theme.colors.text};
-  font-weight: 500;
-  min-width: 30px;
-  text-align: center;
-  transition: all ${({ theme }) => theme.transitions.fast};
-  height: 100%;
-  min-height: 48px;
-  justify-content: center;
-  
-  @media (max-width: 768px) {
-    min-width: 25px;
-    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
-    min-height: 40px;
-  }
-`;
 
 const IntervalLabel = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.xs};
@@ -442,15 +406,85 @@ const SeparatorCell = styled.td`
 `;
 
 // Re-add the ItemWrapper component that was accidentally removed
-const ItemWrapper = styled.div`
+const ItemWrapper = styled.div<{ $isSeventhMode?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 40px;
+  width: ${({ $isSeventhMode }) => $isSeventhMode ? '45px' : '40px'};
   height: 100%;
-  
+
   @media (max-width: 768px) {
-    width: 30px;
+    width: ${({ $isSeventhMode }) => $isSeventhMode ? '35px' : '30px'};
+  }
+`;
+
+// Seventh chord toggle button
+const SeventhToggleButton = styled.button<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background-color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.primary : 'transparent'};
+  color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.buttonText : theme.colors.textSecondary};
+  border: 2px solid ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.primary : theme.colors.border};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  font-weight: bold;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+
+  &:hover {
+    transform: scale(1.1);
+    background-color: ${({ $isActive, theme }) =>
+      $isActive ? theme.colors.primary : `${theme.colors.primary}22`};
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      background-color: transparent;
+    }
+  }
+`;
+
+// Update ScaleToneNote to support seventh highlighting
+const ScaleToneNoteUpdated = styled.div<{ $highlight: 'root' | 'chord' | 'seventh' | 'none' }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background-color: ${({ $highlight, theme }) =>
+    $highlight === 'root'
+      ? theme.colors.primary
+      : $highlight === 'chord'
+        ? `${theme.colors.secondary}88`
+        : $highlight === 'seventh'
+          ? '#8b5cf6'
+          : `${theme.colors.primary}22`};
+  color: ${({ $highlight, theme }) =>
+    $highlight === 'root' || $highlight === 'chord' || $highlight === 'seventh'
+      ? theme.colors.buttonText
+      : theme.colors.text};
+  font-weight: 500;
+  min-width: 100%;
+  text-align: center;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  height: 100%;
+  min-height: 48px;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+    padding: ${({ theme }) => `${theme.spacing.xs} 2px`};
+    min-height: 40px;
   }
 `;
 
@@ -480,6 +514,9 @@ export default function InspirationGenerator({
   
   // Add state for selected chord
   const [selectedChord, setSelectedChord] = useState<number | null>(null);
+
+  // Add state for seventh chord mode
+  const [isSeventhMode, setIsSeventhMode] = useState<boolean>(false);
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -518,12 +555,6 @@ export default function InspirationGenerator({
     // Less common enharmonics (included for completeness)
     "D♯", "G♯", "A♯",
     "F♭", "C♭", "E♯", "B♯"
-  ], []);
-
-  // For chromatic calculations, we still need the 12-note chromatic scale
-  const chromaticNotes = useMemo(() => [
-    "C", "C♯", "D", "D♯", "E", "F",
-    "F♯", "G", "G♯", "A", "A♯", "B",
   ], []);
 
   const roots = notes;
@@ -627,21 +658,11 @@ export default function InspirationGenerator({
     [scaleIntervals, scaleNoteCounts]
   );
 
-  // initialize to C Major
-  const initialScaleTones = useMemo(() => 
-    generateScaleTonesMemoized("C", "Major").join(" - "),
-  [generateScaleTonesMemoized]);
-  
-  const [computedScaleNotes, setComputedScaleNotes] = useState<string>(
-    initialScaleTones
-  );
-
   // Update computed scale tones whenever root or scale changes
   useEffect(() => {
     const tonesArr = generateScaleTonesMemoized(rootEl, scaleEl);
-    setComputedScaleNotes(tonesArr.join(" - "));
     setTonesArrEl(tonesArr);
-  }, [rootEl, scaleEl, generateScaleTonesMemoized]);
+  }, [rootEl, scaleEl, generateScaleTonesMemoized, setTonesArrEl]);
 
   const maxBpm = 140;
   const minBpm = 75;
@@ -775,7 +796,6 @@ export default function InspirationGenerator({
       // Define common keys (more likely to be selected)
       const commonKeys = ["C", "D", "E", "F", "G", "A", "B", "B♭", "E♭", "A♭", "F♯"];
       const lessCommonKeys = ["D♭", "G♭", "C♯", "D♯", "G♯", "A♯"];
-      const rareKeys = ["F♭", "C♭", "E♯", "B♯"];
 
       // Weight: 70% common, 25% less common, 5% rare
       let pool: string[] = [];
@@ -879,9 +899,6 @@ export default function InspirationGenerator({
       if (updates.bpmEl) setBpmEl(updates.bpmEl);
     }
 
-    // Update computed notes separately since it's local state
-    setComputedScaleNotes(tonesArr.join(" - "));
-
     setAnimate(true);
   };
 
@@ -894,6 +911,29 @@ export default function InspirationGenerator({
     return '';
   };
 
+  // Function to determine if scale supports seventh chords
+  const canUseSeventhChords = () => {
+    const noteCount = scaleNoteCounts[scaleEl] || 7;
+    return noteCount >= 7;
+  };
+
+  // Function to get seventh chord quality suffix
+  const getSeventhChordSuffix = (index: number, baseQuality: string | null): string => {
+    if (!baseQuality) return 'maj7';  // Default major 7th
+
+    // Map base chord qualities to seventh chord types
+    if (baseQuality === '') return 'maj7';  // Major → Major 7th
+    if (baseQuality === 'm') return 'm7';   // Minor → Minor 7th
+    if (baseQuality === 'dim') return 'dim7'; // Diminished → Diminished 7th
+    if (baseQuality === 'aug') return 'maj7+5'; // Augmented → Major 7th #5
+
+    // For dominant (V chord in major/minor keys), use dominant 7th
+    if (scaleEl === 'Major' && index === 4) return '7'; // V7 in major
+    if (scaleEl === 'Minor' && index === 4) return '7'; // V7 in minor (if using harmonic minor)
+
+    return 'maj7';
+  };
+
   // Update the getChordNames function for better chord generation logic
   const getChordNames = () => {
     if (!rootEl || !scaleEl || !tonesArrEl || tonesArrEl.length < 3) {
@@ -902,99 +942,137 @@ export default function InspirationGenerator({
 
     const qualities = chordQualities[scaleEl as keyof typeof chordQualities] || chordQualities.Major;
     const noteCount = scaleNoteCounts[scaleEl] || 7;
-    
+
     return romanNumerals.slice(0, 7).map((_, index) => {
       // For scales with fewer notes, only generate chords where possible
       if (index >= noteCount) {
         return "—";
       }
-      
+
       // Check if the chord quality is null (indicating no valid chord can be formed)
       if (qualities[index] === null) {
         return "—";
       }
-      
+
       // For scales with 5 or 6 notes, verify that we can form a proper triad
       if (noteCount < 7) {
         // Check if we can form a proper triad by building on this scale degree
         const rootIndex = index;
         const thirdIndex = (index + 2) % noteCount;
         const fifthIndex = (index + 4) % noteCount;
-        
+
         // Verify that root, third, and fifth are distinct notes
         const distinct = new Set([rootIndex, thirdIndex, fifthIndex]).size === 3;
-        
+
         if (!distinct) {
           return "—";
         }
       }
-      
-      return `${tonesArrEl[index]}${qualities[index] || ''}`;
+
+      // Generate chord name based on mode (triad or seventh)
+      const baseChordName = `${tonesArrEl[index]}${qualities[index] || ''}`;
+
+      // If in seventh mode and scale supports it, add seventh chord suffix
+      if (isSeventhMode && noteCount >= 7) {
+        const seventhSuffix = getSeventhChordSuffix(index, qualities[index]);
+        // Replace base quality with seventh quality
+        if (qualities[index] === '') {
+          // Major chord - replace with appropriate seventh
+          return `${tonesArrEl[index]}${seventhSuffix}`;
+        } else if (qualities[index] === 'm') {
+          // Minor chord
+          return `${tonesArrEl[index]}m7`;
+        } else if (qualities[index] === 'dim') {
+          // Diminished
+          return `${tonesArrEl[index]}dim7`;
+        } else if (qualities[index] === 'aug') {
+          // Augmented
+          return `${tonesArrEl[index]}maj7♯5`;
+        } else {
+          return baseChordName;
+        }
+      }
+
+      return baseChordName;
     });
   };
 
-  // Update getHighlightType function to handle different scale types
-  const getHighlightType = (noteIndex: number): 'root' | 'chord' | 'none' => {
+  // Update getHighlightType function to handle different scale types and seventh chords
+  const getHighlightType = (noteIndex: number): 'root' | 'chord' | 'seventh' | 'none' => {
     if (selectedChord === null) return 'none';
-    
+
     const noteCount = scaleNoteCounts[scaleEl] || 7;
-    
+
     // If this is the root note of the selected chord
     if (noteIndex === selectedChord) return 'root';
-    
+
     // If the scale has fewer than 7 notes, adjust the chord building logic
     if (noteCount < 7) {
-      // For scales with fewer notes, calculate the third and fifth positions differently
+      // For scales with fewer notes, can't build proper seventh chords
+      // So even in seventh mode, we'll only highlight triad notes
       const thirdIndex = (selectedChord + 2) % noteCount;
       const fifthIndex = (selectedChord + 4) % noteCount;
-      
+
       // Highlight the note if it's part of the chord triad
       if (noteIndex === thirdIndex || noteIndex === fifthIndex) {
         return 'chord';
       }
     } else {
-      // Special case for certain 7-note scales
-      if (scaleEl === "Harmonic Minor" || scaleEl === "Double Harmonic" || scaleEl === "Hungarian Minor") {
-        // Handle augmented or diminished chords in these scales specially
-        if (chordQualities[scaleEl as keyof typeof chordQualities][selectedChord] === 'aug') {
-          // For augmented chords, the fifth is raised
-          const thirdIndex = (selectedChord + 2) % 7;
-          // Use the raised fifth if available
-          const fifthIndex = (selectedChord + 4) % 7;
-          const raisedFifthIndex = (selectedChord + 5) % 7;
-          
-          if (noteIndex === thirdIndex || noteIndex === fifthIndex || noteIndex === raisedFifthIndex) {
-            return 'chord';
-          }
-        } else if (chordQualities[scaleEl as keyof typeof chordQualities][selectedChord] === 'dim') {
-          // For diminished chords, the fifth is lowered
-          const thirdIndex = (selectedChord + 2) % 7;
-          const flattenedFifthIndex = (selectedChord + 3) % 7;
-          
-          if (noteIndex === thirdIndex || noteIndex === flattenedFifthIndex) {
-            return 'chord';
+      // For 7-note scales, handle seventh chords if in seventh mode
+      if (isSeventhMode) {
+        const thirdIndex = (selectedChord + 2) % 7;
+        const fifthIndex = (selectedChord + 4) % 7;
+        const seventhIndex = (selectedChord + 6) % 7;
+
+        if (noteIndex === seventhIndex) {
+          return 'seventh';
+        } else if (noteIndex === thirdIndex || noteIndex === fifthIndex) {
+          return 'chord';
+        }
+      } else {
+        // Triad mode - handle special scales
+        if (scaleEl === "Harmonic Minor" || scaleEl === "Double Harmonic" || scaleEl === "Hungarian Minor") {
+          // Handle augmented or diminished chords in these scales specially
+          if (chordQualities[scaleEl as keyof typeof chordQualities][selectedChord] === 'aug') {
+            // For augmented chords, the fifth is raised
+            const thirdIndex = (selectedChord + 2) % 7;
+            // Use the raised fifth if available
+            const fifthIndex = (selectedChord + 4) % 7;
+            const raisedFifthIndex = (selectedChord + 5) % 7;
+
+            if (noteIndex === thirdIndex || noteIndex === fifthIndex || noteIndex === raisedFifthIndex) {
+              return 'chord';
+            }
+          } else if (chordQualities[scaleEl as keyof typeof chordQualities][selectedChord] === 'dim') {
+            // For diminished chords, the fifth is lowered
+            const thirdIndex = (selectedChord + 2) % 7;
+            const flattenedFifthIndex = (selectedChord + 3) % 7;
+
+            if (noteIndex === thirdIndex || noteIndex === flattenedFifthIndex) {
+              return 'chord';
+            }
+          } else {
+            // Standard triad pattern for other chords
+            const thirdIndex = (selectedChord + 2) % 7;
+            const fifthIndex = (selectedChord + 4) % 7;
+
+            if (noteIndex === thirdIndex || noteIndex === fifthIndex) {
+              return 'chord';
+            }
           }
         } else {
-          // Standard triad pattern for other chords
+          // Standard 7-note scales
+          // Standard triad pattern for most chords
           const thirdIndex = (selectedChord + 2) % 7;
           const fifthIndex = (selectedChord + 4) % 7;
-          
+
           if (noteIndex === thirdIndex || noteIndex === fifthIndex) {
             return 'chord';
           }
         }
-      } else {
-        // Standard 7-note scales
-        // Standard triad pattern for most chords
-        const thirdIndex = (selectedChord + 2) % 7;
-        const fifthIndex = (selectedChord + 4) % 7;
-        
-        if (noteIndex === thirdIndex || noteIndex === fifthIndex) {
-          return 'chord';
-        }
       }
     }
-    
+
     return 'none';
   };
 
@@ -1143,15 +1221,24 @@ export default function InspirationGenerator({
               </SeparatorCell>
             </tr>
             
-            {/* Chord Degrees section integrated into the table - with empty TableHeader for alignment */}
+            {/* Chord Degrees section integrated into the table - with seventh toggle in TableHeader */}
             <TableRow className="chord-scale-row">
               <SpacerCell />
-              <TableHeader />
+              <TableHeader>
+                <SeventhToggleButton
+                  $isActive={isSeventhMode}
+                  disabled={!canUseSeventhChords()}
+                  onClick={() => canUseSeventhChords() && setIsSeventhMode(!isSeventhMode)}
+                  title={canUseSeventhChords() ? "Toggle seventh chords" : "Scale must have 7+ notes for seventh chords"}
+                >
+                  7
+                </SeventhToggleButton>
+              </TableHeader>
               <LabelCell>
                 Chord<br />Degrees
               </LabelCell>
               <ExtendedInfoCell>
-                <ChordDegreesContainer $noteCount={scaleNoteCounts[scaleEl] || 7}>
+                <ChordDegreesContainer $noteCount={scaleNoteCounts[scaleEl] || 7} $isSeventhMode={isSeventhMode}>
                   {romanNumerals.slice(0, 7).map((numeral, index) => {
                     const noteCount = scaleNoteCounts[scaleEl] || 7;
                     const chordName = getChordNames()[index];
@@ -1163,8 +1250,8 @@ export default function InspirationGenerator({
                     }
                     
                     return (
-                      <ItemWrapper key={index}>
-                        <ChordDegree 
+                      <ItemWrapper key={index} $isSeventhMode={isSeventhMode}>
+                        <ChordDegree
                           $isSelected={selectedChord === index}
                           onClick={() => isValidChord ? handleChordClick(index) : null}
                           style={{ opacity: isValidChord ? 1 : 0.5 }}
@@ -1172,12 +1259,12 @@ export default function InspirationGenerator({
                           {numeral}
                         </ChordDegree>
                         {isValidChord ? (
-                          <ChordName $isSelected={selectedChord === index}>
+                          <ChordName $isSelected={selectedChord === index} $isSeventhMode={isSeventhMode}>
                             {chordName}
                           </ChordName>
                         ) : (
                           <TooltipWrapper>
-                            <ChordName $isSelected={false}>
+                            <ChordName $isSelected={false} $isSeventhMode={isSeventhMode}>
                               —
                             </ChordName>
                             <Tooltip>No standard chord</Tooltip>
@@ -1205,37 +1292,37 @@ export default function InspirationGenerator({
                 Scale<br />Tones
               </LabelCell>
               <ExtendedInfoCell>
-                <ScaleTonesContainer $noteCount={scaleNoteCounts[scaleEl] || 7}>
+                <ScaleTonesContainer $noteCount={scaleNoteCounts[scaleEl] || 7} $isSeventhMode={isSeventhMode}>
                   {tonesArrEl.map((note, index) => {
                     const noteCount = scaleNoteCounts[scaleEl] || 7;
-                    
+
                     // Only show scale degrees for this scale
                     if (index >= noteCount) {
                       return null;
                     }
-                    
+
                     const intervals = getSemitoneIntervals(scaleEl);
                     const shouldShowInterval = index < intervals.length;
                     const interval = shouldShowInterval ? intervals[index] : null;
-                    
+
                     return (
-                      <ItemWrapper key={index}>
-                        <ScaleToneNote 
+                      <ItemWrapper key={index} $isSeventhMode={isSeventhMode}>
+                        <ScaleToneNoteUpdated
                           $highlight={getHighlightType(index)}
                         >
                           {note}
                           {shouldShowInterval && interval !== null && (
-                            <IntervalLabel 
-                              title={interval === 1 ? 
-                                "Half Step (1 semitone)" : 
-                                interval === 3 ? 
+                            <IntervalLabel
+                              title={interval === 1 ?
+                                "Half Step (1 semitone)" :
+                                interval === 3 ?
                                   "Step and a Half (3 semitones)" :
                                   `Whole Step${interval > 2 ? "s" : ""} (${interval} semitones)`}
                             >
                               +{interval}
                             </IntervalLabel>
                           )}
-                        </ScaleToneNote>
+                        </ScaleToneNoteUpdated>
                       </ItemWrapper>
                     );
                   })}
