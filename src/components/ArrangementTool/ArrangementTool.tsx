@@ -442,22 +442,34 @@ const growUp = keyframes`
 `;
 
 // Styled Components
+const ThemeAwareWrapper = styled.div`
+  --text-primary: ${({ theme }) => theme.colors.text};
+  --text-secondary: ${({ theme }) => theme.colors.textSecondary};
+  --primary: ${({ theme }) => theme.colors.primary};
+  --secondary: ${({ theme }) => theme.colors.secondary};
+  --bg-card: ${({ theme }) => theme.colors.card};
+  --bg-main: ${({ theme }) => theme.colors.background};
+  --border: ${({ theme }) => theme.colors.border};
+  width: 100%;
+  height: 100%;
+`;
+
 const ArrangementCard = styled(Card)`
   background: ${({ theme }) => theme.colors.card};
   padding: 0;
   overflow: visible;
   display: flex;
   flex-direction: column;
-  height: 600px;
+  height: 660px; /* Increased by 10% from 600px */
   position: relative;
 
   @media (max-width: 768px) {
-    height: 500px;
+    height: 550px; /* Increased by 10% from 500px */
   }
 `;
 
 const Header = styled.div`
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme.colors.card};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
   display: flex;
@@ -466,7 +478,7 @@ const Header = styled.div`
 `;
 
 const TemplateSelector = styled.div`
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme.colors.card};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.md};
   position: relative;
@@ -519,14 +531,14 @@ const Dropdown = styled.div`
   }
 
   &::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.background};
+    background: ${({ theme }) => theme.colors.card};
     border-radius: ${({ theme }) => theme.borderRadius.small};
   }
 
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.textSecondary};
     border-radius: ${({ theme }) => theme.borderRadius.small};
-    border: 2px solid ${({ theme }) => theme.colors.background};
+    border: 2px solid ${({ theme }) => theme.colors.card};
 
     &:hover {
       background: ${({ theme }) => theme.colors.primary};
@@ -541,7 +553,7 @@ const CategoryHeader = styled.div<{ $color?: string }>`
   color: ${({ $color }) => $color || '#666'};
   letter-spacing: 1.5px;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme.colors.card};
   position: sticky;
   top: 0;
   z-index: 1;
@@ -572,14 +584,14 @@ const SceneList = styled.div`
   overflow-y: auto;
   overflow-x: hidden;
   padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme.colors.card};
 `;
 
 const SceneItem = styled.div<{ $energy: number; $delay: number }>`
   position: relative;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   overflow: hidden;
-  background: ${({ theme }) => theme.colors.card};
+  background: ${({ theme }) => `${theme.colors.background}88`};
   border: 1px solid ${({ theme, $energy }) =>
     `${ENERGY_COLORS[$energy].fill}44`};
   margin-bottom: ${({ theme }) => theme.spacing.xs};
@@ -611,11 +623,11 @@ const SceneContent = styled.div`
 
 const EnergyArcContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme.colors.card};
 `;
 
 const EnergyArcChart = styled.div`
-  background: ${({ theme }) => theme.colors.card};
+  background: ${({ theme }) => `${theme.colors.background}44`};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   padding: ${({ theme }) => theme.spacing.md};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -656,11 +668,18 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   }, [selected]);
 
   return (
-    <ArrangementCard>
-      <TemplateSelector>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+    <ThemeAwareWrapper>
+      <ArrangementCard>
+        <TemplateSelector>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: '9px', color: '#666', marginBottom: '5px', letterSpacing: '1px' }}>
+            <div style={{
+              fontSize: '9px',
+              color: 'var(--text-secondary)',
+              marginBottom: '5px',
+              letterSpacing: '1px',
+              opacity: 0.7
+            }}>
               TEMPLATE
             </div>
             <div style={{ position: 'relative' }}>
@@ -679,7 +698,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   fontSize: '8px',
-                  color: '#666'
+                  color: 'var(--text-secondary)'
                 }}>
                   {isOpen ? '▲' : '▼'}
                 </span>
@@ -725,7 +744,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{
                               fontSize: '11px',
-                              color: name === selected ? '#FF6A00' : '#CCC',
+                              color: name === selected ? 'var(--primary)' : 'var(--text-primary)',
                               fontWeight: 600,
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
@@ -735,7 +754,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                             </div>
                             <div style={{
                               fontSize: '9px',
-                              color: '#4A4A4A',
+                              color: 'var(--text-secondary)',
                               marginTop: '1px',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
@@ -754,28 +773,28 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
           </div>
 
           <div style={{ flex: 1, minWidth: '160px' }}>
-            <div style={{ fontSize: '11px', color: '#999', lineHeight: 1.6 }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
               {template.desc}
             </div>
-            <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px' }}>
               → {template.vibe}
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '16px', flexShrink: 0 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '9px', color: '#666', letterSpacing: '1px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                 SECTIONS
               </div>
-              <div style={{ fontSize: '20px', color: '#FF6A00', fontWeight: 700 }}>
+              <div style={{ fontSize: '20px', color: 'var(--primary)', fontWeight: 700 }}>
                 {template.scenes.length}
               </div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '9px', color: '#666', letterSpacing: '1px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
                 BARS
               </div>
-              <div style={{ fontSize: '20px', color: '#FF6A00', fontWeight: 700 }}>
+              <div style={{ fontSize: '20px', color: 'var(--primary)', fontWeight: 700 }}>
                 {totalBars}
               </div>
             </div>
@@ -791,7 +810,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
               <SceneItem key={si} $energy={scene.energy} $delay={si * 0.04}>
                 <SceneEnergyBar $energy={scene.energy} $delay={si * 0.04 + 0.1} />
                 <SceneContent>
-                  <span style={{ fontSize: '9px', color: '#555', width: '16px', textAlign: 'right', flexShrink: 0 }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', width: '16px', textAlign: 'right', flexShrink: 0 }}>
                     {si + 1}
                   </span>
                   <div style={{
@@ -802,10 +821,10 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                     flexShrink: 0,
                     boxShadow: `0 0 8px ${colors.clip}55`
                   }} />
-                  <span style={{ fontSize: '13px', color: '#E0E0E0', fontWeight: 600, flex: 1 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600, flex: 1 }}>
                     {scene.name}
                   </span>
-                  <span style={{ fontSize: '10px', color: '#666', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', flexShrink: 0 }}>
                     {scene.bars} bars
                   </span>
                 </SceneContent>
@@ -815,7 +834,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
         </div>
 
         <EnergyArcContainer>
-          <div style={{ fontSize: '9px', color: '#555', marginBottom: '8px', letterSpacing: '1px', paddingLeft: '2px' }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '1px', paddingLeft: '2px' }}>
             ENERGY ARC
           </div>
           <EnergyArcChart>
@@ -841,6 +860,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
         </EnergyArcContainer>
       </SceneList>
     </ArrangementCard>
+    </ThemeAwareWrapper>
   );
 };
 
