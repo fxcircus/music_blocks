@@ -64,10 +64,10 @@ const ControlButtons = styled.div`
   z-index: 10;
 `;
 
-const ControlButton = styled.button<{ $danger?: boolean; $visible?: boolean }>`
-  background: ${({ theme, $danger }) => $danger ? theme.colors.error : theme.colors.buttonPrimary};
-  color: ${({ theme }) => theme.colors.buttonText};
-  border: none;
+const ControlButton = styled.button<{ $visible?: boolean }>`
+  background: transparent;
+  color: #b33939; /* Dark red color for the X icon */
+  border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
   cursor: pointer;
@@ -89,45 +89,12 @@ const ControlButton = styled.button<{ $danger?: boolean; $visible?: boolean }>`
   &:hover:not(:disabled) {
     opacity: 1;
     transform: scale(1.05);
+    border-color: #b33939;
+    background: rgba(179, 57, 57, 0.1);
   }
 
   &:active:not(:disabled) {
     transform: scale(0.95);
-  }
-`;
-
-const RemoveConfirmation = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: ${({ theme }) => theme.colors.card};
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: none;
-  z-index: 20;
-  text-align: center;
-  min-width: 200px;
-`;
-
-const ConfirmationButtons = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.md};
-  justify-content: center;
-`;
-
-const ConfirmButton = styled.button<{ $danger?: boolean }>`
-  background: ${({ theme, $danger }) => $danger ? theme.colors.error : theme.colors.buttonSecondary};
-  color: ${({ theme }) => theme.colors.buttonText};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
-  cursor: pointer;
-  transition: ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    opacity: 0.8;
   }
 `;
 
@@ -148,7 +115,6 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   isRecentlyDragged = false,
   onShowHelp
 }) => {
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
@@ -156,18 +122,9 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   const showRemoveButton = isHovered || isActive || isRecentlyDragged;
 
   const handleRemoveClick = () => {
-    setShowConfirmation(true);
-  };
-
-  const handleConfirmRemove = () => {
-    setShowConfirmation(false);
     if (onRemove) {
       onRemove();
     }
-  };
-
-  const handleCancelRemove = () => {
-    setShowConfirmation(false);
   };
 
   const handleHeaderClick = () => {
@@ -197,7 +154,6 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
             <ControlButton
               onClick={handleRemoveClick}
               disabled={!canRemove}
-              $danger
               $visible={showRemoveButton}
               title="Remove block"
             >
@@ -205,21 +161,6 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
             </ControlButton>
           )}
         </ControlButtons>
-      )}
-
-      {/* Confirmation dialog */}
-      {showConfirmation && (
-        <RemoveConfirmation>
-          <p>Remove this block?</p>
-          <ConfirmationButtons>
-            <ConfirmButton onClick={handleCancelRemove}>
-              Cancel
-            </ConfirmButton>
-            <ConfirmButton $danger onClick={handleConfirmRemove}>
-              Remove
-            </ConfirmButton>
-          </ConfirmationButtons>
-        </RemoveConfirmation>
       )}
 
       {!hideHeader && (

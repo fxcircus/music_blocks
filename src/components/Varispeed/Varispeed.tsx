@@ -48,6 +48,14 @@ const NOTE_COLORS: { [key: number]: string } = {
   8: "#4c62aa", 9: "#3a78b0", 10: "#4a8ea0", 11: "#5aa490"
 };
 
+// Using the same color scheme as Arrangement block for consistency
+const ENERGY_COLORS: Record<number, { bg: string; fill: string; clip: string }> = {
+  1: { bg: "#1E3A52", fill: "#2B5B84", clip: "#3A7BBF" },
+  2: { bg: "#3D3818", fill: "#8B7E2A", clip: "#C4B236" },
+  3: { bg: "#3D2510", fill: "#9B5E28", clip: "#E08A3A" },
+  4: { bg: "#3D1515", fill: "#8B2E2E", clip: "#D14545" },
+};
+
 const BPM_MIN = 10;
 const BPM_MAX = 200;
 
@@ -297,10 +305,8 @@ const BpmBarFill = styled.div<{ $width: number; $isSource?: boolean; $color?: st
   height: 100%;
   background: ${({ theme, $isSource, $color }) =>
     $isSource
-      ? `linear-gradient(90deg, ${theme.colors.primary}60, ${theme.colors.primary}30)`
-      : `linear-gradient(90deg, ${$color}44, ${$color}15)`};
-  border-right: ${({ theme, $isSource, $color }) =>
-    `2px solid ${$isSource ? theme.colors.primary : $color}88`};
+      ? theme.colors.primary
+      : $color};
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
@@ -549,7 +555,27 @@ const Varispeed: FC<VarispeedProps> = ({
         {calculations.map((calc) => {
           const isSource = calc.semitones === 0;
           const barRatio = calc.targetBpm / maxBpm;
-          const color = NOTE_COLORS[calc.noteIdx];
+
+          // Map semitones to energy levels for consistent coloring with Arrangement block
+          const getEnergyLevel = (semitones: number) => {
+            const abs = Math.abs(semitones);
+            if (abs <= 1) return 1;
+            if (abs <= 3) return 2;
+            if (abs <= 4) return 3;
+            return 4;
+          };
+
+          const energyLevel = getEnergyLevel(calc.semitones);
+          const color = ENERGY_COLORS[energyLevel].fill;
+
+          // Format semitone notation
+          const getSemitoneNotation = (semitones: number) => {
+            if (semitones === 0) return '0';
+            const abs = Math.abs(semitones);
+            const sign = semitones > 0 ? '+' : '-';
+            const suffix = abs === 1 ? 'st' : abs === 2 ? 'nd' : abs === 3 ? 'rd' : 'th';
+            return `${sign}${abs}${suffix}`;
+          };
 
           return (
             <CalculationRow key={calc.semitones} $isSource={isSource}>
@@ -576,7 +602,7 @@ const Varispeed: FC<VarispeedProps> = ({
                   color: isSource ? '#e8a849' : calc.ratio > 1 ? '#a0c070' : '#c07070',
                   marginLeft: '8px'
                 }}>
-                  {isSource ? '1.000×' : `${calc.ratio.toFixed(3)}×`}
+                  {getSemitoneNotation(calc.semitones)}
                 </div>
               )}
             </CalculationRow>

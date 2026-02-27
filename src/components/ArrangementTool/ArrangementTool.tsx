@@ -509,25 +509,21 @@ const SelectorButton = styled.button<{ $isOpen?: boolean }>`
 `;
 
 const RandomButton = styled.button`
-  background: ${({ theme }) => theme.colors.card};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background: transparent;
+  border: none;
   color: ${({ theme }) => theme.colors.primary};
-  padding: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.fontSizes.md};
+  padding: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.fontSizes.lg};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
   transition: all 0.2s;
   position: relative;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-    transform: scale(1.05);
+    color: ${({ theme }) => theme.colors.secondary};
+    transform: scale(1.1);
   }
 
   &:active {
@@ -640,9 +636,7 @@ const SceneEnergyBar = styled.div<{ $energy: number; $delay: number }>`
   left: 0;
   bottom: 0;
   width: ${({ $energy }) => `${($energy / 4) * 100}%`};
-  background: ${({ $energy }) =>
-    `linear-gradient(90deg, ${ENERGY_COLORS[$energy].bg} 0%, ${ENERGY_COLORS[$energy].fill}88 60%, ${ENERGY_COLORS[$energy].clip}22 100%)`};
-  border-right: ${({ $energy }) => `2px solid ${ENERGY_COLORS[$energy].clip}66`};
+  background: ${({ $energy }) => ENERGY_COLORS[$energy].fill};
   animation: ${fillIn} 0.5s ease both;
   animation-delay: ${({ $delay }) => `${$delay}s`};
 `;
@@ -668,10 +662,10 @@ const EnergyArcChart = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const ArcEnergyBar = styled.div<{ $width: number; $height: number; $delay: number; $bg: string; $clip: string }>`
+const ArcEnergyBar = styled.div<{ $width: number; $height: number; $delay: number; $fill: string }>`
   width: ${({ $width }) => `${$width}%`};
   height: ${({ $height }) => `${$height}%`};
-  background: ${({ $bg, $clip }) => `linear-gradient(to top, ${$bg}, ${$clip})`};
+  background: ${({ $fill }) => $fill};
   border-radius: 3px 3px 0 0;
   animation: ${growUp} 0.5s ease both;
   animation-delay: ${({ $delay }) => `${$delay}s`};
@@ -905,8 +899,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                     key={i}
                     $width={widthPercent}
                     $height={heightPercent}
-                    $bg={colors.bg}
-                    $clip={colors.clip}
+                    $fill={colors.fill}
                     $delay={i * 0.06}
                     title={`${scene.name} — ${scene.bars} bars`}
                   />

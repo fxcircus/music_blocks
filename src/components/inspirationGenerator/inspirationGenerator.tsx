@@ -340,40 +340,42 @@ const Tooltip = styled.div`
 // Update the ChordDegreesContainer to handle dynamic spacing
 const ChordDegreesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
   display: flex;
-  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
+  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
   gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-    $isSeventhMode ? theme.spacing.xs : $noteCount < 6 ? theme.spacing.md : theme.spacing.sm};
+    $isSeventhMode ? theme.spacing.xs : $noteCount < 7 ? '0' : theme.spacing.sm};
   overflow-x: visible;
   padding-right: ${({ theme }) => theme.spacing.sm};
-  width: fit-content;
+  width: ${({ $isSeventhMode }) => $isSeventhMode ? '350px' : '320px'};
   position: relative;
   z-index: 10;
 
   @media (max-width: 768px) {
-    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
+    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
     padding-right: ${({ theme }) => theme.spacing.xs};
     gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-      $isSeventhMode ? '4px' : $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
+      $isSeventhMode ? '4px' : $noteCount < 7 ? '0' : theme.spacing.xs};
+    width: ${({ $isSeventhMode }) => $isSeventhMode ? '260px' : '240px'};
   }
 `;
 
 // Update the ScaleTonesContainer to handle dynamic spacing
 const ScaleTonesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
   display: flex;
-  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
+  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
   gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-    $isSeventhMode ? theme.spacing.xs : $noteCount < 6 ? theme.spacing.md : theme.spacing.sm};
+    $isSeventhMode ? theme.spacing.xs : $noteCount < 7 ? '0' : theme.spacing.sm};
   overflow-x: visible;
   padding-right: ${({ theme }) => theme.spacing.sm};
-  width: fit-content;
+  width: ${({ $isSeventhMode }) => $isSeventhMode ? '350px' : '320px'};
   position: relative;
   z-index: 10;
 
   @media (max-width: 768px) {
-    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'center' : 'flex-start'};
+    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
     padding-right: ${({ theme }) => theme.spacing.xs};
     gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-      $isSeventhMode ? '4px' : $noteCount < 6 ? theme.spacing.sm : theme.spacing.xs};
+      $isSeventhMode ? '4px' : $noteCount < 7 ? '0' : theme.spacing.xs};
+    width: ${({ $isSeventhMode }) => $isSeventhMode ? '260px' : '240px'};
   }
 `;
 
@@ -535,6 +537,7 @@ const InversionControls = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   margin-left: ${({ theme }) => theme.spacing.sm};
+  min-width: 120px;
 `;
 
 const InversionButton = styled.button<{ $disabled?: boolean }>`
@@ -1822,31 +1825,29 @@ export default function InspirationGenerator({
                   })}
                 </ChordDegreesContainer>
 
-                {/* Inversion Controls - show only when a chord is selected */}
-                {selectedChord !== null && (
-                  <InversionControls>
-                    <InversionButton
-                      onClick={() => cycleInversion('prev')}
-                      disabled={false}
-                      title="Previous inversion"
-                    >
-                      ←
-                    </InversionButton>
-                    <InversionDisplay>
-                      {inversionIndex === 0 ? 'Root' :
-                       inversionIndex === 1 ? '1st Inv' :
-                       inversionIndex === 2 ? '2nd Inv' :
-                       inversionIndex === 3 ? '3rd Inv' : 'Root'}
-                    </InversionDisplay>
-                    <InversionButton
-                      onClick={() => cycleInversion('next')}
-                      disabled={false}
-                      title="Next inversion"
-                    >
-                      →
-                    </InversionButton>
-                  </InversionControls>
-                )}
+                {/* Inversion Controls - always present to maintain width, but invisible when no chord selected */}
+                <InversionControls style={{ visibility: selectedChord !== null ? 'visible' : 'hidden' }}>
+                  <InversionButton
+                    onClick={() => cycleInversion('prev')}
+                    disabled={selectedChord === null}
+                    title="Previous inversion"
+                  >
+                    ←
+                  </InversionButton>
+                  <InversionDisplay>
+                    {inversionIndex === 0 ? 'Root' :
+                     inversionIndex === 1 ? '1st Inv' :
+                     inversionIndex === 2 ? '2nd Inv' :
+                     inversionIndex === 3 ? '3rd Inv' : 'Root'}
+                  </InversionDisplay>
+                  <InversionButton
+                    onClick={() => cycleInversion('next')}
+                    disabled={selectedChord === null}
+                    title="Next inversion"
+                  >
+                    →
+                  </InversionButton>
+                </InversionControls>
               </ExtendedInfoCell>
             </TableRow>
             
