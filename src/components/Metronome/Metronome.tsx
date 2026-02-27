@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaDrum, FaBug } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import ToolCard from '../common/ToolCard';
+import TipsModal from '../common/TipsModal';
+import HelpButton from '../common/HelpButton';
 import config from '../../config';
 
 interface LoaderProps {
@@ -345,6 +347,7 @@ const Metronome: FC<LoaderProps> = ({
     const [muteSound, setMuteSound] = useState(false);
     const [bpm, setBpm] = useState(initialBpm);
     const [currentBeat, setCurrentBeat] = useState(0);
+    const [showTips, setShowTips] = useState(false);
     const beats = [0, 1, 2, 3]; // 4/4 time signature
     
     // Refs
@@ -567,6 +570,7 @@ const Metronome: FC<LoaderProps> = ({
             canRemove={canRemove}
             canMoveUp={canMoveUp}
             canMoveDown={canMoveDown}
+            additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
         >
             {config.DEBUG_MODE && (
                 <DebugButton onClick={toggleDebug} aria-label="Toggle debug panel">
@@ -676,6 +680,24 @@ const Metronome: FC<LoaderProps> = ({
                     />
                 ))}
             </BeatsRow>
+            <TipsModal
+                isOpen={showTips}
+                onClose={() => setShowTips(false)}
+                title="How to Use the Metronome"
+                content={
+                    <>
+                        <p>
+                            You can click directly on the metronome dial to start or stop playback.
+                        </p>
+                        <p>
+                            Use the + and – controls to adjust BPM.
+                        </p>
+                        <p>
+                            The metronome will play at the currently displayed tempo.
+                        </p>
+                    </>
+                }
+            />
         </ToolCard>
     );
 };

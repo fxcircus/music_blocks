@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
+import TipsModal from '../common/TipsModal';
+import HelpButton from '../common/HelpButton';
 
 interface VarispeedProps {
   bpm?: number;
@@ -61,6 +63,14 @@ const VarispeedHeader = styled.div`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.md};
+  position: relative;
+`;
+
+const HeaderControls = styled.div`
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 `;
 
 const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
@@ -304,36 +314,6 @@ const BpmValue = styled.div<{ $isSource?: boolean }>`
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 `;
 
-const InfoSection = styled.div`
-  margin-top: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-`;
-
-const InfoTitle = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const InfoText = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.text};
-  line-height: 1.8;
-
-  strong {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  em {
-    color: ${({ theme }) => theme.colors.textSecondary};
-    font-style: italic;
-  }
-`;
 
 function KeyPicker({ keyIdx, setKeyIdx, disabled, displayKey }: { keyIdx: number; setKeyIdx: (idx: number) => void; disabled?: boolean; displayKey?: string }) {
   const [open, setOpen] = useState(false);
@@ -401,6 +381,7 @@ const Varispeed: FC<VarispeedProps> = ({
   const [localKeyIdx, setLocalKeyIdx] = useState(propKeyIdx);
   const [localLinked, setLocalLinked] = useState(propLinked);
   const [isMobile, setIsMobile] = useState(false);
+  const [showTips, setShowTips] = useState(false);
 
   const isLinked = propSetLinked ? propLinked : localLinked;
   const setIsLinked = propSetLinked || setLocalLinked;
@@ -490,6 +471,7 @@ const Varispeed: FC<VarispeedProps> = ({
 
   return (
     <VarispeedCard
+      className="varispeed-card"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -499,6 +481,9 @@ const Varispeed: FC<VarispeedProps> = ({
           <Icon icon={FaWaveSquare} size={20} />
         </CardIconWrapper>
         <CardTitle>Varispeed Calculator</CardTitle>
+        <HeaderControls>
+          <HelpButton onClick={() => setShowTips(true)} />
+        </HeaderControls>
       </VarispeedHeader>
 
       <ControlSection>
@@ -593,16 +578,25 @@ const Varispeed: FC<VarispeedProps> = ({
         })}
       </div>
 
-      <InfoSection>
-        <InfoTitle>How to use</InfoTitle>
-        <InfoText>
-          <strong>To pitch down:</strong> Set your DAW to the target BPM (faster), record your part, then slow playback to your original BPM.
-          <br />
-          <strong>To pitch up:</strong> Set your DAW to the target BPM (slower), record your part, then speed playback to your original BPM.
-          <br />
-          <em>Each semitone ≈ 5.95% speed change.</em>
-        </InfoText>
-      </InfoSection>
+      <TipsModal
+        isOpen={showTips}
+        onClose={() => setShowTips(false)}
+        title="How to Use the Varispeed Calculator"
+        content={
+          <>
+            <h3>How to use</h3>
+            <p>
+              <strong>To pitch down:</strong> Set your DAW to the target BPM (faster), record your part, then slow playback to your original BPM.
+            </p>
+            <p>
+              <strong>To pitch up:</strong> Set your DAW to the target BPM (slower), record your part, then speed playback to your original BPM.
+            </p>
+            <p>
+              <em>Each semitone ≈ 5.95% speed change.</em>
+            </p>
+          </>
+        }
+      />
     </VarispeedCard>
   );
 };

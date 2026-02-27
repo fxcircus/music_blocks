@@ -18,6 +18,7 @@ interface ToolCardProps {
   canMoveDown?: boolean;
   hideHeader?: boolean;
   showControlsOnly?: boolean;
+  additionalControls?: ReactNode;
 }
 
 const StyledToolCard = styled(Card)`
@@ -118,7 +119,8 @@ const ToolCard: React.FC<ToolCardProps> = ({
   canMoveUp = true,
   canMoveDown = true,
   hideHeader = false,
-  showControlsOnly = false
+  showControlsOnly = false,
+  additionalControls
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -139,14 +141,15 @@ const ToolCard: React.FC<ToolCardProps> = ({
 
   return (
     <StyledToolCard
-      className={className}
+      className={`tool-card ${className || ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Control buttons for move and remove */}
-      {(onMoveUp || onMoveDown || onRemove) && (
+      {(onMoveUp || onMoveDown || onRemove || additionalControls) && (
         <ControlButtons>
+          {additionalControls}
           {onMoveUp && (
             <ControlButton
               onClick={onMoveUp}

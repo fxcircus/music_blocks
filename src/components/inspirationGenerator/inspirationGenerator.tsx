@@ -12,6 +12,8 @@ import {
   getCorrectNoteSpelling
 } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
+import TipsModal from '../common/TipsModal';
+import HelpButton from '../common/HelpButton';
 
 // Chord quality mapping for different modes
 const chordQualities: Record<string, (string | null)[]> = {
@@ -395,6 +397,14 @@ const InspirationCardHeader = styled.div`
   align-items: center;
   justify-content: center;
   margin-bottom: ${({ theme }) => theme.spacing.sm};
+  position: relative;
+`;
+
+const HeaderControls = styled.div`
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 `;
 
 const ChordDegree = styled.div<{ $isSelected: boolean }>`
@@ -682,6 +692,9 @@ export default function InspirationGenerator({
   // Add state for dropdown menus
   const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
   const dropdownRef = useRef<HTMLTableCellElement>(null);
+
+  // Add state for tips modal
+  const [showTips, setShowTips] = useState(false);
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -1585,6 +1598,7 @@ export default function InspirationGenerator({
   return (
     <div style={{ overflow: 'visible' }}>
       <InspirationCard
+        className="inspiration-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -1594,6 +1608,9 @@ export default function InspirationGenerator({
             <Icon icon={FaMusic} size={20} />
           </CardIconWrapper>
           <CardTitle>Inspiration Generator</CardTitle>
+          <HeaderControls>
+            <HelpButton onClick={() => setShowTips(true)} />
+          </HeaderControls>
         </InspirationCardHeader>
         
         <DiceButton
@@ -1909,6 +1926,27 @@ export default function InspirationGenerator({
           isSeventhMode={isSeventhMode}
           visualizerType="both"
           playingNoteIndex={playingNoteIndex}
+        />
+        <TipsModal
+          isOpen={showTips}
+          onClose={() => setShowTips(false)}
+          title="About the Inspiration Generator"
+          content={
+            <>
+              <p>
+                Click on the dice to "roll" a new set of "rules".
+              </p>
+              <p>
+                When you find a setting you like, click on the lock icon to keep it locked, then continue rolling to randomize the other unlocked parameters.
+              </p>
+              <p>
+                Click on the chord degrees to highlight the different notes from the scale that form each chord.
+              </p>
+              <p>
+                Click on the icon next to "Chord Degrees" to switch between triads and seventh chords.
+              </p>
+            </>
+          }
         />
       </InspirationCard>
     </div>

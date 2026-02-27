@@ -146,7 +146,7 @@ const AboutPage = () => {
           <SectionTitle>Features</SectionTitle>
           <List>
             <ListItem>
-              <Strong>🍅 Flow Timer:</Strong> 
+              <Strong>🍅 Flow Timer:</Strong>
               <NestedList>
                 <ListItem>A simple Pomodoro-style timer to help you stay focused while writing, practicing, or producing.</ListItem>
               </NestedList>
@@ -155,18 +155,37 @@ const AboutPage = () => {
               <Strong>🎲 Inspiration Generator:</Strong>
               <NestedList>
                 <ListItem>Randomize scales, BPM, and sounds. Lock in what you like and shuffle the rest.</ListItem>
+                <ListItem>Interactive chord degrees with highlighting and seventh chord support.</ListItem>
+                <ListItem>Visual piano and guitar displays showing scale notes and chord tones.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
               <Strong>🎶 Metronome:</Strong>
               <NestedList>
                 <ListItem>Follows the BPM from the Inspiration Generator, with manual adjustment in 1-step increments.</ListItem>
+                <ListItem>Click the dial to jump to specific BPM values.</ListItem>
+              </NestedList>
+            </ListItem>
+            <ListItem>
+              <Strong>🎸 Varispeed Calculator:</Strong>
+              <NestedList>
+                <ListItem>Calculate pitch shifts for varispeed recording and tape manipulation.</ListItem>
+                <ListItem>Shows BPM changes when recording at different pitches.</ListItem>
+                <ListItem>Perfect for analog and digital recording workflows.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
               <Strong>📝 Notes:</Strong>
               <NestedList>
-                <ListItem>Write down lyrics, chord progressions, FX pedal settings, etc'...</ListItem>
+                <ListItem>Write down lyrics, chord progressions, FX pedal settings, etc...</ListItem>
+                <ListItem>Auto-saves locally as you type.</ListItem>
+              </NestedList>
+            </ListItem>
+            <ListItem>
+              <Strong>❓ Contextual Help:</Strong>
+              <NestedList>
+                <ListItem>Hover over any block to reveal a help button with tips and instructions.</ListItem>
+                <ListItem>Clean interface that shows help only when needed.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
@@ -179,7 +198,7 @@ const AboutPage = () => {
             <ListItem>
               <Strong>🌓 Dark / Light Modes:</Strong>
               <NestedList>
-                <ListItem>Yes.</ListItem>
+                <ListItem>Full theme support with carefully crafted dark and light modes.</ListItem>
               </NestedList>
             </ListItem>
           </List>

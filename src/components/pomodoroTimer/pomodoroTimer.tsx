@@ -5,6 +5,8 @@ import { FaUndo, FaPlay, FaPause, FaCoffee } from 'react-icons/fa';
 import { GiTomato } from 'react-icons/gi';
 import ToolCard from '../common/ToolCard';
 import { Icon } from '../../utils/IconHelper';
+import TipsModal from '../common/TipsModal';
+import HelpButton from '../common/HelpButton';
 
 // Styled components
 const TimerDisplay = styled(motion.div)`
@@ -78,6 +80,7 @@ export default function PomodoroTimer({
 }: PomodoroTimerProps = {}) {
   const [time, setTime] = useState(1500);
   const [isCounting, setIsCounting] = useState(false);
+  const [showTips, setShowTips] = useState(false);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const secondsToMinutes = (seconds: number) => {
@@ -136,6 +139,7 @@ export default function PomodoroTimer({
       canRemove={canRemove}
       canMoveUp={canMoveUp}
       canMoveDown={canMoveDown}
+      additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
     >
       <TimerDisplay
         initial={{ scale: 0.9 }}
@@ -176,6 +180,28 @@ export default function PomodoroTimer({
           <IconWrapper><Icon icon={FaCoffee} size={20} /></IconWrapper>
         </TimerButton>
       </TimerControls>
+
+      <TipsModal
+        isOpen={showTips}
+        onClose={() => setShowTips(false)}
+        title="How the Flow Timer Works"
+        content={
+          <>
+            <p>
+              This timer follows the Pomodoro technique.
+            </p>
+            <p>
+              Work in focused intervals (typically 25 minutes), then take a short break.
+            </p>
+            <p>
+              After several work sessions, take a longer break.
+            </p>
+            <p>
+              Use the timer to structure focused deep work sessions.
+            </p>
+          </>
+        }
+      />
     </ToolCard>
   );
 }
