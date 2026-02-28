@@ -22,12 +22,12 @@ const CURRENT_STORAGE_VERSION = 2; // Version 1 = old flat state, Version 2 = bl
 export const getDefaultAppState = (): AppState => {
   // Define default block configuration with specific order and visibility
   const defaultBlockConfig = [
-    { id: 'inspirationGenerator', order: 0, visible: true },  // First row left
-    { id: 'metronome', order: 1, visible: true },            // First row right
-    { id: 'flowTimer', order: 2, visible: true },            // Second row left
-    { id: 'notes', order: 3, visible: true },                // Second row right
-    { id: 'arrangementTool', order: 4, visible: false },     // Third row left (hidden)
-    { id: 'varispeed', order: 5, visible: false },           // Third row right (hidden)
+    { id: 'inspirationGenerator', order: 0, visible: true },  // Row 1 left
+    { id: 'arrangementTool', order: 1, visible: true },       // Row 1 right
+    { id: 'metronome', order: 2, visible: true },             // Row 2 left
+    { id: 'flowTimer', order: 3, visible: true },             // Row 2 right
+    { id: 'notes', order: 4, visible: true },                 // Row 3 left
+    { id: 'varispeed', order: 5, visible: true },             // Row 3 right
   ];
 
   const blocks: BlockInstance[] = defaultBlockConfig.map(config => ({
@@ -123,7 +123,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
       instanceId: 'arrangementTool',
       type: 'arrangementTool',
       order: 4,
-      visible: false, // Hidden by default
+      visible: true,
       state: {
         selectedTemplate: 'Two Peaks',
       },
@@ -132,7 +132,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
       instanceId: 'varispeed',
       type: 'varispeed',
       order: 5,
-      visible: false, // Hidden by default
+      visible: true,
       state: {
         bpm: 120,
         keyIdx: 0,
@@ -286,9 +286,16 @@ export const updateBlockState = (
  */
 export const addBlock = (appState: AppState, blockTypeId: string): AppState => {
   // Check if block already exists
-  const exists = appState.blocks.some(b => b.type === blockTypeId);
-  if (exists) {
-    console.warn(`[Storage] Block type '${blockTypeId}' already exists`);
+  const existingBlock = appState.blocks.find(b => b.type === blockTypeId);
+  if (existingBlock) {
+    // If it exists but is hidden, make it visible
+    if (!existingBlock.visible) {
+      const updatedBlocks = appState.blocks.map(b =>
+        b.type === blockTypeId ? { ...b, visible: true } : b
+      );
+      return { ...appState, blocks: updatedBlocks };
+    }
+    console.warn(`[Storage] Block type '${blockTypeId}' already exists and is visible`);
     return appState;
   }
 
