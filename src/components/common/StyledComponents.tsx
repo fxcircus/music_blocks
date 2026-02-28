@@ -360,10 +360,6 @@ export const AppWrapper = styled.div`
   transition: all ${({ theme }) => theme.transitions.normal};
   font-family: 'Inter', 'Roboto', sans-serif;
   padding-top: 70px; /* Space for fixed navbar */
-
-  @media (max-width: 768px) {
-    zoom: 0.85;
-  }
 `;
 
 // Create a consistent header component for all cards
