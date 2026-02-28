@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar } from 'react-icons/fa';
+import { GiPianoKeys } from 'react-icons/gi';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
@@ -616,6 +617,36 @@ const PlayButton = styled.button<{ $isPlaying: boolean }>`
   }
 `;
 
+const VisualizerIcons = styled.div`
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: ${({ theme }) => theme.spacing.xs};
+`;
+
+const VisualizerIconButton = styled.button<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.primary : 'transparent'};
+  color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.buttonText : theme.colors.textSecondary};
+  border: 2px solid ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.primary : theme.colors.border};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    background: ${({ $isActive, theme }) =>
+      $isActive ? theme.colors.primary : `${theme.colors.primary}22`};
+    transform: scale(1.05);
+  }
+`;
+
 // Update ScaleToneNote to support seventh highlighting and playback
 const ScaleToneNoteUpdated = styled.div<{
   $highlight: 'root' | 'chord' | 'seventh' | 'none';
@@ -703,6 +734,10 @@ export default function InspirationGenerator({
 
   // Add state for tips modal
   const [showTips, setShowTips] = useState(false);
+
+  // Visualizer toggle state
+  const [showPiano, setShowPiano] = useState(false);
+  const [showGuitar, setShowGuitar] = useState(false);
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -1902,7 +1937,7 @@ export default function InspirationGenerator({
               <LabelCell>
                 Scale<br />Tones
               </LabelCell>
-              <ExtendedInfoCell>
+              <ExtendedInfoCell style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <ScaleTonesContainer $noteCount={scaleNoteCounts[scaleEl] || 7} $isSeventhMode={isSeventhMode}>
                   {tonesArrEl.map((note, index) => {
                     const noteCount = scaleNoteCounts[scaleEl] || 7;
@@ -1939,6 +1974,22 @@ export default function InspirationGenerator({
                     );
                   })}
                 </ScaleTonesContainer>
+                <VisualizerIcons>
+                  <VisualizerIconButton
+                    $isActive={showPiano}
+                    onClick={() => setShowPiano(!showPiano)}
+                    title="Toggle piano"
+                  >
+                    <Icon icon={GiPianoKeys} size={16} />
+                  </VisualizerIconButton>
+                  <VisualizerIconButton
+                    $isActive={showGuitar}
+                    onClick={() => setShowGuitar(!showGuitar)}
+                    title="Toggle guitar"
+                  >
+                    <Icon icon={FaGuitar} size={14} />
+                  </VisualizerIconButton>
+                </VisualizerIcons>
               </ExtendedInfoCell>
             </TableRow>
             
@@ -1961,6 +2012,8 @@ export default function InspirationGenerator({
           isSeventhMode={isSeventhMode}
           visualizerType="both"
           playingNoteIndex={playingNoteIndex}
+          showPiano={showPiano}
+          showGuitar={showGuitar}
         />
         <TipsModal
           isOpen={showTips}

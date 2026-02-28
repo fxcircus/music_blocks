@@ -17,6 +17,8 @@ export interface NotesVisualizerProps {
   isSeventhMode: boolean;       // Seventh chord mode
   visualizerType: 'piano' | 'guitar' | 'both';
   playingNoteIndex?: number;    // Currently playing note (-1 if not playing)
+  showPiano: boolean;
+  showGuitar: boolean;
 }
 
 export interface PianoVisualizerProps {
