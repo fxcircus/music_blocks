@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { PianoVisualizerProps, PianoKey, getNoteChromatic } from '../types';
 
@@ -22,11 +22,12 @@ const WhiteKey = styled.div<{
   $isHighlighted: boolean;
   $highlightType?: 'root' | 'chord' | 'seventh' | 'scale';
   $isPlaying?: boolean;
+  $isPressed?: boolean;
 }>`
   width: 28px;
   height: 100px;
-  background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
-    if ($isPlaying) return '#dc2626';  // Solid red when playing
+  background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+    if ($isPressed || $isPlaying) return '#dc2626';  // Solid red when pressed or playing
     if (!$isHighlighted) return '#ffffff';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue for root notes
@@ -42,12 +43,13 @@ const WhiteKey = styled.div<{
   position: relative;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
-  transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1, 0.98)' : 'scale(1, 1)'};
+  transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  user-select: none;
 
   &:hover {
-    background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
-      if ($isPlaying) return '#dc2626';  // Stay red when playing
+    background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+      if ($isPressed || $isPlaying) return '#dc2626';  // Stay red when pressed or playing
       if (!$isHighlighted) return '#f5f5f5';
       switch ($highlightType) {
         case 'root': return '#006699';  // Darker blue on hover for root
@@ -77,12 +79,13 @@ const BlackKey = styled.div<{
   $isHighlighted: boolean;
   $highlightType?: 'root' | 'chord' | 'seventh' | 'scale';
   $isPlaying?: boolean;
+  $isPressed?: boolean;
   $leftOffset: number;
 }>`
   width: 20px;
   height: 65px;
-  background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
-    if ($isPlaying) return '#dc2626';  // Solid red when playing
+  background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+    if ($isPressed || $isPlaying) return '#dc2626';  // Solid red when pressed or playing
     if (!$isHighlighted) return '#2a2a2a';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue for root notes (black keys)
@@ -98,12 +101,13 @@ const BlackKey = styled.div<{
   border-radius: 0 0 3px 3px;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
-  transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1, 0.98)' : 'scale(1, 1)'};
+  transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  user-select: none;
 
   &:hover {
-    background: ${({ $isHighlighted, $highlightType, $isPlaying, theme }) => {
-      if ($isPlaying) return '#dc2626';  // Stay red when playing
+    background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+      if ($isPressed || $isPlaying) return '#dc2626';  // Stay red when pressed or playing
       if (!$isHighlighted) return '#3a3a3a';
       switch ($highlightType) {
         case 'root': return '#006699';  // Darker blue on hover for root (black keys)
@@ -137,6 +141,127 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
+  // State to track which keys are currently pressed
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+
+  // Audio context and oscillators management
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const activeOscillatorsRef = useRef<Map<string, OscillatorNode>>(new Map());
+
+  // Initialize audio context lazily
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  // Calculate frequency for a given note
+  const calculateFrequency = useCallback((note: string, octave: number): number => {
+    const noteFrequencies: Record<string, number> = {
+      'C': 261.63,
+      'C♯': 277.18, 'D♭': 277.18,
+      'D': 293.66,
+      'D♯': 311.13, 'E♭': 311.13,
+      'E': 329.63,
+      'F': 349.23,
+      'F♯': 369.99, 'G♭': 369.99,
+      'G': 392.00,
+      'G♯': 415.30, 'A♭': 415.30,
+      'A': 440.00,
+      'A♯': 466.16, 'B♭': 466.16,
+      'B': 493.88
+    };
+
+    const baseFreq = noteFrequencies[note] || 261.63; // Default to C if not found
+    return baseFreq * Math.pow(2, octave - 4); // Adjust for octave (C4 = middle C)
+  }, []);
+
+  // Play a note
+  const playNote = useCallback((note: string, octave: number) => {
+    try {
+      const context = getAudioContext();
+
+      // Resume context if suspended
+      if (context.state === 'suspended') {
+        context.resume();
+      }
+
+      const frequency = calculateFrequency(note, octave);
+      const keyId = `${note}-${octave}`;
+
+      // Stop any existing oscillator for this key
+      const existingOsc = activeOscillatorsRef.current.get(keyId);
+      if (existingOsc) {
+        existingOsc.stop();
+        activeOscillatorsRef.current.delete(keyId);
+      }
+
+      // Create new oscillator
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'triangle'; // Softer sound than sine
+
+      // Set up gain envelope for smoother sound
+      gainNode.gain.setValueAtTime(0, context.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.01); // Quick attack
+      gainNode.gain.exponentialRampToValueAtTime(0.15, context.currentTime + 0.1); // Sustain
+
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+
+      // Start playing
+      oscillator.start(context.currentTime);
+
+      // Store the oscillator
+      activeOscillatorsRef.current.set(keyId, oscillator);
+    } catch (error) {
+      console.error('Error playing note:', error);
+    }
+  }, [getAudioContext, calculateFrequency]);
+
+  // Stop a note
+  const stopNote = useCallback((note: string, octave: number) => {
+    try {
+      const keyId = `${note}-${octave}`;
+      const oscillator = activeOscillatorsRef.current.get(keyId);
+
+      if (oscillator && audioContextRef.current) {
+        const context = audioContextRef.current;
+        const gainNode = context.createGain();
+
+        // Quick fade out to avoid clicks
+        gainNode.gain.setValueAtTime(0.15, context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+
+        oscillator.stop(context.currentTime + 0.1);
+        activeOscillatorsRef.current.delete(keyId);
+      }
+    } catch (error) {
+      console.error('Error stopping note:', error);
+    }
+  }, []);
+
+  // Handle key press
+  const handleKeyPress = useCallback((key: PianoKey, octave: number) => {
+    const keyId = `${key.note}-${octave}`;
+    setPressedKeys(prev => new Set([...prev, keyId]));
+    playNote(key.note, octave + 3); // Adjust octave for proper pitch
+  }, [playNote]);
+
+  // Handle key release
+  const handleKeyRelease = useCallback((key: PianoKey, octave: number) => {
+    const keyId = `${key.note}-${octave}`;
+    setPressedKeys(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(keyId);
+      return newSet;
+    });
+    stopNote(key.note, octave + 3);
+  }, [stopNote]);
   // Helper function to determine highlight type
   const getHighlightType = (
     noteIndex: number,
@@ -301,27 +426,81 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     <PianoContainer>
       <KeysContainer>
         {/* Render white keys */}
-        {whiteKeys.map((key, index) => (
-          <WhiteKey
-            key={`white-${key.note}-${index}`}
-            $isHighlighted={key.isHighlighted}
-            $highlightType={key.highlightType}
-            $isPlaying={key.isPlaying}
-            title={key.note}
-          />
-        ))}
+        {whiteKeys.map((key, index) => {
+          const octave = Math.floor(key.position / 12);
+          const keyId = `${key.note}-${octave}`;
+          const isPressed = pressedKeys.has(keyId);
+
+          return (
+            <WhiteKey
+              key={`white-${key.note}-${index}`}
+              $isHighlighted={key.isHighlighted}
+              $highlightType={key.highlightType}
+              $isPlaying={key.isPlaying}
+              $isPressed={isPressed}
+              title={key.note}
+              onMouseDown={() => handleKeyPress(key, octave)}
+              onMouseUp={() => handleKeyRelease(key, octave)}
+              onMouseLeave={() => {
+                // Also release on mouse leave to prevent stuck notes
+                if (isPressed) {
+                  handleKeyRelease(key, octave);
+                }
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                handleKeyPress(key, octave);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleKeyRelease(key, octave);
+              }}
+            />
+          );
+        })}
 
         {/* Render black keys */}
-        {blackKeys.map((key, index) => (
-          <BlackKey
-            key={`black-${key.note}-${index}`}
-            $isHighlighted={key.isHighlighted}
-            $highlightType={key.highlightType}
-            $isPlaying={key.isPlaying}
-            $leftOffset={calculateBlackKeyOffset(key)}
-            title={key.note}
-          />
-        ))}
+        {blackKeys.map((key, index) => {
+          const octave = Math.floor(key.position / 12);
+          const keyId = `${key.note}-${octave}`;
+          const isPressed = pressedKeys.has(keyId);
+
+          return (
+            <BlackKey
+              key={`black-${key.note}-${index}`}
+              $isHighlighted={key.isHighlighted}
+              $highlightType={key.highlightType}
+              $isPlaying={key.isPlaying}
+              $isPressed={isPressed}
+              $leftOffset={calculateBlackKeyOffset(key)}
+              title={key.note}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleKeyPress(key, octave);
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                handleKeyRelease(key, octave);
+              }}
+              onMouseLeave={() => {
+                // Also release on mouse leave to prevent stuck notes
+                if (isPressed) {
+                  handleKeyRelease(key, octave);
+                }
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleKeyPress(key, octave);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleKeyRelease(key, octave);
+              }}
+            />
+          );
+        })}
       </KeysContainer>
     </PianoContainer>
   );

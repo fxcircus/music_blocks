@@ -93,6 +93,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
     defaultState: {
       bpm: 120,
       keyIdx: 0,
+      linkedToGenerator: true, // Default to linked
     },
     category: 'music',
     description: 'Calculate pitch and tempo changes for varispeed effects',

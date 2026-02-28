@@ -170,7 +170,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           setBpm={(bpm: number) => updateBlockState({ bpm })}
           keyIdx={block.state.keyIdx || 0}
           setKeyIdx={(keyIdx: number) => updateBlockState({ keyIdx })}
-          linkedToGenerator={block.state.linkedToGenerator || false}
+          linkedToGenerator={block.state.linkedToGenerator !== undefined ? block.state.linkedToGenerator : true}
           setLinkedToGenerator={(linked: boolean) => updateBlockState({ linkedToGenerator: linked })}
           generatorBpm={globalBpm}
           generatorRoot={generatorRoot}

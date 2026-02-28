@@ -98,6 +98,7 @@ const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  min-width: 85px; /* Prevent width change between "Link" and "Linked" */
   transition: all 0.2s;
 
   &:hover {
