@@ -14,7 +14,6 @@ import {
 } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
-import HelpButton from '../common/HelpButton';
 import DragHandle from '../common/DragHandle';
 
 // Chord quality mapping for different modes
@@ -82,6 +81,8 @@ interface componentProps {
   setSoundEl: (soundEl: string) => void;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
+  showTips?: boolean;
+  setShowTips?: (show: boolean) => void;
 }
 
 // Styled components
@@ -406,12 +407,6 @@ const InspirationCardHeader = styled.div`
   position: relative;
 `;
 
-const HeaderControls = styled.div`
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-`;
 
 const ChordDegree = styled.div<{ $isSelected: boolean }>`
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
@@ -704,6 +699,8 @@ export default function InspirationGenerator({
   onBatchUpdate,
   dragHandleProps,
   isRecentlyDragged,
+  showTips: showTipsExternal,
+  setShowTips: setShowTipsExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const [locked, setLocked] = useState<LockedState>({
     root: false,
@@ -732,8 +729,10 @@ export default function InspirationGenerator({
   const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
   const dropdownRef = useRef<HTMLTableCellElement>(null);
 
-  // Add state for tips modal
-  const [showTips, setShowTips] = useState(false);
+  // Tips modal - use external state if provided, otherwise internal
+  const [showTipsInternal, setShowTipsInternal] = useState(false);
+  const showTips = showTipsExternal !== undefined ? showTipsExternal : showTipsInternal;
+  const setShowTips = setShowTipsExternal || setShowTipsInternal;
 
   // Visualizer toggle state
   const [showPiano, setShowPiano] = useState(false);
@@ -1680,9 +1679,6 @@ export default function InspirationGenerator({
             <Icon icon={FaMusic} size={20} />
           </CardIconWrapper>
           <CardTitle>Inspiration Generator</CardTitle>
-          <HeaderControls>
-            <HelpButton onClick={() => setShowTips(true)} />
-          </HeaderControls>
         </InspirationCardHeader>
         
         <DiceButton

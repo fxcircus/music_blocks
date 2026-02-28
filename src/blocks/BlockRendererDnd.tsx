@@ -59,6 +59,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
 }) => {
   const [animate, setAnimate] = useState(false);
   const [showArrangementHelp, setShowArrangementHelp] = useState(false);
+  const [showTips, setShowTips] = useState(false);
 
   // Get the component and type info for this block
   const BlockComponent = getBlockComponent(block.type);
@@ -131,6 +132,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           onBatchUpdate={(updates: Record<string, any>) => updateBlockState(updates)}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          showTips={showTips}
+          setShowTips={setShowTips}
         />
       );
       break;
@@ -176,6 +179,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           generatorRoot={generatorRoot}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          showTips={showTips}
+          setShowTips={setShowTips}
         />
       );
       break;
@@ -261,6 +266,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         showControlsOnly={false}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
+        onShowHelp={(block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
       >
         {blockContent}
       </CardComponent>

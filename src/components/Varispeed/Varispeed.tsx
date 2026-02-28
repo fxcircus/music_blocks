@@ -5,7 +5,6 @@ import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from '
 import { Icon } from '../../utils/IconHelper';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
-import HelpButton from '../common/HelpButton';
 import DragHandle from '../common/DragHandle';
 
 interface VarispeedProps {
@@ -19,6 +18,8 @@ interface VarispeedProps {
   generatorRoot?: string;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
+  showTips?: boolean;
+  setShowTips?: (show: boolean) => void;
 }
 
 // Notes for chromatic scale display (using Unicode ♯ and ♭)
@@ -77,12 +78,6 @@ const VarispeedHeader = styled.div`
   position: relative;
 `;
 
-const HeaderControls = styled.div`
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-`;
 
 const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   background: ${({ theme, $isLinked }) =>
@@ -386,14 +381,18 @@ const Varispeed: FC<VarispeedProps> = ({
   generatorBpm,
   generatorRoot,
   dragHandleProps,
-  isRecentlyDragged
+  isRecentlyDragged,
+  showTips: showTipsExternal,
+  setShowTips: setShowTipsExternal,
 }) => {
   const [localBpm, setLocalBpm] = useState(propBpm);
   const [bpmInput, setBpmInput] = useState(String(propBpm));
   const [localKeyIdx, setLocalKeyIdx] = useState(propKeyIdx);
   const [localLinked, setLocalLinked] = useState(propLinked);
   const [isMobile, setIsMobile] = useState(false);
-  const [showTips, setShowTips] = useState(false);
+  const [showTipsInternal, setShowTipsInternal] = useState(false);
+  const showTips = showTipsExternal !== undefined ? showTipsExternal : showTipsInternal;
+  const setShowTips = setShowTipsExternal || setShowTipsInternal;
 
   const isLinked = propSetLinked ? propLinked : localLinked;
   const setIsLinked = propSetLinked || setLocalLinked;
@@ -494,9 +493,6 @@ const Varispeed: FC<VarispeedProps> = ({
           <Icon icon={FaWaveSquare} size={20} />
         </CardIconWrapper>
         <CardTitle>Varispeed Calculator</CardTitle>
-        <HeaderControls>
-          <HelpButton onClick={() => setShowTips(true)} />
-        </HeaderControls>
       </VarispeedHeader>
 
       <ControlSection>
