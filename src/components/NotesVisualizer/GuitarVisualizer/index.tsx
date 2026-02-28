@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { GuitarVisualizerProps, GuitarString, GuitarFret, getNoteChromatic, getChromaticNote, STANDARD_TUNING } from '../types';
 
@@ -13,6 +13,9 @@ const CAGED_OFFSETS = [
 
 const INLAY_FRETS = [3, 5, 7, 9];
 const DOUBLE_INLAY_FRETS = [12];
+
+// Base octaves per string after reversal (high E first, low E last)
+const STRING_OCTAVES_REVERSED = [4, 3, 3, 3, 2, 2];
 
 interface CAGEDPosition {
   name: string;
@@ -143,11 +146,13 @@ const FretDot = styled.div<{
   $isHighlighted: boolean;
   $highlightType?: 'root' | 'chord' | 'seventh' | 'scale';
   $isPlaying?: boolean;
+  $isPressed?: boolean;
 }>`
   width: ${({ $isHighlighted }) => $isHighlighted ? '18px' : '0'};
   height: ${({ $isHighlighted }) => $isHighlighted ? '18px' : '0'};
   border-radius: 50%;
-  background: ${({ $isHighlighted, $highlightType, theme }) => {
+  background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+    if ($isPressed || $isPlaying) return '#dc2626';
     if (!$isHighlighted) return 'transparent';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue for root notes
@@ -163,18 +168,20 @@ const FretDot = styled.div<{
   justify-content: center;
   cursor: ${({ $isHighlighted }) => $isHighlighted ? 'pointer' : 'default'};
   transition: all ${({ theme }) => theme.transitions.fast};
-  transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1.3)' : 'scale(1)'};
-  box-shadow: ${({ $isPlaying, $isHighlighted, theme }) =>
-    $isPlaying ? `0 0 10px ${theme.colors.primary}` :
+  transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1.3)' : 'scale(1)'};
+  box-shadow: ${({ $isPlaying, $isPressed, $isHighlighted, theme }) =>
+    ($isPlaying || $isPressed) ? `0 0 10px #dc2626` :
     $isHighlighted ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'};
   font-size: 10px;
   color: ${({ $isHighlighted, theme }) =>
     $isHighlighted ? theme.colors.buttonText : theme.colors.textSecondary};
   font-weight: ${({ $highlightType }) =>
     $highlightType === 'root' ? 'bold' : 'normal'};
+  user-select: none;
 
   &:hover {
-    background: ${({ $isHighlighted, $highlightType, theme }) => {
+    background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
+      if ($isPressed || $isPlaying) return '#dc2626';
       if (!$isHighlighted) return 'transparent';
       switch ($highlightType) {
         case 'root': return '#006699';  // Darker blue on hover for root
@@ -191,12 +198,14 @@ const OpenString = styled.div<{
   $isHighlighted: boolean;
   $highlightType?: 'root' | 'chord' | 'seventh' | 'scale';
   $isPlaying?: boolean;
+  $isPressed?: boolean;
 }>`
   width: ${({ $isHighlighted }) => $isHighlighted ? '20px' : '0'};
   height: ${({ $isHighlighted }) => $isHighlighted ? '20px' : '0'};
   border-radius: 50%;
-  border: ${({ $isHighlighted, $highlightType, theme }) => {
+  border: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
     if (!$isHighlighted) return 'none';
+    if ($isPressed || $isPlaying) return '2px solid #dc2626';
     switch ($highlightType) {
       case 'root': return `2px solid #0088cc`;  // Bright blue border for root
       case 'chord': return `2px solid #8b5cf6`;  // Purple for other chord tones
@@ -211,8 +220,9 @@ const OpenString = styled.div<{
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  color: ${({ $isHighlighted, $highlightType, theme }) => {
+  color: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
     if (!$isHighlighted) return 'transparent';
+    if ($isPressed || $isPlaying) return '#dc2626';
     switch ($highlightType) {
       case 'root': return '#0088cc';  // Bright blue text for root
       case 'chord': return '#8b5cf6';  // Purple for other chord tones
@@ -221,7 +231,9 @@ const OpenString = styled.div<{
       default: return theme.colors.textSecondary;
     }
   }};
-  transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1.2)' : 'scale(1)'};
+  cursor: pointer;
+  user-select: none;
+  transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1.2)' : 'scale(1)'};
   transition: all ${({ theme }) => theme.transitions.fast};
 `;
 
@@ -312,8 +324,92 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
   selectedChord
 }) => {
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   const positions = useMemo(() => computeCAGEDPositions(rootNote), [rootNote]);
+
+  // Audio context and oscillators management
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const activeOscillatorsRef = useRef<Map<string, OscillatorNode>>(new Map());
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const calculateFrequency = useCallback((note: string, octave: number): number => {
+    const noteFrequencies: Record<string, number> = {
+      'C': 261.63, 'C♯': 277.18, 'D♭': 277.18,
+      'D': 293.66, 'D♯': 311.13, 'E♭': 311.13,
+      'E': 329.63, 'F': 349.23, 'F♯': 369.99, 'G♭': 369.99,
+      'G': 392.00, 'G♯': 415.30, 'A♭': 415.30,
+      'A': 440.00, 'A♯': 466.16, 'B♭': 466.16,
+      'B': 493.88
+    };
+    const baseFreq = noteFrequencies[note] || 261.63;
+    return baseFreq * Math.pow(2, octave - 4);
+  }, []);
+
+  const playNote = useCallback((note: string, octave: number, keyId: string) => {
+    try {
+      const context = getAudioContext();
+      if (context.state === 'suspended') { context.resume(); }
+
+      const frequency = calculateFrequency(note, octave);
+
+      const existingOsc = activeOscillatorsRef.current.get(keyId);
+      if (existingOsc) {
+        existingOsc.stop();
+        activeOscillatorsRef.current.delete(keyId);
+      }
+
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'triangle';
+      gainNode.gain.setValueAtTime(0, context.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.15, context.currentTime + 0.1);
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      oscillator.start(context.currentTime);
+      activeOscillatorsRef.current.set(keyId, oscillator);
+    } catch (error) {
+      console.error('Error playing note:', error);
+    }
+  }, [getAudioContext, calculateFrequency]);
+
+  const stopNote = useCallback((keyId: string) => {
+    try {
+      const oscillator = activeOscillatorsRef.current.get(keyId);
+      if (oscillator && audioContextRef.current) {
+        oscillator.stop(audioContextRef.current.currentTime + 0.1);
+        activeOscillatorsRef.current.delete(keyId);
+      }
+    } catch (error) {
+      console.error('Error stopping note:', error);
+    }
+  }, []);
+
+  const handleFretPress = useCallback((note: string, stringIndex: number, fretNumber: number) => {
+    const openChromatic = getNoteChromatic(STANDARD_TUNING[5 - stringIndex]); // reversed order
+    const octave = STRING_OCTAVES_REVERSED[stringIndex] + Math.floor((openChromatic + fretNumber) / 12);
+    const keyId = `${stringIndex}-${fretNumber}`;
+    setPressedKeys(prev => new Set([...prev, keyId]));
+    playNote(note, octave, keyId);
+  }, [playNote]);
+
+  const handleFretRelease = useCallback((stringIndex: number, fretNumber: number) => {
+    const keyId = `${stringIndex}-${fretNumber}`;
+    setPressedKeys(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(keyId);
+      return newSet;
+    });
+    stopNote(keyId);
+  }, [stopNote]);
 
   // Reset to position 0 when root note changes
   useEffect(() => {
@@ -444,39 +540,56 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
                 <StringLabel>{string.openNote}</StringLabel>
                 <StringLine />
 
-                {visibleFrets.map((fret) => (
-                  <Fret
-                    key={`fret-${fret.fretNumber}`}
-                    $isHighlighted={fret.isHighlighted}
-                    $highlightType={fret.highlightType}
-                    $isPlaying={fret.isPlaying}
-                    $isOpen={fret.fretNumber === 0}
-                  >
-                    {fret.fretNumber === 0 ? (
-                      <OpenString
-                        $isHighlighted={fret.isHighlighted}
-                        $highlightType={fret.highlightType}
-                        $isPlaying={fret.isPlaying}
-                      >
-                        {fret.isHighlighted ? 'O' : ''}
-                      </OpenString>
-                    ) : (
-                      <FretDot
-                        $isHighlighted={fret.isHighlighted}
-                        $highlightType={fret.highlightType}
-                        $isPlaying={fret.isPlaying}
-                      >
-                        {/* Show "R" only when:
-                            1. No chord selected and it's the scale root (blue)
-                            2. Chord selected, it's the scale root, but not the chord root (purple) */}
-                        {fret.isHighlighted && fret.isScaleRoot && (
-                          (selectedChord === null && fret.highlightType === 'root') ||
-                          (selectedChord !== null && fret.highlightType !== 'root')
-                        ) ? 'R' : ''}
-                      </FretDot>
-                    )}
-                  </Fret>
-                ))}
+                {visibleFrets.map((fret) => {
+                  const keyId = `${stringIndex}-${fret.fretNumber}`;
+                  const isPressed = pressedKeys.has(keyId);
+
+                  return (
+                    <Fret
+                      key={`fret-${fret.fretNumber}`}
+                      $isHighlighted={fret.isHighlighted}
+                      $highlightType={fret.highlightType}
+                      $isPlaying={fret.isPlaying}
+                      $isOpen={fret.fretNumber === 0}
+                    >
+                      {fret.fretNumber === 0 ? (
+                        <OpenString
+                          $isHighlighted={fret.isHighlighted}
+                          $highlightType={fret.highlightType}
+                          $isPlaying={fret.isPlaying}
+                          $isPressed={isPressed}
+                          onMouseDown={() => fret.isHighlighted && handleFretPress(fret.note, stringIndex, fret.fretNumber)}
+                          onMouseUp={() => fret.isHighlighted && handleFretRelease(stringIndex, fret.fretNumber)}
+                          onMouseLeave={() => isPressed && handleFretRelease(stringIndex, fret.fretNumber)}
+                          onTouchStart={(e) => { e.preventDefault(); fret.isHighlighted && handleFretPress(fret.note, stringIndex, fret.fretNumber); }}
+                          onTouchEnd={(e) => { e.preventDefault(); fret.isHighlighted && handleFretRelease(stringIndex, fret.fretNumber); }}
+                        >
+                          {fret.isHighlighted ? 'O' : ''}
+                        </OpenString>
+                      ) : (
+                        <FretDot
+                          $isHighlighted={fret.isHighlighted}
+                          $highlightType={fret.highlightType}
+                          $isPlaying={fret.isPlaying}
+                          $isPressed={isPressed}
+                          onMouseDown={() => fret.isHighlighted && handleFretPress(fret.note, stringIndex, fret.fretNumber)}
+                          onMouseUp={() => fret.isHighlighted && handleFretRelease(stringIndex, fret.fretNumber)}
+                          onMouseLeave={() => isPressed && handleFretRelease(stringIndex, fret.fretNumber)}
+                          onTouchStart={(e) => { e.preventDefault(); fret.isHighlighted && handleFretPress(fret.note, stringIndex, fret.fretNumber); }}
+                          onTouchEnd={(e) => { e.preventDefault(); fret.isHighlighted && handleFretRelease(stringIndex, fret.fretNumber); }}
+                        >
+                          {/* Show "R" only when:
+                              1. No chord selected and it's the scale root (blue)
+                              2. Chord selected, it's the scale root, but not the chord root (purple) */}
+                          {fret.isHighlighted && fret.isScaleRoot && (
+                            (selectedChord === null && fret.highlightType === 'root') ||
+                            (selectedChord !== null && fret.highlightType !== 'root')
+                          ) ? 'R' : ''}
+                        </FretDot>
+                      )}
+                    </Fret>
+                  );
+                })}
               </StringRow>
             );
           })}
