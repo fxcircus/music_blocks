@@ -350,10 +350,15 @@ const FretNumbers = styled.div`
 
 const FretNumber = styled.div<{ $isFirst?: boolean }>`
   width: ${({ $isFirst }) => $isFirst ? '35px' : '58px'};
-  text-align: center;
   font-size: ${({ theme }) => theme.fontSizes.xs};
   color: ${({ theme }) => theme.colors.textSecondary};
   font-weight: 500;
+  display: flex;
+  justify-content: flex-end;
+
+  span {
+    transform: translateX(50%);
+  }
 `;
 
 const NutMarker = styled.div`
@@ -366,32 +371,25 @@ const NutMarker = styled.div`
   opacity: 0.8;
 `;
 
-const InlayRow = styled.div`
-  display: flex;
-  align-items: center;
-  height: 16px;
-  margin-top: 4px;
+const InlayOverlay = styled.div`
+  position: absolute;
+  left: 40px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
 `;
 
-const InlaySpacer = styled.div`
-  width: 30px;
-`;
-
-const InlayCell = styled.div<{ $isOpen?: boolean }>`
-  width: ${({ $isOpen }) => $isOpen ? '35px' : '55px'};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  margin: 0 1px;
-`;
-
-const InlayDot = styled.div`
-  width: 6px;
-  height: 6px;
+const InlayDot = styled.div<{ $top: string; $left: string }>`
+  position: absolute;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
+  top: ${({ $top }) => $top};
+  left: ${({ $left }) => $left};
+  transform: translate(-50%, -50%);
 `;
 
 const PositionIndicator = styled.div`
@@ -652,11 +650,12 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
           <FretNumbers>
             {visibleFretRange.map((fretNum, i) => (
               <FretNumber key={fretNum} $isFirst={i === 0 && fretNum === 0}>
-                {fretNum}
+                <span>{fretNum}</span>
               </FretNumber>
             ))}
           </FretNumbers>
           {showNut && <NutMarker />}
+          <div style={{ position: 'relative' }}>
           {fretboard.map((string, stringIndex) => {
             const visibleFrets = string.frets.filter(
               f => f.fretNumber >= currentPosition.startFret &&
@@ -729,20 +728,39 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
             );
           })}
 
-          <InlayRow>
-            <InlaySpacer />
-            {visibleFretRange.map(fretNum => (
-              <InlayCell key={fretNum} $isOpen={fretNum === 0}>
-                {INLAY_FRETS.includes(fretNum) && <InlayDot />}
-                {DOUBLE_INLAY_FRETS.includes(fretNum) && (
-                  <>
-                    <InlayDot />
-                    <InlayDot />
-                  </>
-                )}
-              </InlayCell>
-            ))}
-          </InlayRow>
+          <InlayOverlay>
+            {visibleFretRange.map((fretNum, i) => {
+              if (!INLAY_FRETS.includes(fretNum) && !DOUBLE_INLAY_FRETS.includes(fretNum)) return null;
+              // Each fret: open=37px, normal=57px (width + 2px margin)
+              // StringLabel = 30px, offset from overlay left (overlay starts at 40px but StringLabel is outside)
+              const fretWidths = visibleFretRange.map((_, idx) => idx === 0 && visibleFretRange[0] === 0 ? 37 : 57);
+              let left = -10; // offset for label area difference
+              for (let j = 0; j < i; j++) left += fretWidths[j];
+              left += fretWidths[i] + fretWidths[i] / 2;
+              const leftPx = `${left}px`;
+              // StringRow = 25px height + 4px margin = 29px per string
+              // Strings: 0=E, 1=B, 2=G, 3=D, 4=A, 5=E
+              // Between G(2) and D(3): center = 2.5 * 29 + 12.5 = 85px
+              const singleDotTop = `${2.5 * 29 + 12.5}px`;
+              // Double dots: under B(1) and A(4)
+              const bStringTop = `${1 * 29 + 14.5}px`;
+              const aStringTop = `${4 * 29 + 14.5}px`;
+
+              if (INLAY_FRETS.includes(fretNum)) {
+                return <InlayDot key={fretNum} $top={singleDotTop} $left={leftPx} />;
+              }
+              if (DOUBLE_INLAY_FRETS.includes(fretNum)) {
+                return (
+                  <React.Fragment key={fretNum}>
+                    <InlayDot $top={bStringTop} $left={leftPx} />
+                    <InlayDot $top={aStringTop} $left={leftPx} />
+                  </React.Fragment>
+                );
+              }
+              return null;
+            })}
+          </InlayOverlay>
+          </div>
         </FretboardContainer>
 
         <NavButton
