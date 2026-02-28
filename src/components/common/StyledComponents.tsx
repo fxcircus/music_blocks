@@ -362,7 +362,7 @@ export const AppWrapper = styled.div`
   padding-top: 70px; /* Space for fixed navbar */
 
   @media (max-width: 768px) {
-    zoom: 0.95;
+    zoom: 0.85;
   }
 `;
 
