@@ -1,16 +1,83 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { GuitarVisualizerProps, GuitarString, GuitarFret, getNoteChromatic, getChromaticNote, STANDARD_TUNING } from '../types';
+
+// CAGED position offsets from root fret on low E string
+const CAGED_OFFSETS = [
+  { name: 'E shape', offset: 0 },
+  { name: 'D shape', offset: 2 },
+  { name: 'C shape', offset: 4 },
+  { name: 'A shape', offset: 5 },
+  { name: 'G shape', offset: 7 },
+];
+
+const INLAY_FRETS = [3, 5, 7, 9];
+const DOUBLE_INLAY_FRETS = [12];
+
+interface CAGEDPosition {
+  name: string;
+  startFret: number;
+  endFret: number;
+  index: number;
+}
+
+function computeCAGEDPositions(rootNote: string): CAGEDPosition[] {
+  const rootChromatic = getNoteChromatic(rootNote);
+  const rootFretOnLowE = (rootChromatic - 4 + 12) % 12;
+
+  const positions = CAGED_OFFSETS.map((shape) => {
+    const startFret = (rootFretOnLowE + shape.offset) % 12;
+    return {
+      name: shape.name,
+      startFret,
+      endFret: Math.min(startFret + 4, 12),
+      index: 0,
+    };
+  });
+
+  positions.sort((a, b) => a.startFret - b.startFret);
+
+  return positions
+    .filter(p => p.startFret <= 12)
+    .map((p, i) => ({ ...p, index: i + 1 }));
+}
 
 const GuitarContainer = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: center;
   background: ${({ theme }) => theme.colors.background};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   padding: ${({ theme }) => theme.spacing.md};
   box-shadow: ${({ theme }) => theme.shadows.medium};
   overflow-x: auto;
   min-height: 180px;
+`;
+
+const FretboardWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const NavButton = styled.button<{ $disabled?: boolean }>`
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme, $disabled }) => $disabled ? `${theme.colors.textSecondary}44` : theme.colors.textSecondary};
+  cursor: ${({ $disabled }) => $disabled ? 'default' : 'pointer'};
+  font-size: 16px;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${({ theme, $disabled }) => $disabled ? 'transparent' : `${theme.colors.primary}22`};
+  }
 `;
 
 const FretboardContainer = styled.div`
@@ -183,6 +250,59 @@ const NutMarker = styled.div`
   opacity: 0.8;
 `;
 
+const InlayRow = styled.div`
+  display: flex;
+  align-items: center;
+  height: 16px;
+  margin-top: 4px;
+`;
+
+const InlaySpacer = styled.div`
+  width: 30px;
+`;
+
+const InlayCell = styled.div<{ $isOpen?: boolean }>`
+  width: ${({ $isOpen }) => $isOpen ? '35px' : '55px'};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin: 0 1px;
+`;
+
+const InlayDot = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+`;
+
+const PositionIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: ${({ theme }) => theme.spacing.sm};
+`;
+
+const PositionDot = styled.div<{ $isActive: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.textSecondary : `${theme.colors.textSecondary}44`};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+`;
+
+const PositionLabel = styled.div`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-align: center;
+  margin-top: 2px;
+`;
+
 const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
   activeNotes,
   highlightedNotes,
@@ -191,6 +311,28 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
+  const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
+
+  const positions = useMemo(() => computeCAGEDPositions(rootNote), [rootNote]);
+
+  // Reset to position 0 when root note changes
+  useEffect(() => {
+    setCurrentPositionIndex(0);
+  }, [rootNote]);
+
+  const currentPosition = positions[currentPositionIndex] || positions[0];
+
+  // Build visible fret range from current position
+  const visibleFretRange = useMemo(() => {
+    const range: number[] = [];
+    for (let i = currentPosition.startFret; i <= currentPosition.endFret; i++) {
+      range.push(i);
+    }
+    return range;
+  }, [currentPosition]);
+
+  const showNut = currentPosition.startFret === 0;
+
   // Helper function to determine highlight type
   const getHighlightType = (
     noteIndex: number,
@@ -240,8 +382,8 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
       const frets: GuitarFret[] = [];
       const openChromatic = getNoteChromatic(openNote);
 
-      // Generate frets 0-5
-      for (let fretNum = 0; fretNum <= 5; fretNum++) {
+      // Generate frets 0-12
+      for (let fretNum = 0; fretNum <= 12; fretNum++) {
         const chromaticPosition = (openChromatic + fretNum) % 12;
         const fretNote = getChromaticNote(chromaticPosition);
 
@@ -269,60 +411,110 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
     return strings.reverse();
   }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord]);
 
+  const isFirstPosition = currentPositionIndex === 0;
+  const isLastPosition = currentPositionIndex === positions.length - 1;
+
   return (
     <GuitarContainer>
-      <FretNumbers>
-        <FretNumber $isFirst>0</FretNumber>
-        <FretNumber>1</FretNumber>
-        <FretNumber>2</FretNumber>
-        <FretNumber>3</FretNumber>
-        <FretNumber>4</FretNumber>
-        <FretNumber>5</FretNumber>
-      </FretNumbers>
+      <FretboardWrapper>
+        <NavButton
+          $disabled={isFirstPosition}
+          onClick={() => !isFirstPosition && setCurrentPositionIndex(currentPositionIndex - 1)}
+        >
+          ‹
+        </NavButton>
 
-      <FretboardContainer>
-        <NutMarker />
-        {fretboard.map((string, stringIndex) => (
-          <StringRow key={`string-${stringIndex}`}>
-            <StringLabel>{string.openNote}</StringLabel>
-            <StringLine />
-
-            {string.frets.map((fret, fretIndex) => (
-              <Fret
-                key={`fret-${fretIndex}`}
-                $isHighlighted={fret.isHighlighted}
-                $highlightType={fret.highlightType}
-                $isPlaying={fret.isPlaying}
-                $isOpen={fret.fretNumber === 0}
-              >
-                {fret.fretNumber === 0 ? (
-                  <OpenString
-                    $isHighlighted={fret.isHighlighted}
-                    $highlightType={fret.highlightType}
-                    $isPlaying={fret.isPlaying}
-                  >
-                    {fret.isHighlighted ? 'O' : ''}
-                  </OpenString>
-                ) : (
-                  <FretDot
-                    $isHighlighted={fret.isHighlighted}
-                    $highlightType={fret.highlightType}
-                    $isPlaying={fret.isPlaying}
-                  >
-                    {/* Show "R" only when:
-                        1. No chord selected and it's the scale root (blue)
-                        2. Chord selected, it's the scale root, but not the chord root (purple) */}
-                    {fret.isHighlighted && fret.isScaleRoot && (
-                      (selectedChord === null && fret.highlightType === 'root') ||
-                      (selectedChord !== null && fret.highlightType !== 'root')
-                    ) ? 'R' : ''}
-                  </FretDot>
-                )}
-              </Fret>
+        <FretboardContainer>
+          <FretNumbers>
+            {visibleFretRange.map((fretNum, i) => (
+              <FretNumber key={fretNum} $isFirst={i === 0 && fretNum === 0}>
+                {fretNum}
+              </FretNumber>
             ))}
-          </StringRow>
+          </FretNumbers>
+          {showNut && <NutMarker />}
+          {fretboard.map((string, stringIndex) => {
+            const visibleFrets = string.frets.filter(
+              f => f.fretNumber >= currentPosition.startFret &&
+                   f.fretNumber <= currentPosition.endFret
+            );
+
+            return (
+              <StringRow key={`string-${stringIndex}`}>
+                <StringLabel>{string.openNote}</StringLabel>
+                <StringLine />
+
+                {visibleFrets.map((fret) => (
+                  <Fret
+                    key={`fret-${fret.fretNumber}`}
+                    $isHighlighted={fret.isHighlighted}
+                    $highlightType={fret.highlightType}
+                    $isPlaying={fret.isPlaying}
+                    $isOpen={fret.fretNumber === 0}
+                  >
+                    {fret.fretNumber === 0 ? (
+                      <OpenString
+                        $isHighlighted={fret.isHighlighted}
+                        $highlightType={fret.highlightType}
+                        $isPlaying={fret.isPlaying}
+                      >
+                        {fret.isHighlighted ? 'O' : ''}
+                      </OpenString>
+                    ) : (
+                      <FretDot
+                        $isHighlighted={fret.isHighlighted}
+                        $highlightType={fret.highlightType}
+                        $isPlaying={fret.isPlaying}
+                      >
+                        {/* Show "R" only when:
+                            1. No chord selected and it's the scale root (blue)
+                            2. Chord selected, it's the scale root, but not the chord root (purple) */}
+                        {fret.isHighlighted && fret.isScaleRoot && (
+                          (selectedChord === null && fret.highlightType === 'root') ||
+                          (selectedChord !== null && fret.highlightType !== 'root')
+                        ) ? 'R' : ''}
+                      </FretDot>
+                    )}
+                  </Fret>
+                ))}
+              </StringRow>
+            );
+          })}
+
+          <InlayRow>
+            <InlaySpacer />
+            {visibleFretRange.map(fretNum => (
+              <InlayCell key={fretNum} $isOpen={fretNum === 0}>
+                {INLAY_FRETS.includes(fretNum) && <InlayDot />}
+                {DOUBLE_INLAY_FRETS.includes(fretNum) && (
+                  <>
+                    <InlayDot />
+                    <InlayDot />
+                  </>
+                )}
+              </InlayCell>
+            ))}
+          </InlayRow>
+        </FretboardContainer>
+
+        <NavButton
+          $disabled={isLastPosition}
+          onClick={() => !isLastPosition && setCurrentPositionIndex(currentPositionIndex + 1)}
+        >
+          ›
+        </NavButton>
+      </FretboardWrapper>
+
+      <PositionIndicator>
+        {positions.map((pos, i) => (
+          <PositionDot
+            key={i}
+            $isActive={i === currentPositionIndex}
+            onClick={() => setCurrentPositionIndex(i)}
+          />
         ))}
-      </FretboardContainer>
+      </PositionIndicator>
+      <PositionLabel>{currentPosition.name}</PositionLabel>
     </GuitarContainer>
   );
 };
