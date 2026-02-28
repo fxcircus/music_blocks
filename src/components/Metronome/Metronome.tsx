@@ -20,9 +20,9 @@ const MetronomeDisplay = styled.div`
   width: 100%;
   position: relative;
   height: 120px;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
 `;
 
@@ -62,29 +62,49 @@ const MetronomeBase = styled(motion.div)`
 `;
 
 const BpmDisplay = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.xxl};
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text};
-  min-width: 80px;
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing.xs};
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  z-index: 2;
+
+  input {
+    font-size: ${({ theme }) => theme.fontSizes.lg};
+    font-weight: 700;
+    color: #fff;
+    background: transparent;
+    border: none;
+    border-radius: ${({ theme }) => theme.borderRadius.medium};
+    padding: 2px 4px;
+    width: 52px;
+    text-align: center;
+    outline: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .bpm-label {
+    position: absolute;
+    right: -16px;
+    bottom: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+  }
 `;
 
 const ControlsContainer = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
   margin-top: ${({ theme }) => theme.spacing.sm};
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const ControlButton = styled(motion.button)`
@@ -124,12 +144,16 @@ const BeatsRow = styled.div`
 `;
 
 const BpmControls = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  width: 100%;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  gap: 200px;
+  z-index: 1;
 `;
 
 const IconWrapper = styled.span`
@@ -344,6 +368,7 @@ const Metronome: FC<LoaderProps> = ({
     const [bpm, setBpm] = useState(initialBpm);
     const [currentBeat, setCurrentBeat] = useState(0);
     const [showTips, setShowTips] = useState(false);
+    const [bpmInput, setBpmInput] = useState(String(initialBpm));
     const beats = [0, 1, 2, 3]; // 4/4 time signature
     
     // Refs
@@ -468,6 +493,7 @@ const Metronome: FC<LoaderProps> = ({
             debugLog(`Updating metronome tempo to ${bpm}`);
             metronomeRef.current.setTempo(bpm);
         }
+        setBpmInput(String(bpm));
     }, [bpm, debugLog]);
     
     // Update mute state in metronome engine
@@ -542,6 +568,39 @@ const Metronome: FC<LoaderProps> = ({
         }
     };
     
+    const handleBpmInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setBpmInput(e.target.value);
+    };
+
+    const commitBpmInput = () => {
+        const parsed = parseInt(bpmInput, 10);
+        if (!isNaN(parsed)) {
+            const clamped = Math.max(40, Math.min(300, parsed));
+            debugLog(`Manual BPM input: ${bpm} → ${clamped}`);
+            ignoreExternalUpdatesRef.current = true;
+            setBpm(clamped);
+            if (ignoreTimeoutRef.current) {
+                clearTimeout(ignoreTimeoutRef.current);
+            }
+            ignoreTimeoutRef.current = setTimeout(() => {
+                ignoreExternalUpdatesRef.current = false;
+                ignoreTimeoutRef.current = null;
+            }, 500);
+        } else {
+            setBpmInput(String(bpm));
+        }
+    };
+
+    const handleBpmInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            commitBpmInput();
+            (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'Escape') {
+            setBpmInput(String(bpm));
+            (e.target as HTMLInputElement).blur();
+        }
+    };
+
     const toggleMetronome = () => {
         debugLog(`Toggle metronome: ${metronomePlaying ? 'off' : 'on'}`);
         setMetronomePlaying(!metronomePlaying);
@@ -584,19 +643,32 @@ const Metronome: FC<LoaderProps> = ({
             )}
             
             <MetronomeDisplay>
-                <MetronomeBase 
+                <BpmDisplay>
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={bpmInput}
+                        onChange={handleBpmInputChange}
+                        onBlur={commitBpmInput}
+                        onKeyDown={handleBpmInputKeyDown}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="BPM value"
+                    />
+                    <span className="bpm-label">BPM</span>
+                </BpmDisplay>
+                <MetronomeBase
                     onClick={toggleMetronome}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 />
-                <MetronomePendulum 
+                <MetronomePendulum
                     key={`pendulum-${bpm}-${metronomePlaying}`}
-                    animate={{ 
+                    animate={{
                         rotate: metronomePlaying ? [20, -20, 20] : 0
                     }}
-                    transition={metronomePlaying ? { 
-                        repeat: Infinity, 
-                        duration: 60 / bpm, 
+                    transition={metronomePlaying ? {
+                        repeat: Infinity,
+                        duration: 60 / bpm,
                         ease: "easeInOut",
                         repeatType: "loop"
                     } : {
@@ -607,38 +679,34 @@ const Metronome: FC<LoaderProps> = ({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 />
+                <BpmControls>
+                    <ControlButton
+                        onClick={handleDecreaseBpm}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        aria-label="Decrease BPM"
+                    >
+                        <IconWrapper>
+                            <Icon icon={FaMinus} size={18} />
+                        </IconWrapper>
+                    </ControlButton>
+                    <ControlButton
+                        onClick={handleIncreaseBpm}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        aria-label="Increase BPM"
+                    >
+                        <IconWrapper>
+                            <Icon icon={FaPlus} size={18} />
+                        </IconWrapper>
+                    </ControlButton>
+                </BpmControls>
             </MetronomeDisplay>
             
-            <BpmControls>
-                <ControlButton 
-                    onClick={handleDecreaseBpm}
-                    whileHover={{ scale: 1.2 }} 
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Decrease BPM"
-                >
-                    <IconWrapper>
-                        <Icon icon={FaMinus} size={18} />
-                    </IconWrapper>
-                </ControlButton>
-                
-                <BpmDisplay>{bpm}</BpmDisplay>
-                
-                <ControlButton 
-                    onClick={handleIncreaseBpm}
-                    whileHover={{ scale: 1.2 }} 
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Increase BPM"
-                >
-                    <IconWrapper>
-                        <Icon icon={FaPlus} size={18} />
-                    </IconWrapper>
-                </ControlButton>
-            </BpmControls>
-            
             <ControlsContainer>
-                <PlayPauseButton 
+                <PlayPauseButton
                     onClick={toggleMetronome}
-                    whileHover={{ scale: 1.2 }} 
+                    whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label={metronomePlaying ? "Pause metronome" : "Play metronome"}
                 >
@@ -646,19 +714,16 @@ const Metronome: FC<LoaderProps> = ({
                         {metronomePlaying ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
                     </IconWrapper>
                 </PlayPauseButton>
-                
-                <ButtonGroup>
-                    <ControlButton 
-                        onClick={toggleMute}
-                        whileHover={{ scale: 1.2 }} 
-                        whileTap={{ scale: 0.9 }}
-                        aria-label={muteSound ? "Unmute sound" : "Mute sound"}
-                    >
-                        <IconWrapper>
-                            {muteSound ? <Icon icon={FaVolumeMute} size={24} /> : <Icon icon={FaVolumeUp} size={24} />}
-                        </IconWrapper>
-                    </ControlButton>
-                </ButtonGroup>
+                <ControlButton
+                    onClick={toggleMute}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={muteSound ? "Unmute sound" : "Mute sound"}
+                >
+                    <IconWrapper>
+                        {muteSound ? <Icon icon={FaVolumeMute} size={24} /> : <Icon icon={FaVolumeUp} size={24} />}
+                    </IconWrapper>
+                </ControlButton>
             </ControlsContainer>
             
             <BeatsRow>
@@ -684,7 +749,7 @@ const Metronome: FC<LoaderProps> = ({
                             You can click directly on the metronome dial to start or stop playback.
                         </p>
                         <p>
-                            Use the + and – controls to adjust BPM.
+                            Use the + and – controls to adjust BPM, or click directly on the BPM input field to change the tempo.
                         </p>
                         <p>
                             The metronome will play at the currently displayed tempo.

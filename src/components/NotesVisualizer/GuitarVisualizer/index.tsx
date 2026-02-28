@@ -45,6 +45,97 @@ function computeCAGEDPositions(rootNote: string): CAGEDPosition[] {
     .map((p, i) => ({ ...p, index: i + 1 }));
 }
 
+interface ChordVoicing {
+  strings: (number | null)[]; // index 0=low E to 5=high E; number=fret, null=muted
+}
+
+function computeChordVoicing(
+  chordTones: number[],
+  chordRoot: number,
+  startFret: number,
+  endFret: number
+): ChordVoicing {
+  const tuningChromatic = [4, 9, 2, 7, 11, 4]; // E A D G B E
+
+  // Step 1: Find candidate chord tones per string within fret window
+  const candidatesPerString: { fret: number; chromatic: number }[][] = [];
+  for (let s = 0; s < 6; s++) {
+    const open = tuningChromatic[s];
+    const candidates: { fret: number; chromatic: number }[] = [];
+    for (let fret = startFret; fret <= endFret; fret++) {
+      const note = (open + fret) % 12;
+      if (chordTones.includes(note)) {
+        candidates.push({ fret, chromatic: note });
+      }
+    }
+    candidatesPerString.push(candidates);
+  }
+
+  // Step 2: Generate all possible voicings (each string: mute or play a candidate)
+  const voicings: (number | null)[][] = [];
+  function generate(si: number, current: (number | null)[]) {
+    if (si === 6) { voicings.push([...current]); return; }
+    current.push(null);
+    generate(si + 1, current);
+    current.pop();
+    for (const c of candidatesPerString[si]) {
+      current.push(c.fret);
+      generate(si + 1, current);
+      current.pop();
+    }
+  }
+  generate(0, []);
+
+  // Step 3: Filter to valid voicings
+  const valid = voicings.filter(v => {
+    const playedFrets = v.filter(f => f !== null && f !== 0) as number[];
+    const playedNotes = v
+      .map((fret, s) => fret !== null ? (tuningChromatic[s] + fret) % 12 : null)
+      .filter(n => n !== null) as number[];
+    if (playedNotes.length < 3) return false;
+    for (const tone of chordTones) {
+      if (!playedNotes.includes(tone)) return false;
+    }
+    if (playedFrets.length > 0) {
+      if (Math.max(...playedFrets) - Math.min(...playedFrets) > 4) return false;
+    }
+    const playedIndices = v.map((f, i) => f !== null ? i : -1).filter(i => i !== -1);
+    if (playedIndices.length > 0) {
+      const min = Math.min(...playedIndices);
+      const max = Math.max(...playedIndices);
+      for (let i = min; i <= max; i++) {
+        if (v[i] === null) return false;
+      }
+    }
+    return true;
+  });
+
+  // Step 4: Score and pick the best
+  const scored = valid.map(v => {
+    let score = 0;
+    const played = v
+      .map((fret, s) => fret !== null ? { chromatic: (tuningChromatic[s] + fret) % 12, fret, string: s } : null)
+      .filter(n => n !== null) as { chromatic: number; fret: number; string: number }[];
+
+    if (played[0]?.chromatic === chordRoot) score += 50;
+    score += played.length * 8;
+    const fretted = played.filter(n => n.fret > 0);
+    if (fretted.length > 0) {
+      score -= (Math.max(...fretted.map(n => n.fret)) - Math.min(...fretted.map(n => n.fret))) * 5;
+    }
+    score += played.filter(n => n.fret === 0).length * 3;
+    score -= fretted.length * 2;
+    if (fretted.length > 0) {
+      score -= (fretted.reduce((sum, n) => sum + n.fret, 0) / fretted.length) * 0.5;
+    }
+    return { voicing: v, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  if (scored.length > 0) return { strings: scored[0].voicing };
+  return { strings: [null, null, null, null, null, null] };
+}
+
 const GuitarContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -107,12 +198,25 @@ const StringLine = styled.div`
   z-index: 0;
 `;
 
-const StringLabel = styled.div`
+const StringLabel = styled.div<{ $isMuted?: boolean }>`
   width: 30px;
   text-align: center;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: bold;
   color: ${({ theme }) => theme.colors.textSecondary};
+  opacity: ${({ $isMuted }) => $isMuted ? 0.3 : 1};
+`;
+
+const MutedMarker = styled.div`
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  opacity: 0.5;
 `;
 
 const Fret = styled.div<{
@@ -468,6 +572,16 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
     }
   };
 
+  // Compute single playable chord voicing when a chord is selected
+  const chordVoicing = useMemo(() => {
+    if (selectedChord === null) return null;
+    const chordTones = Array.from(highlightedNotes)
+      .map(idx => getNoteChromatic(activeNotes[idx]));
+    const chordRoot = getNoteChromatic(activeNotes[selectedChord]);
+    return computeChordVoicing(chordTones, chordRoot,
+      currentPosition.startFret, currentPosition.endFret);
+  }, [selectedChord, highlightedNotes, activeNotes, currentPosition, isSeventhMode]);
+
   const fretboard = useMemo(() => {
     const strings: GuitarString[] = [];
 
@@ -484,14 +598,28 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
         const fretNote = getChromaticNote(chromaticPosition);
 
         // Check if this note is in our active notes
-        const isActive = activeNotes.some(n => getNoteChromatic(n) === chromaticPosition);
+        let isActive = activeNotes.some(n => getNoteChromatic(n) === chromaticPosition);
         const noteIndex = activeNotes.findIndex(n => getNoteChromatic(n) === chromaticPosition);
+        let highlightType = getHighlightType(noteIndex, highlightedNotes, rootNote, fretNote);
+
+        // Override for chord voicing: only show the single best voicing
+        if (selectedChord !== null && chordVoicing && chordVoicing.strings.some(f => f !== null)) {
+          const voicingFret = chordVoicing.strings[stringIndex];
+          if (voicingFret === fretNum) {
+            isActive = true;
+            const chordRootChromatic = getNoteChromatic(activeNotes[selectedChord]);
+            highlightType = chromaticPosition === chordRootChromatic ? 'root' : 'chord';
+          } else {
+            isActive = false;
+            highlightType = undefined;
+          }
+        }
 
         frets.push({
           note: fretNote,
           fretNumber: fretNum,
           isHighlighted: isActive,
-          highlightType: getHighlightType(noteIndex, highlightedNotes, rootNote, fretNote),
+          highlightType,
           isPlaying: playingNoteIndex === noteIndex,
           isScaleRoot: getNoteChromatic(fretNote) === getNoteChromatic(rootNote)
         });
@@ -505,7 +633,7 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
 
     // Reverse so low E is at bottom (like looking at a guitar)
     return strings.reverse();
-  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord]);
+  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord, chordVoicing]);
 
   const isFirstPosition = currentPositionIndex === 0;
   const isLastPosition = currentPositionIndex === positions.length - 1;
@@ -534,15 +662,20 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
               f => f.fretNumber >= currentPosition.startFret &&
                    f.fretNumber <= currentPosition.endFret
             );
+            const voicingStringIndex = 5 - stringIndex; // render is reversed
+            const isMuted = !!(selectedChord !== null && chordVoicing
+              && chordVoicing.strings.some(f => f !== null)
+              && chordVoicing.strings[voicingStringIndex] === null);
 
             return (
               <StringRow key={`string-${stringIndex}`}>
-                <StringLabel>{string.openNote}</StringLabel>
+                <StringLabel $isMuted={isMuted}>{string.openNote}</StringLabel>
                 <StringLine />
 
-                {visibleFrets.map((fret) => {
+                {visibleFrets.map((fret, fretIdx) => {
                   const keyId = `${stringIndex}-${fret.fretNumber}`;
                   const isPressed = pressedKeys.has(keyId);
+                  const showMutedX = isMuted && fretIdx === 0;
 
                   return (
                     <Fret
@@ -552,7 +685,9 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
                       $isPlaying={fret.isPlaying}
                       $isOpen={fret.fretNumber === 0}
                     >
-                      {fret.fretNumber === 0 ? (
+                      {showMutedX ? (
+                        <MutedMarker>X</MutedMarker>
+                      ) : fret.fretNumber === 0 ? (
                         <OpenString
                           $isHighlighted={fret.isHighlighted}
                           $highlightType={fret.highlightType}

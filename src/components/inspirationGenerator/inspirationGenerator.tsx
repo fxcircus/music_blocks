@@ -2050,6 +2050,20 @@ export default function InspirationGenerator({
                 <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
               </p>
+              <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <p style={{ fontWeight: 600, marginBottom: 6 }}>
+                  <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                  Tips for Practicing with the CAGED Fretboard:
+                </p>
+                <ul style={{ paddingLeft: 18, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <li>Pick one chord (like the I chord) and navigate through all five positions using the arrows. Notice how the same notes appear in different shapes — this builds your fretboard map.</li>
+                  <li>In each position, look at where the root notes (cyan dots marked "R") fall. These are your anchor points. Learn to spot them instantly — they tell you where you are on the neck.</li>
+                  <li>The five shapes always appear in the same order: E → D → C → A → G ascending the neck, then repeat. Once you memorize this sequence, you can find any chord anywhere.</li>
+                  <li>Practice connecting positions: play the scale in one position, then slide into the next position without stopping. The overlapping frets between positions are your "bridge" notes.</li>
+                  <li>Try playing the same chord progression in different positions. The voicings will sound different even though the chords are the same — this is how pros add variety to their parts.</li>
+                  <li>Start with the E and A shapes — these are the most common barre chord forms you already know. Then gradually add G, C, and D shapes to unlock the full neck.</li>
+                </ul>
+              </div>
             </>
           }
         />
