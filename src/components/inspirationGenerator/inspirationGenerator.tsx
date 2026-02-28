@@ -2033,6 +2033,12 @@ export default function InspirationGenerator({
               <p>
                 Click on the icon next to "Chord Degrees" to switch between triads and seventh chords.
               </p>
+              <p>
+                Use the piano and guitar icons in the Scale Tones row to toggle interactive visualizations. Click any highlighted note on either instrument to hear it played.
+              </p>
+              <p>
+                The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
+              </p>
             </>
           }
         />
