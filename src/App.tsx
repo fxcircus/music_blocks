@@ -7,14 +7,12 @@ import CurrentProject from './pages/CurrentProject/CurrentProject';
 import AboutPage from './pages/About/About';
 import './App.css';
 
-// Update the getBasename function
 const getBasename = (): string => {
-  // Check if we're on GitHub Pages
-  const isGitHubPages = window.location.hostname !== 'localhost' && 
-                        window.location.hostname !== '127.0.0.1' && 
-                        window.location.pathname.includes('/music-tools-studio');
-  
-  return isGitHubPages ? '/music-tools-studio' : '/';
+  const isGitHubPages = window.location.hostname !== 'localhost' &&
+                        window.location.hostname !== '127.0.0.1' &&
+                        window.location.pathname.startsWith('/music_blocks');
+
+  return isGitHubPages ? '/music_blocks' : '/';
 };
 
 export default function App(): JSX.Element {
@@ -28,7 +26,6 @@ export default function App(): JSX.Element {
           <Routes>
             <Route path="/" element={<CurrentProject result="" />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/music-tools-studio" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
