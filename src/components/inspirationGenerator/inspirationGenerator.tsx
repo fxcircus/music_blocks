@@ -2022,21 +2022,32 @@ export default function InspirationGenerator({
           content={
             <>
               <p>
+                <Icon icon={FaDice} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Click on the dice to "roll" a new set of "rules".
               </p>
               <p>
+                <Icon icon={FaLock} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 When you find a setting you like, click on the lock icon to keep it locked, then continue rolling to randomize the other unlocked parameters.
               </p>
               <p>
+                <Icon icon={FaMusic} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Click on the chord degrees to highlight the different notes from the scale that form each chord.
               </p>
               <p>
+                <strong style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 6 }}>7</strong>
                 Click on the icon next to "Chord Degrees" to switch between triads and seventh chords.
               </p>
               <p>
+                <Icon icon={FaVolumeUp} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                Press the play button next to "Scale Tones" to hear the scale or selected chord played back.
+              </p>
+              <p>
+                <Icon icon={GiPianoKeys} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Use the piano and guitar icons in the Scale Tones row to toggle interactive visualizations. Click any highlighted note on either instrument to hear it played.
               </p>
               <p>
+                <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
               </p>
             </>
