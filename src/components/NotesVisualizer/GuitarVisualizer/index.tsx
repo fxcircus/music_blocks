@@ -86,7 +86,7 @@ const FretDot = styled.div<{
       case 'root': return '#0088cc';  // Bright blue for root notes
       case 'chord': return '#8b5cf6';  // Purple for other chord tones
       case 'seventh': return '#8b5cf6';
-      case 'scale': return `${theme.colors.primary}44`;
+      case 'scale': return '#8b5cf6';  // Solid purple for scale notes
       default: return 'transparent';
     }
   }};
@@ -113,7 +113,7 @@ const FretDot = styled.div<{
         case 'root': return '#006699';  // Darker blue on hover for root
         case 'chord': return '#9b6cf6';  // Slightly lighter on hover
         case 'seventh': return '#9b6cf6';
-        case 'scale': return `${theme.colors.primary}66`;
+        case 'scale': return '#9b6cf6';  // Solid purple on hover
         default: return 'transparent';
       }
     }};
@@ -134,7 +134,7 @@ const OpenString = styled.div<{
       case 'root': return `2px solid #0088cc`;  // Bright blue border for root
       case 'chord': return `2px solid #8b5cf6`;  // Purple for other chord tones
       case 'seventh': return `2px solid #8b5cf6`;
-      case 'scale': return `2px solid ${theme.colors.primary}88`;
+      case 'scale': return `2px solid #8b5cf6`;  // Solid purple border for scale notes
       default: return 'none';
     }
   }};
@@ -150,6 +150,7 @@ const OpenString = styled.div<{
       case 'root': return '#0088cc';  // Bright blue text for root
       case 'chord': return '#8b5cf6';  // Purple for other chord tones
       case 'seventh': return '#8b5cf6';
+      case 'scale': return '#8b5cf6';  // Solid purple for scale notes
       default: return theme.colors.textSecondary;
     }
   }};
