@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic } from 'react-icons/md';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
@@ -1976,21 +1976,21 @@ export default function InspirationGenerator({
                   <VisualizerIconButton
                     $isActive={showProgressions}
                     onClick={() => setShowProgressions(!showProgressions)}
-                    title="Toggle chord progressions"
+                    title="Toggle chord progressions panel"
                   >
                     <Icon icon={MdQueueMusic} size={16} />
                   </VisualizerIconButton>
                   <VisualizerIconButton
                     $isActive={showPiano}
                     onClick={() => setShowPiano(!showPiano)}
-                    title="Toggle piano"
+                    title="Toggle piano visualization"
                   >
                     <Icon icon={GiPianoKeys} size={16} />
                   </VisualizerIconButton>
                   <VisualizerIconButton
                     $isActive={showGuitar}
                     onClick={() => setShowGuitar(!showGuitar)}
-                    title="Toggle guitar"
+                    title="Toggle guitar fretboard visualization"
                   >
                     <Icon icon={FaGuitar} size={14} />
                   </VisualizerIconButton>
@@ -2058,6 +2058,14 @@ export default function InspirationGenerator({
               <p>
                 <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
+              </p>
+              <p>
+                <Icon icon={MdQueueMusic} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                Use the chord progressions icon in the Scale Tones row to open the progressions panel. Browse 66 named progressions across 7 genres (Pop, Rock, Jazz, Blues, Emotional, EDM, Classical) using the dropdown. Click the dice to pick a random progression, hit play to hear all chords played simultaneously in sequence, or click any chord pill to hear it individually. Piano and guitar visualizations update in real time as chords play.
+              </p>
+              <p>
+                <Icon icon={FaDownload} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                Export any chord progression as a MIDI file using the download button. The file is named with the key, scale, and progression (e.g., "A Minor - Anthem - I V vi IV.mid") and can be dragged directly into a DAW like Ableton. Each chord gets one full bar, and the clip will follow your project tempo.
               </p>
               <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
                 <p style={{ fontWeight: 600, marginBottom: 6 }}>

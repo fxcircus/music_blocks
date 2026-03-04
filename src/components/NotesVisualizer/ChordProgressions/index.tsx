@@ -431,20 +431,23 @@ const Arrow = styled.span`
 
 const ExportBtn = styled.button`
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 2px solid ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: ${({ theme }) => theme.colors.primary};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 8px;
-  margin-left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
   transition: all 0.15s;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.buttonText};
+    transform: scale(1.05);
   }
 `;
 
@@ -708,6 +711,9 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         <PlayBtn $isPlaying={isPlaying} onClick={startPlayback} title={isPlaying ? 'Stop' : 'Play progression'}>
           <Icon icon={isPlaying ? FaStop : FaPlay} size={12} />
         </PlayBtn>
+        <ExportBtn onClick={handleExport} title="Download chord progression as MIDI file">
+          <Icon icon={FaDownload} size={12} />
+        </ExportBtn>
       </TopRow>
 
       <ChordPillsRow>
@@ -723,9 +729,6 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
             </ChordPill>
           </React.Fragment>
         ))}
-        <ExportBtn onClick={handleExport} title="Download MIDI">
-          <Icon icon={FaDownload} size={12} />
-        </ExportBtn>
       </ChordPillsRow>
     </Container>
   );

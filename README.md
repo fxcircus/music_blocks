@@ -49,6 +49,17 @@ Toggle from the Scale Tones row to show an interactive fretboard using the **CAG
 
 15 scales are supported: Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Harmonic Minor, Melodic Minor, Hungarian Minor, Double Harmonic, Phrygian Dominant, Pentatonic Major, Pentatonic Minor, and Blues.
 
+#### 🎶 Chord Progressions
+
+Toggle from the Scale Tones row to open the chord progressions panel. Browse and play common progressions that automatically adapt to whatever root and scale you've selected.
+
+- **66 Named Progressions** across 7 categories: Pop, Rock, Jazz, Blues, Emotional, EDM, and Classical
+- **Dropdown Browser** — Browse all progressions organized by genre, with example songs listed for each (e.g., "Anthem — Don't Stop Believin', Let It Be, No Woman No Cry")
+- **🎲 Randomize** — Dice button picks a random progression from any category
+- **▶ Playback** — Play the full progression with chords sounding simultaneously. Piano and guitar visualizations highlight each chord in real time as it plays
+- **Clickable Chord Pills** — Click any chord degree in the progression to hear it and see it highlighted on piano/guitar
+- **⬇ MIDI Export** — Download any progression as a `.mid` file. The filename includes the key, scale, and progression name (e.g., `A Minor - Anthem - I V vi IV.mid`). Drag the file directly into Ableton or any DAW — each chord is one bar and the clip follows your project tempo
+
 ---
 
 ### 📊 Arrangement
