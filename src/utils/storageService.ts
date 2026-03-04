@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   BPM_EL: `${PREFIX}BpmEl`,
   SOUND_EL: `${PREFIX}SoundEl`,
   THEME: `${PREFIX}Theme`,
+  TEMPLATE: `${PREFIX}Template`,
+  PROGRESSION: `${PREFIX}Progression`,
 };
 
 /**
@@ -84,6 +86,8 @@ export const loadAppState = (): TilesState => {
     tonesArrEl: getFromStorage(STORAGE_KEYS.TONES_ARR_EL, DEFAULT_STATE.tonesArrEl),
     bpmEl: getFromStorage(STORAGE_KEYS.BPM_EL, DEFAULT_STATE.bpmEl),
     soundEl: getFromStorage(STORAGE_KEYS.SOUND_EL, DEFAULT_STATE.soundEl),
+    template: getFromStorage(STORAGE_KEYS.TEMPLATE, ''),
+    progression: getFromStorage(STORAGE_KEYS.PROGRESSION, 0),
   };
 };
 
@@ -98,4 +102,6 @@ export const saveAppState = (state: TilesState): void => {
   saveToStorage(STORAGE_KEYS.TONES_ARR_EL, state.tonesArrEl);
   saveToStorage(STORAGE_KEYS.BPM_EL, state.bpmEl);
   saveToStorage(STORAGE_KEYS.SOUND_EL, state.soundEl);
+  if (state.template !== undefined) saveToStorage(STORAGE_KEYS.TEMPLATE, state.template);
+  if (state.progression !== undefined) saveToStorage(STORAGE_KEYS.PROGRESSION, state.progression);
 }; 

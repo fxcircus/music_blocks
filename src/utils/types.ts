@@ -13,6 +13,8 @@ export interface TilesState {
   tonesArrEl: string[];
   bpmEl: string;
   soundEl: string;
+  template?: string;
+  progression?: number;
 }
 
 // Sample projects data for testing

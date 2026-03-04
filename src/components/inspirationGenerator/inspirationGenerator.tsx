@@ -740,6 +740,12 @@ export default function InspirationGenerator({
   const [showGuitar, setShowGuitar] = useState(false);
   const [showProgressions, setShowProgressions] = useState(false);
 
+  // Chord progression persistence
+  const savedProgressionIndex = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
+  const handleProgressionChange = useCallback((index: number) => {
+    localStorage.setItem('tilesProgression', String(index));
+  }, []);
+
   // Update localStorage whenever values change
   useEffect(() => {
     localStorage.setItem('tilesRootEl', rootEl);
@@ -2022,7 +2028,9 @@ export default function InspirationGenerator({
           showProgressions={showProgressions}
           bpm={parseInt(bpmEl) || 120}
           scaleNoteCount={scaleNoteCounts[scaleEl] || 7}
+          initialProgressionIndex={savedProgressionIndex}
           onSelectChord={setSelectedChord}
+          onProgressionChange={handleProgressionChange}
         />
         <TipsModal
           isOpen={showTips}

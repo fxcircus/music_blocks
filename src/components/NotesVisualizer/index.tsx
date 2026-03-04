@@ -32,7 +32,9 @@ const NotesVisualizer: React.FC<NotesVisualizerProps> = ({
   showProgressions,
   bpm,
   scaleNoteCount,
+  initialProgressionIndex,
   onSelectChord,
+  onProgressionChange,
 }) => {
   // Calculate which notes should be highlighted based on chord selection
   const highlightedNotes = useMemo(() => {
@@ -78,7 +80,9 @@ const NotesVisualizer: React.FC<NotesVisualizerProps> = ({
             selectedChord={selectedChord}
             bpm={bpm}
             scaleNoteCount={scaleNoteCount}
+            initialProgressionIndex={initialProgressionIndex}
             onSelectChord={onSelectChord}
+            onProgressionChange={onProgressionChange}
           />
         </VisualizerSection>
       )}

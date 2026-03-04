@@ -685,7 +685,10 @@ function getAllTemplates(): Record<string, Template> {
 const ALL_TEMPLATES = getAllTemplates();
 
 const ArrangementTool: FC<ArrangementToolProps> = () => {
-  const [selected, setSelected] = useState("Two Peaks");
+  const [selected, setSelected] = useState(() => {
+    const saved = localStorage.getItem('tilesTemplate');
+    return saved && ALL_TEMPLATES[saved] ? saved : 'Two Peaks';
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [animKey, setAnimKey] = useState(0);
 
@@ -705,6 +708,19 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
 
   useEffect(() => {
     setAnimKey((k) => k + 1);
+    localStorage.setItem('tilesTemplate', selected);
+  }, [selected]);
+
+  // Re-read localStorage when URL state is applied (handles shared links)
+  useEffect(() => {
+    const handler = () => {
+      const saved = localStorage.getItem('tilesTemplate');
+      if (saved && ALL_TEMPLATES[saved] && saved !== selected) {
+        setSelected(saved);
+      }
+    };
+    window.addEventListener('urlStateApplied', handler);
+    return () => window.removeEventListener('urlStateApplied', handler);
   }, [selected]);
 
   return (

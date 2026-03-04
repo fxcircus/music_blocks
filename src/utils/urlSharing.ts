@@ -8,24 +8,29 @@ export const encodeStateToURL = (state: TilesState): string => {
   const url = new URL(window.location.href);
   
   // Clear any existing state params
-  ['root', 'scale', 'bpm', 'sound', 'notes', 'timer'].forEach(param => {
+  ['root', 'scale', 'bpm', 'sound', 'notes', 'timer', 'template', 'progression'].forEach(param => {
     url.searchParams.delete(param);
   });
-  
+
   // Add state params
   if (state.rootEl) url.searchParams.set('root', state.rootEl);
   if (state.scaleEl) url.searchParams.set('scale', state.scaleEl);
   if (state.bpmEl) url.searchParams.set('bpm', state.bpmEl);
   if (state.soundEl) url.searchParams.set('sound', state.soundEl);
-  
+
   // Only include notes if they exist to keep URL cleaner
   if (state.notes && state.notes.trim()) {
     url.searchParams.set('notes', encodeURIComponent(state.notes));
   }
-  
-  // We can derive tonesEl and tonesArrEl from rootEl and scaleEl,
-  // so we don't need to include them in the URL
-  
+
+  // Arrangement template
+  if (state.template) url.searchParams.set('template', encodeURIComponent(state.template));
+
+  // Chord progression index
+  if (state.progression !== undefined && state.progression > 0) {
+    url.searchParams.set('progression', String(state.progression));
+  }
+
   return url.toString();
 };
 
@@ -49,7 +54,17 @@ export const decodeURLToState = (url: string): Partial<TilesState> => {
     if (params.has('notes')) {
       partialState.notes = decodeURIComponent(params.get('notes') || '');
     }
-    
+
+    // Arrangement template
+    if (params.has('template')) {
+      partialState.template = decodeURIComponent(params.get('template') || '');
+    }
+
+    // Chord progression index
+    if (params.has('progression')) {
+      partialState.progression = parseInt(params.get('progression') || '0', 10);
+    }
+
     return partialState;
   } catch (error) {
     console.error('Error decoding URL params:', error);
@@ -63,7 +78,7 @@ export const decodeURLToState = (url: string): Partial<TilesState> => {
 export const hasStateParams = (url: string): boolean => {
   try {
     const urlObj = new URL(url);
-    const params = ['root', 'scale', 'bpm', 'sound', 'notes'];
+    const params = ['root', 'scale', 'bpm', 'sound', 'notes', 'template', 'progression'];
     return params.some(param => urlObj.searchParams.has(param));
   } catch (error) {
     return false;

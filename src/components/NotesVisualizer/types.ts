@@ -22,7 +22,9 @@ export interface NotesVisualizerProps {
   showProgressions: boolean;
   bpm: number;
   scaleNoteCount: number;
+  initialProgressionIndex?: number;
   onSelectChord: (degree: number | null) => void;
+  onProgressionChange?: (index: number) => void;
 }
 
 export interface PianoVisualizerProps {

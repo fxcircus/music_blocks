@@ -272,7 +272,23 @@ const CurrentProject: FC<LoaderProps> = () => {
                         });
                     }
 
+                    // Update arrangement template
+                    if (urlState.template) {
+                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'arrangementTool', {
+                            selectedTemplate: urlState.template,
+                        });
+                        localStorage.setItem('tilesTemplate', urlState.template);
+                    }
+
+                    // Update chord progression
+                    if (urlState.progression !== undefined) {
+                        localStorage.setItem('tilesProgression', String(urlState.progression));
+                    }
+
                     saveBlockState(updatedBlockState);
+
+                    // Notify components that URL state was applied
+                    window.dispatchEvent(new Event('urlStateApplied'));
                     return updatedBlockState;
                 });
             }

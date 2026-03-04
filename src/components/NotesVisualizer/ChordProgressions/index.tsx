@@ -22,7 +22,9 @@ export interface ChordProgressionsProps {
   selectedChord: number | null;
   bpm: number;
   scaleNoteCount: number;
+  initialProgressionIndex?: number;
   onSelectChord: (degree: number | null) => void;
+  onProgressionChange?: (index: number) => void;
 }
 
 // ─── MIDI / Chord Helpers ────────────────────────────────────────────
@@ -461,9 +463,14 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   selectedChord,
   bpm,
   scaleNoteCount,
+  initialProgressionIndex = 0,
   onSelectChord,
+  onProgressionChange,
 }) => {
-  const [globalIndex, setGlobalIndex] = useState(0); // index into full CHORD_PROGRESSIONS
+  const [globalIndex, setGlobalIndex] = useState(() => {
+    const clamped = Math.max(0, Math.min(initialProgressionIndex, CHORD_PROGRESSIONS.length - 1));
+    return clamped;
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [playingChordIdx, setPlayingChordIdx] = useState(-1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -476,6 +483,11 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const currentProgression = CHORD_PROGRESSIONS[globalIndex] || CHORD_PROGRESSIONS[0];
+
+  // Notify parent when progression changes (for persistence)
+  useEffect(() => {
+    onProgressionChange?.(globalIndex);
+  }, [globalIndex, onProgressionChange]);
 
   // Close dropdown on outside click
   useEffect(() => {
