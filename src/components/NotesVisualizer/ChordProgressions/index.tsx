@@ -1,0 +1,651 @@
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import styled from 'styled-components';
+import { FaDice, FaPlay, FaStop } from 'react-icons/fa';
+import { Icon } from '../../../utils/IconHelper';
+
+// ─── Types ───────────────────────────────────────────────────────────
+
+type Category = 'pop' | 'rock' | 'jazz' | 'blues' | 'emotional' | 'edm' | 'classical';
+
+interface ChordProgressionDef {
+  name: string;
+  desc: string;
+  category: Category;
+  degrees: number[];
+}
+
+export interface ChordProgressionsProps {
+  activeNotes: string[];
+  rootNote: string;
+  isSeventhMode: boolean;
+  selectedChord: number | null;
+  bpm: number;
+  scaleNoteCount: number;
+  onSelectChord: (degree: number | null) => void;
+}
+
+// ─── Data ────────────────────────────────────────────────────────────
+
+const CATEGORIES: { key: Category; label: string }[] = [
+  { key: 'pop', label: 'Pop' },
+  { key: 'rock', label: 'Rock' },
+  { key: 'jazz', label: 'Jazz' },
+  { key: 'blues', label: 'Blues' },
+  { key: 'emotional', label: 'Emotional' },
+  { key: 'edm', label: 'EDM' },
+  { key: 'classical', label: 'Classical' },
+];
+
+const ROMAN_NUMERALS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
+
+const CHORD_PROGRESSIONS: ChordProgressionDef[] = [
+  // POP
+  { name: 'Anthem', desc: "Don't Stop Believin', Let It Be, No Woman No Cry", category: 'pop', degrees: [0, 4, 5, 3] },
+  { name: 'Doo-Wop', desc: "Earth Angel, Stand By Me, Perfect (Ed Sheeran)", category: 'pop', degrees: [0, 5, 3, 4] },
+  { name: 'Sunshine', desc: "La Bamba, Twist and Shout, Walking on Sunshine", category: 'pop', degrees: [0, 3, 4] },
+  { name: 'Bright & Steady', desc: "All Too Well, Ride (Twenty One Pilots)", category: 'pop', degrees: [0, 3, 4, 0] },
+  { name: 'Hopeful Rise', desc: "Someone Like You (Adele), Africa (Toto)", category: 'pop', degrees: [0, 4, 3, 4] },
+  { name: 'Warm Glow', desc: "I'm Yours (Jason Mraz), Hey Soul Sister", category: 'pop', degrees: [0, 3, 4, 3] },
+  { name: 'Gentle Landing', desc: "Lean On Me, With a Little Help From My Friends", category: 'pop', degrees: [0, 0, 3, 0] },
+  { name: 'Wistful', desc: "Wonderwall (Oasis), Dreams (Fleetwood Mac)", category: 'pop', degrees: [0, 2, 5, 3] },
+  { name: 'Upbeat Drive', desc: "Shut Up and Dance, What Makes You Beautiful", category: 'pop', degrees: [0, 4, 1, 3] },
+  { name: 'Bittersweet', desc: "Every Breath You Take, Roxanne (The Police)", category: 'pop', degrees: [0, 5, 3, 3] },
+  { name: 'Soaring', desc: "Firework (Katy Perry), Fight Song", category: 'pop', degrees: [0, 3, 5, 4] },
+  { name: 'Groovy Pop', desc: "Sunday Morning (Maroon 5), Satin Doll", category: 'pop', degrees: [1, 4, 0] },
+  { name: 'Dreamy Float', desc: "Somewhere Over the Rainbow (IZ), Can't Help Falling in Love", category: 'pop', degrees: [0, 4, 5, 2, 3, 0, 3, 4] },
+  { name: 'Tender', desc: "Let It Be Me, All of Me (John Legend)", category: 'pop', degrees: [0, 5, 1, 4] },
+  { name: 'Playful Bounce', desc: "Shake It Off, Call Me Maybe", category: 'pop', degrees: [3, 0, 4, 5] },
+  { name: 'Confident Strut', desc: "Uptown Funk, Treasure (Bruno Mars)", category: 'pop', degrees: [0, 3, 0, 4] },
+  { name: 'Nostalgic', desc: "Graduation (Vitamin C), Memories (Maroon 5)", category: 'pop', degrees: [0, 4, 5, 2, 3, 4] },
+  { name: 'Euphoric Lift', desc: "Viva La Vida, Clocks (Coldplay)", category: 'pop', degrees: [3, 4, 0, 5] },
+  { name: 'Sweet Resolution', desc: "Hallelujah (Leonard Cohen), The Scientist", category: 'pop', degrees: [0, 5, 0, 3] },
+  { name: 'Vulnerable', desc: "Stay With Me (Sam Smith), Skinny Love", category: 'pop', degrees: [0, 2, 5] },
+
+  // ROCK
+  { name: 'Power Trio', desc: "Johnny B. Goode, La Bamba, Louie Louie", category: 'rock', degrees: [0, 3, 4] },
+  { name: 'Highway Drive', desc: "Sweet Home Alabama, Lynyrd Skynyrd jams", category: 'rock', degrees: [4, 3, 0] },
+  { name: 'Stadium Roar', desc: "Don't Stop Believin', Livin' on a Prayer", category: 'rock', degrees: [0, 4, 5, 3] },
+  { name: 'Defiant March', desc: "Boulevard of Broken Dreams, The Passenger", category: 'rock', degrees: [5, 3, 0, 4] },
+  { name: 'Garage Bash', desc: "Wild Thing, Blitzkrieg Bop, Louie Louie", category: 'rock', degrees: [0, 3, 4, 3] },
+  { name: 'Brooding Edge', desc: "Creep (Radiohead), Take Me to Church", category: 'rock', degrees: [0, 2, 3, 3] },
+  { name: 'Grunge Sway', desc: "Smells Like Teen Spirit, Come As You Are", category: 'rock', degrees: [0, 3, 5, 4] },
+  { name: 'Dark Tension', desc: "Paint It Black, Hit the Road Jack", category: 'rock', degrees: [5, 4, 3, 4] },
+  { name: 'Classic Ballad', desc: "Knockin' on Heaven's Door, Time of Your Life", category: 'rock', degrees: [0, 4, 1, 0] },
+  { name: 'Punk Sprint', desc: "Basket Case, American Idiot (Green Day)", category: 'rock', degrees: [0, 3, 0, 4, 0, 3] },
+  { name: 'Rebel Yell', desc: "Born to Run, Rock and Roll All Nite", category: 'rock', degrees: [0, 0, 3, 4] },
+  { name: 'Desert Road', desc: "Free Bird solo, Hotel California outro", category: 'rock', degrees: [5, 4, 3, 2] },
+  { name: 'Moody Drift', desc: "Wish You Were Here, Comfortably Numb", category: 'rock', degrees: [0, 5, 3, 0] },
+  { name: 'Explosive Drop', desc: "Eye of the Tiger, We Will Rock You", category: 'rock', degrees: [0, 0, 0, 3, 4, 0] },
+  { name: 'Riff Machine', desc: "Smoke on the Water, Iron Man", category: 'rock', degrees: [0, 2, 3] },
+  { name: 'Anthemic Climb', desc: "Stairway to Heaven, November Rain", category: 'rock', degrees: [5, 0, 4, 3] },
+  { name: 'Swagger', desc: "Back in Black, Satisfaction (Rolling Stones)", category: 'rock', degrees: [0, 3, 4, 4] },
+  { name: 'Haunted', desc: "Black Sabbath, Paranoid", category: 'rock', degrees: [0, 5, 2, 4] },
+  { name: 'Arena Closer', desc: "We Are the Champions, Bohemian Rhapsody ending", category: 'rock', degrees: [0, 0, 3, 0, 4, 3, 0] },
+  { name: 'Gritty Stomp', desc: "Seven Nation Army, Crazy Train intro", category: 'rock', degrees: [0, 0, 3, 0, 4, 3] },
+
+  // JAZZ
+  { name: 'Smooth Landing', desc: "Sunday Morning (Maroon 5), Take the A Train", category: 'jazz', degrees: [1, 4, 0] },
+  { name: 'Golden Age', desc: "I Got Rhythm, Island in the Sun (Weezer)", category: 'jazz', degrees: [0, 5, 1, 4] },
+  { name: 'Full Circle', desc: "Fly Me to the Moon, All the Things You Are", category: 'jazz', degrees: [2, 5, 1, 4] },
+  { name: 'Sophisticated Walk', desc: "Autumn Leaves, classic jazz standard form", category: 'jazz', degrees: [1, 4, 0, 3, 6, 2, 5] },
+  { name: 'Late Night', desc: "Blue Moon, In a Sentimental Mood", category: 'jazz', degrees: [0, 5, 0, 4] },
+  { name: 'Bebop Pivot', desc: "Donna Lee, advanced jazz heads", category: 'jazz', degrees: [0, 1, 4, 0] },
+
+  // BLUES
+  { name: '12-Bar Classic', desc: "Sweet Home Chicago, Pride and Joy, The Thrill Is Gone", category: 'blues', degrees: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4] },
+  { name: 'Quick Change', desc: "Texas Flood (SRV), Stormy Monday", category: 'blues', degrees: [0, 3, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4] },
+  { name: 'Shuffle & Groove', desc: "Route 66, Mustang Sally", category: 'blues', degrees: [0, 3, 0, 4] },
+  { name: 'Minor Ache', desc: "The Thrill Is Gone, Black Magic Woman", category: 'blues', degrees: [0, 3, 0, 4, 3, 0] },
+  { name: 'Turnaround', desc: "Crossroads, every blues jam ending", category: 'blues', degrees: [0, 3, 0, 4, 0] },
+
+  // EMOTIONAL
+  { name: 'Heartbreak', desc: "Someone Like You, Apologize, Say Something", category: 'emotional', degrees: [5, 3, 0, 4] },
+  { name: 'Longing', desc: "Mad World, Everybody Hurts (R.E.M.)", category: 'emotional', degrees: [5, 2, 3, 0] },
+  { name: 'Bittersweet Memory', desc: "Fix You (Coldplay), Chasing Cars", category: 'emotional', degrees: [0, 2, 5, 3] },
+  { name: 'Falling Apart', desc: "Hurt (Johnny Cash), Mad World", category: 'emotional', degrees: [5, 4, 3, 0] },
+  { name: 'Quiet Despair', desc: "Creep (Radiohead), Skinny Love", category: 'emotional', degrees: [0, 2, 3, 3] },
+  { name: 'Hopeful Tears', desc: "Let Her Go, When I Was Your Man", category: 'emotional', degrees: [5, 0, 3, 4] },
+
+  // EDM
+  { name: 'Festival Drop', desc: "Wake Me Up (Avicii), Levels, Titanium", category: 'edm', degrees: [5, 3, 0, 4] },
+  { name: 'Euphoria Build', desc: "Clarity (Zedd), Don't You Worry Child", category: 'edm', degrees: [0, 4, 5, 3] },
+  { name: 'Midnight Pulse', desc: "Strobe (deadmau5), Midnight City (M83)", category: 'edm', degrees: [0, 5, 3, 4] },
+  { name: 'Neon Glow', desc: "Something Just Like This, Closer (Chainsmokers)", category: 'edm', degrees: [3, 0, 4, 5] },
+  { name: 'Deep Space', desc: "In the Name of Love, Faded (Alan Walker)", category: 'edm', degrees: [5, 3, 4, 0] },
+
+  // CLASSICAL
+  { name: 'Canon', desc: "Pachelbel's Canon, Graduation, Memories (Maroon 5)", category: 'classical', degrees: [0, 4, 5, 2, 3, 0, 3, 4] },
+  { name: 'Andalusian Descent', desc: "Flamenco, Hit the Road Jack, Stray Cat Strut", category: 'classical', degrees: [5, 4, 3, 2] },
+  { name: 'Plagal Amen', desc: "Church hymn endings, gospel resolutions", category: 'classical', degrees: [3, 0] },
+  { name: 'Royal Cadence', desc: "Classical finales, anthem endings", category: 'classical', degrees: [4, 0] },
+];
+
+// ─── Styled Components ───────────────────────────────────────────────
+
+const Container = styled.div`
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const TopRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
+`;
+
+const DiceBtn = styled.button`
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  padding: 4px;
+  transition: all 0.15s;
+
+  &:hover {
+    transform: scale(1.15) rotate(12deg);
+  }
+`;
+
+const SelectorWrapper = styled.div`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+`;
+
+const SelectorBtn = styled.button<{ $isOpen: boolean }>`
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ $isOpen, theme }) =>
+    $isOpen ? theme.colors.primary : theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: 4px 8px;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: 600;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const SelectorLabel = styled.span`
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const SelectorCaret = styled.span<{ $isOpen: boolean }>`
+  font-size: 10px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  transition: transform 0.15s;
+  transform: ${({ $isOpen }) => $isOpen ? 'rotate(180deg)' : 'rotate(0)'};
+`;
+
+const DropdownPanel = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  z-index: 9999;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+`;
+
+const CategoryHeader = styled.div`
+  padding: 6px 10px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.primary};
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.card};
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  &:first-child {
+    border-top: none;
+  }
+`;
+
+const DropdownOption = styled.button<{ $isSelected: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 5px 10px 5px 16px;
+  background: ${({ $isSelected, theme }) =>
+    $isSelected ? `${theme.colors.primary}22` : 'transparent'};
+  border: none;
+  border-bottom: 1px solid ${({ theme }) => `${theme.colors.border}44`};
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s;
+
+  &:hover {
+    background: ${({ theme }) => `${theme.colors.primary}11`};
+  }
+`;
+
+const OptionName = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+const OptionDesc = styled.span`
+  font-size: 10px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const PlayBtn = styled.button<{ $isPlaying: boolean }>`
+  background: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.primary : 'transparent'};
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.buttonText : theme.colors.primary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.buttonText};
+    transform: scale(1.05);
+  }
+`;
+
+const ChordPillsRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const ChordPill = styled.button<{ $isActive: boolean; $isPlaying: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 26px;
+  padding: 0 6px;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background: ${({ $isActive, $isPlaying, theme }) =>
+    $isPlaying
+      ? theme.colors.primary
+      : $isActive
+        ? `${theme.colors.primary}33`
+        : `${theme.colors.primary}11`};
+  color: ${({ $isPlaying, theme }) =>
+    $isPlaying ? theme.colors.buttonText : theme.colors.text};
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  ${({ $isPlaying }) => $isPlaying && 'transform: scale(1.08);'}
+
+  &:hover {
+    background: ${({ theme }) => `${theme.colors.primary}55`};
+    transform: scale(1.08);
+  }
+`;
+
+const Arrow = styled.span`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 10px;
+  opacity: 0.4;
+`;
+
+// ─── Component ───────────────────────────────────────────────────────
+
+const ChordProgressions: React.FC<ChordProgressionsProps> = ({
+  activeNotes,
+  rootNote,
+  isSeventhMode,
+  selectedChord,
+  bpm,
+  scaleNoteCount,
+  onSelectChord,
+}) => {
+  const [globalIndex, setGlobalIndex] = useState(0); // index into full CHORD_PROGRESSIONS
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingChordIdx, setPlayingChordIdx] = useState(-1);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const isPlayingRef = useRef(false);
+  const progressionDrivenRef = useRef(false); // true when progression is driving chord changes
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const currentProgression = CHORD_PROGRESSIONS[globalIndex] || CHORD_PROGRESSIONS[0];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownOpen]);
+
+  // Stop playback when root/scale/bpm changes
+  useEffect(() => {
+    stopPlayback();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rootNote, activeNotes.length, scaleNoteCount]);
+
+  // Stop playback if user manually clicks a chord degree (not from progression)
+  useEffect(() => {
+    if (isPlayingRef.current && !progressionDrivenRef.current) {
+      stopPlayback();
+    }
+    progressionDrivenRef.current = false;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChord]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const randomize = () => {
+    const len = CHORD_PROGRESSIONS.length;
+    if (len <= 1) return;
+    let idx: number;
+    do {
+      idx = Math.floor(Math.random() * len);
+    } while (idx === globalIndex);
+    setGlobalIndex(idx);
+    stopPlayback();
+  };
+
+  const selectProgression = (idx: number) => {
+    setGlobalIndex(idx);
+    setDropdownOpen(false);
+    stopPlayback();
+  };
+
+  const handlePillClick = (degree: number) => {
+    if (degree >= scaleNoteCount) return;
+
+    // Stop any ongoing progression playback
+    stopPlayback();
+
+    // Select chord in parent for highlighting
+    progressionDrivenRef.current = true;
+    onSelectChord(degree);
+
+    // Build and play the chord
+    const noteCount = scaleNoteCount;
+    const indices = [degree, (degree + 2) % noteCount, (degree + 4) % noteCount];
+    if (isSeventhMode && noteCount >= 7) {
+      indices.push((degree + 6) % 7);
+    }
+
+    const chordTones: { note: string; octave: number }[] = [];
+    let prevChrom = -1;
+    let currentOctave = 4;
+    for (const idx of indices) {
+      const note = activeNotes[idx];
+      if (!note) continue;
+      const chrom = getNoteChromatic(note);
+      if (prevChrom !== -1 && chrom <= prevChrom) currentOctave++;
+      chordTones.push({ note, octave: currentOctave });
+      prevChrom = chrom;
+    }
+
+    playChord(chordTones, 1.0);
+  };
+
+  // ─── Audio ───────────────────────────────────────────────────────
+
+  const getNoteChromatic = (note: string): number => {
+    const map: Record<string, number> = {
+      'C': 0, 'C♯': 1, 'C#': 1, 'D♭': 1,
+      'D': 2, 'D♯': 3, 'D#': 3, 'E♭': 3,
+      'E': 4, 'F♭': 4, 'E♯': 5, 'E#': 5,
+      'F': 5, 'F♯': 6, 'F#': 6, 'G♭': 6,
+      'G': 7, 'G♯': 8, 'G#': 8, 'A♭': 8,
+      'A': 9, 'A♯': 10, 'A#': 10, 'B♭': 10,
+      'B': 11, 'C♭': 11, 'B♯': 0, 'B#': 0,
+    };
+    return map[note] ?? 0;
+  };
+
+  const noteToFrequency = (note: string, octave: number): number => {
+    const map: Record<string, number> = {
+      'C': -9, 'C♯': -8, 'C#': -8, 'D♭': -8,
+      'D': -7, 'D♯': -6, 'D#': -6, 'E♭': -6,
+      'E': -5, 'F♭': -5, 'E♯': -4, 'E#': -4,
+      'F': -4, 'F♯': -3, 'F#': -3, 'G♭': -3,
+      'G': -2, 'G♯': -1, 'G#': -1, 'A♭': -1,
+      'A': 0, 'A♯': 1, 'A#': 1, 'B♭': 1,
+      'B': 2, 'C♭': 2, 'B♯': -9, 'B#': -9,
+    };
+    const semitone = map[note] ?? 0;
+    return 440 * Math.pow(2, ((octave - 4) * 12 + semitone) / 12);
+  };
+
+  const playChord = useCallback((notes: { note: string; octave: number }[], duration: number) => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const t = ctx.currentTime;
+    const noteGain = 0.12 / notes.length;
+
+    for (const { note, octave } of notes) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.frequency.value = noteToFrequency(note, octave);
+      osc.type = 'triangle';
+
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(noteGain, t + 0.02);
+      gain.gain.setValueAtTime(noteGain, t + duration - 0.05);
+      gain.gain.linearRampToValueAtTime(0, t + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + duration);
+
+      activeOscillatorsRef.current.push(osc);
+      osc.onended = () => {
+        const i = activeOscillatorsRef.current.indexOf(osc);
+        if (i > -1) activeOscillatorsRef.current.splice(i, 1);
+      };
+    }
+  }, []);
+
+  const stopPlayback = useCallback(() => {
+    isPlayingRef.current = false;
+    setIsPlaying(false);
+    setPlayingChordIdx(-1);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    activeOscillatorsRef.current.forEach(osc => {
+      try { osc.stop(); } catch {}
+    });
+    activeOscillatorsRef.current = [];
+  }, []);
+
+  const startPlayback = useCallback(() => {
+    if (!currentProgression || activeNotes.length === 0) return;
+    if (isPlayingRef.current) {
+      stopPlayback();
+      onSelectChord(null);
+      return;
+    }
+
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+
+    const chordDuration = (60 / bpm) * 2; // half bar per chord
+    const degrees = currentProgression.degrees;
+    const noteCount = scaleNoteCount;
+
+    const playStep = (stepIdx: number) => {
+      if (!isPlayingRef.current || stepIdx >= degrees.length) {
+        stopPlayback();
+        onSelectChord(null);
+        return;
+      }
+
+      const degree = degrees[stepIdx];
+
+      // Skip invalid degrees for this scale
+      if (degree >= noteCount) {
+        timeoutRef.current = setTimeout(() => playStep(stepIdx + 1), chordDuration * 1000);
+        return;
+      }
+
+      // Select chord in parent (triggers piano/guitar highlighting)
+      progressionDrivenRef.current = true;
+      onSelectChord(degree);
+      setPlayingChordIdx(stepIdx);
+
+      // Build chord tones
+      const chordTones: { note: string; octave: number }[] = [];
+      const rootIdx = degree;
+      const thirdIdx = (degree + 2) % noteCount;
+      const fifthIdx = (degree + 4) % noteCount;
+
+      const indices = [rootIdx, thirdIdx, fifthIdx];
+      if (isSeventhMode && noteCount >= 7) {
+        indices.push((degree + 6) % 7);
+      }
+
+      // Build with ascending octave logic
+      let prevChrom = -1;
+      let currentOctave = 4;
+      for (const idx of indices) {
+        const note = activeNotes[idx];
+        if (!note) continue;
+        const chrom = getNoteChromatic(note);
+        if (prevChrom !== -1 && chrom <= prevChrom) {
+          currentOctave++;
+        }
+        chordTones.push({ note, octave: currentOctave });
+        prevChrom = chrom;
+      }
+
+      playChord(chordTones, chordDuration);
+
+      timeoutRef.current = setTimeout(() => playStep(stepIdx + 1), chordDuration * 1000);
+    };
+
+    playStep(0);
+  }, [currentProgression, activeNotes, bpm, scaleNoteCount, isSeventhMode, onSelectChord, playChord, stopPlayback]);
+
+  if (!currentProgression) return null;
+
+  return (
+    <Container>
+      <TopRow>
+        <DiceBtn onClick={randomize} title="Random progression">
+          <Icon icon={FaDice} size={18} />
+        </DiceBtn>
+        <SelectorWrapper ref={dropdownRef}>
+          <SelectorBtn $isOpen={dropdownOpen} onClick={() => setDropdownOpen(o => !o)}>
+            <SelectorLabel>{currentProgression.name}</SelectorLabel>
+            <SelectorCaret $isOpen={dropdownOpen}>&#9660;</SelectorCaret>
+          </SelectorBtn>
+          {dropdownOpen && (
+            <DropdownPanel>
+              {CATEGORIES.map(cat => (
+                <React.Fragment key={cat.key}>
+                  <CategoryHeader>{cat.label}</CategoryHeader>
+                  {CHORD_PROGRESSIONS.map((p, idx) =>
+                    p.category === cat.key ? (
+                      <DropdownOption
+                        key={idx}
+                        $isSelected={idx === globalIndex}
+                        onClick={() => selectProgression(idx)}
+                      >
+                        <OptionName>{p.name}</OptionName>
+                        <OptionDesc>{'\u2192'} {p.desc}</OptionDesc>
+                      </DropdownOption>
+                    ) : null
+                  )}
+                </React.Fragment>
+              ))}
+            </DropdownPanel>
+          )}
+        </SelectorWrapper>
+        <PlayBtn $isPlaying={isPlaying} onClick={startPlayback} title={isPlaying ? 'Stop' : 'Play progression'}>
+          <Icon icon={isPlaying ? FaStop : FaPlay} size={12} />
+        </PlayBtn>
+      </TopRow>
+
+      <ChordPillsRow>
+        {currentProgression.degrees.map((deg, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <Arrow>{'>'}</Arrow>}
+            <ChordPill
+              $isActive={selectedChord === deg && !isPlaying}
+              $isPlaying={isPlaying && playingChordIdx === i}
+              onClick={() => handlePillClick(deg)}
+            >
+              {ROMAN_NUMERALS[deg] || '?'}
+            </ChordPill>
+          </React.Fragment>
+        ))}
+      </ChordPillsRow>
+    </Container>
+  );
+};
+
+export default ChordProgressions;

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import PianoVisualizer from './PianoVisualizer';
 import GuitarVisualizer from './GuitarVisualizer';
+import ChordProgressions from './ChordProgressions';
 import { NotesVisualizerProps } from './types';
 
 const VisualizerContainer = styled.div`
@@ -27,7 +28,11 @@ const NotesVisualizer: React.FC<NotesVisualizerProps> = ({
   visualizerType,
   playingNoteIndex = -1,
   showPiano,
-  showGuitar
+  showGuitar,
+  showProgressions,
+  bpm,
+  scaleNoteCount,
+  onSelectChord,
 }) => {
   // Calculate which notes should be highlighted based on chord selection
   const highlightedNotes = useMemo(() => {
@@ -59,10 +64,24 @@ const NotesVisualizer: React.FC<NotesVisualizerProps> = ({
     return highlighted;
   }, [selectedChord, activeNotes, isSeventhMode]);
 
-  if (!showPiano && !showGuitar) return null;
+  if (!showPiano && !showGuitar && !showProgressions) return null;
 
   return (
     <VisualizerContainer>
+      {showProgressions && (
+        <VisualizerSection>
+          <ChordProgressions
+            activeNotes={activeNotes}
+            rootNote={root}
+            isSeventhMode={isSeventhMode}
+            selectedChord={selectedChord}
+            bpm={bpm}
+            scaleNoteCount={scaleNoteCount}
+            onSelectChord={onSelectChord}
+          />
+        </VisualizerSection>
+      )}
+
       {showPiano && (
         <VisualizerSection>
           <PianoVisualizer

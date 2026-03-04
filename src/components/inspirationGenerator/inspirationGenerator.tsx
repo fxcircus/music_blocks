@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
+import { MdQueueMusic } from 'react-icons/md';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
@@ -737,6 +738,7 @@ export default function InspirationGenerator({
   // Visualizer toggle state
   const [showPiano, setShowPiano] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
+  const [showProgressions, setShowProgressions] = useState(false);
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -1972,6 +1974,13 @@ export default function InspirationGenerator({
                 </ScaleTonesContainer>
                 <VisualizerIcons>
                   <VisualizerIconButton
+                    $isActive={showProgressions}
+                    onClick={() => setShowProgressions(!showProgressions)}
+                    title="Toggle chord progressions"
+                  >
+                    <Icon icon={MdQueueMusic} size={16} />
+                  </VisualizerIconButton>
+                  <VisualizerIconButton
                     $isActive={showPiano}
                     onClick={() => setShowPiano(!showPiano)}
                     title="Toggle piano"
@@ -1998,7 +2007,7 @@ export default function InspirationGenerator({
           </tbody>
         </StyledTable>
 
-        {/* Notes Visualizer - Piano and Guitar */}
+        {/* Notes Visualizer - Piano, Guitar, and Chord Progressions */}
         <NotesVisualizer
           activeNotes={tonesArrEl}
           scaleNotes={tonesArrEl}
@@ -2010,6 +2019,10 @@ export default function InspirationGenerator({
           playingNoteIndex={playingNoteIndex}
           showPiano={showPiano}
           showGuitar={showGuitar}
+          showProgressions={showProgressions}
+          bpm={parseInt(bpmEl) || 120}
+          scaleNoteCount={scaleNoteCounts[scaleEl] || 7}
+          onSelectChord={setSelectedChord}
         />
         <TipsModal
           isOpen={showTips}
