@@ -1885,8 +1885,8 @@ export default function InspirationGenerator({
                   })}
                 </ChordDegreesContainer>
 
-                {/* Inversion Controls - always present to maintain width, but invisible when no chord selected */}
-                <InversionControls style={{ visibility: selectedChord !== null ? 'visible' : 'hidden' }}>
+                {/* Inversion Controls - always visible, dimmed when no chord selected */}
+                <InversionControls style={{ opacity: selectedChord !== null ? 1 : 0.3 }}>
                   <InversionButton
                     onClick={() => cycleInversion('prev')}
                     disabled={selectedChord === null}
