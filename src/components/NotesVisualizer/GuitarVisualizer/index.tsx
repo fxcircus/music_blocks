@@ -2,15 +2,6 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import styled from 'styled-components';
 import { GuitarVisualizerProps, GuitarString, GuitarFret, getNoteChromatic, getChromaticNote, STANDARD_TUNING } from '../types';
 
-// CAGED position offsets from root fret on low E string
-const CAGED_OFFSETS = [
-  { name: 'E shape', offset: 0 },
-  { name: 'D shape', offset: 2 },
-  { name: 'C shape', offset: 4 },
-  { name: 'A shape', offset: 5 },
-  { name: 'G shape', offset: 7 },
-];
-
 const INLAY_FRETS = [3, 5, 7, 9];
 const DOUBLE_INLAY_FRETS = [12];
 
@@ -26,10 +17,31 @@ interface CAGEDPosition {
 
 function computeCAGEDPositions(rootNote: string): CAGEDPosition[] {
   const rootChromatic = getNoteChromatic(rootNote);
-  const rootFretOnLowE = (rootChromatic - 4 + 12) % 12;
 
-  const positions = CAGED_OFFSETS.map((shape) => {
-    const startFret = (rootFretOnLowE + shape.offset) % 12;
+  // Root fret on each anchor string (open string chromatic values: E=4, A=9, D=2)
+  const rootOnLowE = (rootChromatic - 4 + 12) % 12;
+  const rootOnA    = (rootChromatic - 9 + 12) % 12;
+  const rootOnD    = (rootChromatic - 2 + 12) % 12;
+
+  // Each CAGED shape anchors to a specific string's root note.
+  // Some shapes (G, C) reach back behind the anchor fret.
+  //
+  // E shape: root on low E string, shape starts at root fret
+  // D shape: root on D string, shape starts at root fret
+  // C shape: root on A string, shape reaches 3 frets behind root
+  // A shape: root on A string, shape starts at root fret
+  // G shape: root on low E string, shape reaches 3 frets behind root
+  const shapes = [
+    { name: 'E shape', anchorFret: rootOnLowE, reachBack: 0 },
+    { name: 'D shape', anchorFret: rootOnD,    reachBack: 0 },
+    { name: 'C shape', anchorFret: rootOnA,    reachBack: 3 },
+    { name: 'A shape', anchorFret: rootOnA,    reachBack: 0 },
+    { name: 'G shape', anchorFret: rootOnLowE, reachBack: 3 },
+  ];
+
+  const positions = shapes.map(shape => {
+    let startFret = shape.anchorFret - shape.reachBack;
+    if (startFret < 0) startFret += 12;
     return {
       name: shape.name,
       startFret,
