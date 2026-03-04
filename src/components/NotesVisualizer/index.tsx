@@ -73,6 +73,7 @@ const NotesVisualizer: React.FC<NotesVisualizerProps> = ({
           <ChordProgressions
             activeNotes={activeNotes}
             rootNote={root}
+            scaleName={scale}
             isSeventhMode={isSeventhMode}
             selectedChord={selectedChord}
             bpm={bpm}

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaDice, FaPlay, FaStop } from 'react-icons/fa';
+import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -17,11 +17,106 @@ interface ChordProgressionDef {
 export interface ChordProgressionsProps {
   activeNotes: string[];
   rootNote: string;
+  scaleName: string;
   isSeventhMode: boolean;
   selectedChord: number | null;
   bpm: number;
   scaleNoteCount: number;
   onSelectChord: (degree: number | null) => void;
+}
+
+// ─── MIDI / Chord Helpers ────────────────────────────────────────────
+
+const NOTE_CHROMATIC_MAP: Record<string, number> = {
+  'C': 0, 'C♯': 1, 'C#': 1, 'D♭': 1,
+  'D': 2, 'D♯': 3, 'D#': 3, 'E♭': 3,
+  'E': 4, 'F♭': 4, 'E♯': 5, 'E#': 5,
+  'F': 5, 'F♯': 6, 'F#': 6, 'G♭': 6,
+  'G': 7, 'G♯': 8, 'G#': 8, 'A♭': 8,
+  'A': 9, 'A♯': 10, 'A#': 10, 'B♭': 10,
+  'B': 11, 'C♭': 11, 'B♯': 0, 'B#': 0,
+};
+
+function buildChordTones(
+  degree: number,
+  activeNotes: string[],
+  scaleNoteCount: number,
+  isSeventhMode: boolean,
+): { note: string; octave: number; chromatic: number }[] {
+  const tones: { note: string; octave: number; chromatic: number }[] = [];
+  const indices = [degree, (degree + 2) % scaleNoteCount, (degree + 4) % scaleNoteCount];
+  if (isSeventhMode && scaleNoteCount >= 7) {
+    indices.push((degree + 6) % 7);
+  }
+
+  let prevChrom = -1;
+  let currentOctave = 4;
+  for (const idx of indices) {
+    const note = activeNotes[idx];
+    if (!note) continue;
+    const chrom = NOTE_CHROMATIC_MAP[note] ?? 0;
+    if (prevChrom !== -1 && chrom <= prevChrom) currentOctave++;
+    tones.push({ note, octave: currentOctave, chromatic: chrom });
+    prevChrom = chrom;
+  }
+  return tones;
+}
+
+function chromaticToMidi(chromatic: number, octave: number): number {
+  return chromatic + (octave + 1) * 12;
+}
+
+function getMidiFilename(
+  rootNote: string,
+  scaleName: string,
+  progression: ChordProgressionDef,
+): string {
+  let romanStr = progression.degrees.map(d => ROMAN_NUMERALS[d] || '?').join(' ');
+  if (romanStr.length > 50) {
+    romanStr = progression.degrees.slice(0, 8).map(d => ROMAN_NUMERALS[d] || '?').join(' ') + '...';
+  }
+  const safe = `${rootNote} ${scaleName} - ${progression.name} - ${romanStr}`
+    .replace(/♭/g, 'b')
+    .replace(/♯/g, '#');
+  return `${safe}.mid`;
+}
+
+function buildMidiFile(trackName: string, chords: number[][]): Uint8Array {
+  const TPB = 480;
+  const BAR = TPB * 4;
+
+  function vlq(v: number): number[] {
+    if (v === 0) return [0];
+    const b: number[] = [];
+    b.unshift(v & 0x7f);
+    v >>= 7;
+    while (v > 0) { b.unshift((v & 0x7f) | 0x80); v >>= 7; }
+    return b;
+  }
+
+  const td: number[] = [];
+
+  // Track name meta event
+  const nb = Array.from(new TextEncoder().encode(trackName));
+  td.push(0x00, 0xff, 0x03, ...vlq(nb.length), ...nb);
+
+  for (const notes of chords) {
+    for (const n of notes) {
+      td.push(0x00, 0x90, n, 100);
+    }
+    for (let i = 0; i < notes.length; i++) {
+      td.push(...vlq(i === 0 ? BAR : 0), 0x80, notes[i], 0);
+    }
+  }
+
+  // End of track
+  td.push(0x00, 0xff, 0x2f, 0x00);
+
+  const hdr = [0x4d,0x54,0x68,0x64, 0,0,0,6, 0,0, 0,1, (TPB>>8)&0xff, TPB&0xff];
+  const len = td.length;
+  const trk = [0x4d,0x54,0x72,0x6b, (len>>24)&0xff,(len>>16)&0xff,(len>>8)&0xff,len&0xff, ...td];
+
+  return new Uint8Array([...hdr, ...trk]);
 }
 
 // ─── Data ────────────────────────────────────────────────────────────
@@ -334,11 +429,31 @@ const Arrow = styled.span`
   opacity: 0.4;
 `;
 
+const ExportBtn = styled.button`
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  margin-left: 8px;
+  transition: all 0.15s;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
 // ─── Component ───────────────────────────────────────────────────────
 
 const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   activeNotes,
   rootNote,
+  scaleName,
   isSeventhMode,
   selectedChord,
   bpm,
@@ -412,50 +527,14 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
 
   const handlePillClick = (degree: number) => {
     if (degree >= scaleNoteCount) return;
-
-    // Stop any ongoing progression playback
     stopPlayback();
-
-    // Select chord in parent for highlighting
     progressionDrivenRef.current = true;
     onSelectChord(degree);
-
-    // Build and play the chord
-    const noteCount = scaleNoteCount;
-    const indices = [degree, (degree + 2) % noteCount, (degree + 4) % noteCount];
-    if (isSeventhMode && noteCount >= 7) {
-      indices.push((degree + 6) % 7);
-    }
-
-    const chordTones: { note: string; octave: number }[] = [];
-    let prevChrom = -1;
-    let currentOctave = 4;
-    for (const idx of indices) {
-      const note = activeNotes[idx];
-      if (!note) continue;
-      const chrom = getNoteChromatic(note);
-      if (prevChrom !== -1 && chrom <= prevChrom) currentOctave++;
-      chordTones.push({ note, octave: currentOctave });
-      prevChrom = chrom;
-    }
-
-    playChord(chordTones, 1.0);
+    const tones = buildChordTones(degree, activeNotes, scaleNoteCount, isSeventhMode);
+    playChord(tones, 1.0);
   };
 
   // ─── Audio ───────────────────────────────────────────────────────
-
-  const getNoteChromatic = (note: string): number => {
-    const map: Record<string, number> = {
-      'C': 0, 'C♯': 1, 'C#': 1, 'D♭': 1,
-      'D': 2, 'D♯': 3, 'D#': 3, 'E♭': 3,
-      'E': 4, 'F♭': 4, 'E♯': 5, 'E#': 5,
-      'F': 5, 'F♯': 6, 'F#': 6, 'G♭': 6,
-      'G': 7, 'G♯': 8, 'G#': 8, 'A♭': 8,
-      'A': 9, 'A♯': 10, 'A#': 10, 'B♭': 10,
-      'B': 11, 'C♭': 11, 'B♯': 0, 'B#': 0,
-    };
-    return map[note] ?? 0;
-  };
 
   const noteToFrequency = (note: string, octave: number): number => {
     const map: Record<string, number> = {
@@ -557,31 +636,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
       onSelectChord(degree);
       setPlayingChordIdx(stepIdx);
 
-      // Build chord tones
-      const chordTones: { note: string; octave: number }[] = [];
-      const rootIdx = degree;
-      const thirdIdx = (degree + 2) % noteCount;
-      const fifthIdx = (degree + 4) % noteCount;
-
-      const indices = [rootIdx, thirdIdx, fifthIdx];
-      if (isSeventhMode && noteCount >= 7) {
-        indices.push((degree + 6) % 7);
-      }
-
-      // Build with ascending octave logic
-      let prevChrom = -1;
-      let currentOctave = 4;
-      for (const idx of indices) {
-        const note = activeNotes[idx];
-        if (!note) continue;
-        const chrom = getNoteChromatic(note);
-        if (prevChrom !== -1 && chrom <= prevChrom) {
-          currentOctave++;
-        }
-        chordTones.push({ note, octave: currentOctave });
-        prevChrom = chrom;
-      }
-
+      const chordTones = buildChordTones(degree, activeNotes, noteCount, isSeventhMode);
       playChord(chordTones, chordDuration);
 
       timeoutRef.current = setTimeout(() => playStep(stepIdx + 1), chordDuration * 1000);
@@ -589,6 +644,31 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
 
     playStep(0);
   }, [currentProgression, activeNotes, bpm, scaleNoteCount, isSeventhMode, onSelectChord, playChord, stopPlayback]);
+
+  const handleExport = useCallback(() => {
+    if (!currentProgression) return;
+
+    const allChordMidi: number[][] = [];
+    for (const degree of currentProgression.degrees) {
+      if (degree >= scaleNoteCount) continue;
+      const tones = buildChordTones(degree, activeNotes, scaleNoteCount, isSeventhMode);
+      allChordMidi.push(tones.map(t => chromaticToMidi(t.chromatic, t.octave)));
+    }
+
+    const filename = getMidiFilename(rootNote, scaleName, currentProgression);
+    const trackName = filename.replace('.mid', '');
+    const data = buildMidiFile(trackName, allChordMidi);
+
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'audio/midi' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [currentProgression, activeNotes, scaleNoteCount, isSeventhMode, rootNote, scaleName]);
 
   if (!currentProgression) return null;
 
@@ -643,6 +723,9 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
             </ChordPill>
           </React.Fragment>
         ))}
+        <ExportBtn onClick={handleExport} title="Download MIDI">
+          <Icon icon={FaDownload} size={12} />
+        </ExportBtn>
       </ChordPillsRow>
     </Container>
   );
