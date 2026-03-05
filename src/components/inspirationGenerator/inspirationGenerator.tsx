@@ -1,7 +1,7 @@
 // src/components/Generator/Generator.tsx
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
@@ -335,9 +335,36 @@ const ValueDropdown = styled.div`
   overflow-y: auto;
 `;
 
-const RootDropdown = styled(ValueDropdown)`
-  grid-template-columns: repeat(3, 1fr);
-  width: 280px;
+const RootDropdown = styled(ValueDropdown)<{ $viewMode?: 'grid' | 'circle' }>`
+  grid-template-columns: ${({ $viewMode }) =>
+    $viewMode === 'circle' ? '1fr' : 'repeat(3, 1fr)'};
+  width: ${({ $viewMode }) =>
+    $viewMode === 'circle' ? '300px' : '280px'};
+`;
+
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  margin-bottom: 6px;
+  grid-column: 1 / -1;
+`;
+
+const ViewToggleOption = styled.button<{ $isActive: boolean }>`
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.primary + '30' : 'transparent'};
+  color: ${({ theme, $isActive }) =>
+    $isActive ? theme.colors.primary : theme.colors.textSecondary};
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
 `;
 
 const ScaleDropdown = styled(ValueDropdown)`
@@ -755,6 +782,119 @@ const ScaleToneNoteUpdated = styled.div<{
   }
 `;
 
+// ── Circle of Fifths ──────────────────────────────────────────────────
+
+const CIRCLE_ORDER = ['C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'D♭', 'A♭', 'E♭', 'B♭', 'F'];
+
+const ENHARMONIC_TO_CIRCLE: Record<string, string> = {
+  'B♯': 'C', 'B#': 'C',
+  'F♭': 'E', 'Fb': 'E',
+  'C♭': 'B', 'Cb': 'B',
+  'C♯': 'D♭', 'C#': 'D♭',
+  'G♯': 'A♭', 'G#': 'A♭',
+  'D♯': 'E♭', 'D#': 'E♭',
+  'A♯': 'B♭', 'A#': 'B♭',
+  'E♯': 'F', 'E#': 'F',
+  'G♭': 'F♯', 'Gb': 'F♯',
+  'F#': 'F♯',
+  'Db': 'D♭', 'Ab': 'A♭', 'Eb': 'E♭', 'Bb': 'B♭',
+};
+
+function getCircleIndex(note: string): number {
+  const mapped = ENHARMONIC_TO_CIRCLE[note];
+  const idx = CIRCLE_ORDER.indexOf(mapped ?? note);
+  return idx === -1 ? 0 : idx;
+}
+
+function getCircleDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b);
+  return Math.min(diff, 12 - diff);
+}
+
+function CircleOfFifthsSelector({
+  currentRoot,
+  onSelect,
+}: {
+  currentRoot: string;
+  onSelect: (note: string) => void;
+}) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const theme = useTheme() as any;
+  const selectedCircleIndex = getCircleIndex(currentRoot);
+  const cx = 150, cy = 150, radius = 110, chipR = 22;
+  const distanceOpacity = [1, 0.9, 0.8, 0.7, 0.6, 0.55, 0.5];
+
+  return (
+    <svg viewBox="0 0 300 300" width="100%" style={{ display: 'block' }}>
+      {/* Connecting ring */}
+      <circle cx={cx} cy={cy} r={radius} fill="none" stroke={theme.colors.border} strokeWidth={1} opacity={0.3} />
+      {CIRCLE_ORDER.map((note, i) => {
+        const angle = (i * 2 * Math.PI) / 12 - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        const isSelected = i === selectedCircleIndex;
+        const isHovered = i === hoveredIndex;
+        const dist = getCircleDistance(i, selectedCircleIndex);
+        const opacity = distanceOpacity[dist] ?? 0.5;
+
+        // Show user's spelling if their root maps to this position
+        let label = note;
+        if (isSelected && currentRoot !== note) {
+          label = currentRoot;
+        }
+
+        return (
+          <g
+            key={note}
+            style={{ cursor: 'pointer', opacity }}
+            onMouseEnter={() => setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onSelect(isSelected ? currentRoot : note);
+            }}
+          >
+            <circle
+              cx={x}
+              cy={y}
+              r={chipR}
+              fill={
+                isSelected
+                  ? theme.colors.primary + '30'
+                  : isHovered
+                    ? theme.colors.primary + '20'
+                    : theme.colors.background
+              }
+              stroke={
+                isSelected || isHovered
+                  ? theme.colors.primary
+                  : theme.colors.border
+              }
+              strokeWidth={1.5}
+            />
+            <text
+              x={x}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={13}
+              fontWeight={isSelected ? 600 : 400}
+              fill={
+                isSelected || isHovered
+                  ? theme.colors.primary
+                  : theme.colors.text
+              }
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
+              {label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function InspirationGenerator({
   animate,
   setAnimate,
@@ -801,6 +941,7 @@ export default function InspirationGenerator({
 
   // Add state for dropdown menus
   const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
+  const [rootDropdownView, setRootDropdownView] = useState<'grid' | 'circle'>('grid');
   const dropdownRef = useRef<HTMLTableCellElement>(null);
 
   // Tips modal - use external state if provided, otherwise internal
@@ -1851,19 +1992,40 @@ export default function InspirationGenerator({
               >
                 <ClickableValueInner $isLocked={locked.root} title={locked.root ? "Unlock row to edit" : undefined}>{rootEl}</ClickableValueInner>
                 {openDropdown === 'root' && (
-                  <RootDropdown onClick={(e) => e.stopPropagation()}>
-                    {notes.map((note) => (
-                      <DropdownOption
-                        key={note}
-                        $isSelected={rootEl === note}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleRootSelect(note);
-                        }}
+                  <RootDropdown $viewMode={rootDropdownView} onClick={(e) => e.stopPropagation()}>
+                    <ViewToggle>
+                      <ViewToggleOption
+                        $isActive={rootDropdownView === 'grid'}
+                        onMouseDown={(e) => { e.preventDefault(); setRootDropdownView('grid'); }}
                       >
-                        {note}
-                      </DropdownOption>
-                    ))}
+                        Grid
+                      </ViewToggleOption>
+                      <ViewToggleOption
+                        $isActive={rootDropdownView === 'circle'}
+                        onMouseDown={(e) => { e.preventDefault(); setRootDropdownView('circle'); }}
+                      >
+                        Circle of Fifths
+                      </ViewToggleOption>
+                    </ViewToggle>
+                    {rootDropdownView === 'grid' ? (
+                      notes.map((note) => (
+                        <DropdownOption
+                          key={note}
+                          $isSelected={rootEl === note}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleRootSelect(note);
+                          }}
+                        >
+                          {note}
+                        </DropdownOption>
+                      ))
+                    ) : (
+                      <CircleOfFifthsSelector
+                        currentRoot={rootEl}
+                        onSelect={handleRootSelect}
+                      />
+                    )}
                   </RootDropdown>
                 )}
               </ClickableValueCell>
