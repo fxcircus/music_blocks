@@ -642,6 +642,17 @@ const Metronome: FC<LoaderProps> = ({
                 </DebugOverlay>
             )}
             
+            <PlayPauseButton
+                onClick={toggleMetronome}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label={metronomePlaying ? "Pause metronome" : "Play metronome"}
+            >
+                <IconWrapper>
+                    {metronomePlaying ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
+                </IconWrapper>
+            </PlayPauseButton>
+
             <MetronomeDisplay>
                 <BpmDisplay>
                     <input
@@ -718,16 +729,6 @@ const Metronome: FC<LoaderProps> = ({
             </BeatsRow>
 
             <ControlsContainer>
-                <PlayPauseButton
-                    onClick={toggleMetronome}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label={metronomePlaying ? "Pause metronome" : "Play metronome"}
-                >
-                    <IconWrapper>
-                        {metronomePlaying ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
-                    </IconWrapper>
-                </PlayPauseButton>
                 <ControlButton
                     onClick={toggleMute}
                     whileHover={{ scale: 1.2 }}

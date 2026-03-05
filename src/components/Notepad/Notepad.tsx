@@ -5,7 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import { FaCopy, FaCheck } from 'react-icons/fa';
+import { FaCopy } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
@@ -55,16 +55,16 @@ const CopyBtn = styled.button<{ $success?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
+  gap: 4px;
+  padding: 3px 8px;
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   background: ${({ theme }) => theme.colors.card};
   color: ${({ $success, theme }) =>
     $success ? theme.colors.secondary : theme.colors.textSecondary};
+  font-size: 11px;
+  font-family: inherit;
   cursor: pointer;
-  opacity: 0;
   transition: all 0.15s;
 
   &:hover {
@@ -83,9 +83,6 @@ const EditorWrapper = styled.div`
   overflow-y: auto;
   transition: border-color ${({ theme }) => theme.transitions.fast};
 
-  &:hover ${CopyBtn}, &:focus-within ${CopyBtn} {
-    opacity: 1;
-  }
 
   &:focus-within {
     border-color: ${({ theme }) => theme.colors.primary};
@@ -320,9 +317,9 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
         <CopyBtn
           $success={copied}
           onClick={handleCopy}
-          title={copied ? 'Copied!' : 'Copy to clipboard'}
+          title="Copy to clipboard"
         >
-          <Icon icon={copied ? FaCheck : FaCopy} size={13} />
+          {copied ? 'Copied to clipboard!' : <Icon icon={FaCopy} size={13} />}
         </CopyBtn>
         <EditorContent editor={editor} />
       </EditorWrapper>
