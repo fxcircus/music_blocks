@@ -154,12 +154,14 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
       break;
 
     case 'notes':
-      // Notepad expects notes and setNotes
+      // Notepad expects notes and setNotes, plus tips modal state
       blockContent = (
         <NotesWrapper>
           <BlockComponent
             notes={block.state.notes || ''}
             setNotes={(notes: string) => updateBlockState({ notes })}
+            showTips={showTips}
+            setShowTips={setShowTips}
           />
         </NotesWrapper>
       );
@@ -282,7 +284,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         canRemove={canRemove}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
-        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : undefined}
+        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : block.type === 'notes' ? () => setShowTips(true) : undefined}
       >
         {blockContent}
       </ToolCardDnd>

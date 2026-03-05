@@ -1,71 +1,170 @@
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
+import { AppState } from '../blocks/types';
 import { TilesState } from './types';
 
+// Max URL length we target (safe across all browsers)
+const MAX_URL_LENGTH = 8000;
+// Max notes length before truncation (in characters of HTML)
+const MAX_NOTES_LENGTH = 4000;
+
 /**
- * Encode the application state into URL parameters
+ * Lightweight payload for URL sharing.
+ * Only includes state that matters for sharing — excludes transient state
+ * like timer running, metronome running, etc.
  */
-export const encodeStateToURL = (state: TilesState): string => {
-  // Create a URL object with the current location
+interface ShareableState {
+  v: 2; // version marker
+  blocks: Array<{
+    t: string;   // type
+    o: number;   // order
+    s: Record<string, any>; // state
+  }>;
+  p?: number; // chord progression index
+}
+
+/**
+ * Convert full AppState to a compact shareable payload
+ */
+function toShareable(appState: AppState, progressionIndex?: number): ShareableState {
+  const blocks = appState.blocks
+    .filter(b => b.visible)
+    .sort((a, b) => a.order - b.order)
+    .map(b => {
+      // Strip transient state per block type
+      let state = { ...b.state };
+      switch (b.type) {
+        case 'flowTimer':
+          // Don't share timer running state
+          state = { time: state.time || 1500 };
+          break;
+        case 'metronome':
+          // Don't share running/muted state
+          state = { bpm: state.bpm };
+          break;
+        case 'notes':
+          // Truncate notes if too long
+          if (state.notes && state.notes.length > MAX_NOTES_LENGTH) {
+            state.notes = state.notes.substring(0, MAX_NOTES_LENGTH);
+          }
+          break;
+        case 'inspirationGenerator':
+          // Keep all generator state (root, scale, bpm, sound, tones)
+          break;
+        case 'varispeed':
+          // Keep bpm, keyIdx, linkedToGenerator
+          break;
+        case 'arrangementTool':
+          // Keep selectedTemplate
+          break;
+      }
+      return { t: b.type, o: b.order, s: state };
+    });
+
+  const payload: ShareableState = { v: 2, blocks };
+  if (progressionIndex !== undefined && progressionIndex > 0) {
+    payload.p = progressionIndex;
+  }
+  return payload;
+}
+
+/**
+ * Convert shareable payload back to AppState updates
+ */
+function fromShareable(payload: ShareableState): { appState: Partial<AppState>; progression?: number } {
+  const blocks = payload.blocks.map((b, index) => ({
+    instanceId: b.t,
+    type: b.t,
+    order: b.o ?? index,
+    visible: true,
+    state: b.s,
+  }));
+
+  return {
+    appState: { blocks },
+    progression: payload.p,
+  };
+}
+
+/**
+ * Encode the full block-based AppState into a compressed URL
+ */
+export const encodeAppStateToURL = (appState: AppState): string => {
   const url = new URL(window.location.href);
-  
-  // Clear any existing state params
-  ['root', 'scale', 'bpm', 'sound', 'notes', 'timer', 'template', 'progression'].forEach(param => {
+
+  // Clear all old and new params
+  ['root', 'scale', 'bpm', 'sound', 'notes', 'timer', 'template', 'progression', 's'].forEach(param => {
     url.searchParams.delete(param);
   });
 
-  // Add state params
-  if (state.rootEl) url.searchParams.set('root', state.rootEl);
-  if (state.scaleEl) url.searchParams.set('scale', state.scaleEl);
-  if (state.bpmEl) url.searchParams.set('bpm', state.bpmEl);
-  if (state.soundEl) url.searchParams.set('sound', state.soundEl);
+  // Get chord progression from localStorage
+  const progression = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
 
-  // Only include notes if they exist to keep URL cleaner
-  if (state.notes && state.notes.trim()) {
-    url.searchParams.set('notes', encodeURIComponent(state.notes));
-  }
+  const payload = toShareable(appState, progression);
+  const json = JSON.stringify(payload);
+  const compressed = compressToEncodedURIComponent(json);
 
-  // Arrangement template
-  if (state.template) url.searchParams.set('template', encodeURIComponent(state.template));
+  url.searchParams.set('s', compressed);
 
-  // Chord progression index
-  if (state.progression !== undefined && state.progression > 0) {
-    url.searchParams.set('progression', String(state.progression));
+  // If URL is too long, truncate notes and retry
+  if (url.toString().length > MAX_URL_LENGTH) {
+    const notesBlock = payload.blocks.find(b => b.t === 'notes');
+    if (notesBlock && notesBlock.s.notes) {
+      // Progressively truncate notes
+      const lengths = [2000, 1000, 500, 0];
+      for (const len of lengths) {
+        notesBlock.s.notes = len > 0
+          ? notesBlock.s.notes.substring(0, len)
+          : '';
+        const retryJson = JSON.stringify(payload);
+        const retryCompressed = compressToEncodedURIComponent(retryJson);
+        url.searchParams.set('s', retryCompressed);
+        if (url.toString().length <= MAX_URL_LENGTH) break;
+      }
+    }
   }
 
   return url.toString();
 };
 
 /**
- * Decode URL parameters into application state
+ * Decode URL — handles both new compressed format (?s=...) and legacy format (?root=...&scale=...)
  */
-export const decodeURLToState = (url: string): Partial<TilesState> => {
+export const decodeURLToAppState = (url: string): { appState?: Partial<AppState>; legacyState?: Partial<TilesState>; progression?: number } => {
   try {
     const urlObj = new URL(url);
     const params = urlObj.searchParams;
-    
-    const partialState: Partial<TilesState> = {};
-    
-    // Extract values from URL params
-    if (params.has('root')) partialState.rootEl = params.get('root') || '';
-    if (params.has('scale')) partialState.scaleEl = params.get('scale') || '';
-    if (params.has('bpm')) partialState.bpmEl = params.get('bpm') || '';
-    if (params.has('sound')) partialState.soundEl = params.get('sound') || '';
-    
-    // Decode notes if present
-    if (params.has('notes')) {
-      partialState.notes = decodeURIComponent(params.get('notes') || '');
+
+    // New format: compressed state in ?s= param
+    if (params.has('s')) {
+      const compressed = params.get('s')!;
+      const json = decompressFromEncodedURIComponent(compressed);
+      if (json) {
+        const payload = JSON.parse(json) as ShareableState;
+        if (payload.v === 2) {
+          const result = fromShareable(payload);
+          return { appState: result.appState, progression: result.progression };
+        }
+      }
     }
 
-    // Arrangement template
-    if (params.has('template')) {
-      partialState.template = decodeURIComponent(params.get('template') || '');
-    }
-
-    // Chord progression index
+    // Legacy format: individual params
+    const legacyState: Partial<TilesState> = {};
+    if (params.has('root')) legacyState.rootEl = params.get('root') || '';
+    if (params.has('scale')) legacyState.scaleEl = params.get('scale') || '';
+    if (params.has('bpm')) legacyState.bpmEl = params.get('bpm') || '';
+    if (params.has('sound')) legacyState.soundEl = params.get('sound') || '';
+    if (params.has('notes')) legacyState.notes = decodeURIComponent(params.get('notes') || '');
+    if (params.has('template')) legacyState.template = decodeURIComponent(params.get('template') || '');
+    let progression: number | undefined;
     if (params.has('progression')) {
-      partialState.progression = parseInt(params.get('progression') || '0', 10);
+      progression = parseInt(params.get('progression') || '0', 10);
     }
 
-    return partialState;
+    if (Object.keys(legacyState).length > 0) {
+      return { legacyState, progression };
+    }
+
+    return {};
   } catch (error) {
     console.error('Error decoding URL params:', error);
     return {};
@@ -73,12 +172,12 @@ export const decodeURLToState = (url: string): Partial<TilesState> => {
 };
 
 /**
- * Check if URL contains state parameters
+ * Check if URL contains state parameters (new or legacy format)
  */
 export const hasStateParams = (url: string): boolean => {
   try {
     const urlObj = new URL(url);
-    const params = ['root', 'scale', 'bpm', 'sound', 'notes', 'template', 'progression'];
+    const params = ['s', 'root', 'scale', 'bpm', 'sound', 'notes', 'template', 'progression'];
     return params.some(param => urlObj.searchParams.has(param));
   } catch (error) {
     return false;
@@ -86,11 +185,11 @@ export const hasStateParams = (url: string): boolean => {
 };
 
 /**
- * Copy the current state URL to clipboard and return success status
+ * Copy the current state URL to clipboard
  */
-export const copyStateURLToClipboard = (state: TilesState): Promise<boolean> => {
+export const copyAppStateURLToClipboard = (appState: AppState): Promise<boolean> => {
   try {
-    const url = encodeStateToURL(state);
+    const url = encodeAppStateToURL(appState);
     return navigator.clipboard.writeText(url)
       .then(() => true)
       .catch(err => {
@@ -101,4 +200,34 @@ export const copyStateURLToClipboard = (state: TilesState): Promise<boolean> => 
     console.error('Error generating URL:', error);
     return Promise.resolve(false);
   }
-}; 
+};
+
+// ─── Legacy exports (kept for backward compat during transition) ─────
+
+/** @deprecated Use decodeURLToAppState instead */
+export const decodeURLToState = (url: string): Partial<TilesState> => {
+  const result = decodeURLToAppState(url);
+  return result.legacyState || {};
+};
+
+/** @deprecated Use copyAppStateURLToClipboard instead */
+export const copyStateURLToClipboard = (state: TilesState): Promise<boolean> => {
+  // This path shouldn't be called anymore, but keep it working
+  try {
+    const url = new URL(window.location.href);
+    if (state.rootEl) url.searchParams.set('root', state.rootEl);
+    if (state.scaleEl) url.searchParams.set('scale', state.scaleEl);
+    if (state.bpmEl) url.searchParams.set('bpm', state.bpmEl);
+    if (state.soundEl) url.searchParams.set('sound', state.soundEl);
+    if (state.notes?.trim()) url.searchParams.set('notes', encodeURIComponent(state.notes));
+    if (state.template) url.searchParams.set('template', encodeURIComponent(state.template));
+    if (state.progression !== undefined && state.progression > 0) {
+      url.searchParams.set('progression', String(state.progression));
+    }
+    return navigator.clipboard.writeText(url.toString())
+      .then(() => true)
+      .catch(() => false);
+  } catch {
+    return Promise.resolve(false);
+  }
+};

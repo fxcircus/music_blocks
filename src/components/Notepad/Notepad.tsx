@@ -1,15 +1,34 @@
-import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
-import styled from 'styled-components';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Card, TextArea } from '../common/StyledComponents';
-import { FaEdit, FaEye, FaCopy, FaCheck, FaQuestionCircle } from 'react-icons/fa';
+import React, { useState, useCallback, useEffect } from 'react';
+import styled, { useTheme } from 'styled-components';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import { FaCopy, FaCheck } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
+import { Card } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
+import { SlashCommands } from './SlashCommands';
+import { createSlashCommandRender } from './slashCommandRender';
 
 interface NotesProps {
   notes: string;
   setNotes: (notes: string) => void;
+  showTips?: boolean;
+  setShowTips?: (show: boolean) => void;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────
+
+function migrateContent(content: string): string {
+  if (!content) return '';
+  if (content.trim().startsWith('<')) return content;
+  // Convert plain text lines to HTML paragraphs
+  return content
+    .split('\n')
+    .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
+    .join('');
 }
 
 // ─── Styled Components ────────────────────────────────────────────
@@ -28,65 +47,24 @@ const NotesCard = styled(Card)`
   }
 `;
 
-const Toolbar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ToggleGroup = styled.div`
-  display: flex;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  overflow: hidden;
-`;
-
-const ToggleBtn = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border: none;
-  background: ${({ $active, theme }) =>
-    $active ? `${theme.colors.primary}22` : 'transparent'};
-  color: ${({ $active, theme }) =>
-    $active ? theme.colors.primary : theme.colors.textSecondary};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover {
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-  }
-
-  &:not(:last-child) {
-    border-right: 1px solid ${({ theme }) => theme.colors.border};
-  }
-`;
-
-const ToolbarActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const ActionBtn = styled.button<{ $success?: boolean }>`
+const CopyBtn = styled.button<{ $success?: boolean }>`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  background: transparent;
+  background: ${({ theme }) => theme.colors.card};
   color: ${({ $success, theme }) =>
     $success ? theme.colors.secondary : theme.colors.textSecondary};
   cursor: pointer;
+  opacity: 0;
   transition: all 0.15s;
 
   &:hover {
@@ -95,203 +73,242 @@ const ActionBtn = styled.button<{ $success?: boolean }>`
   }
 `;
 
-const StyledTextArea = styled(TextArea)`
-  min-height: 200px;
+const EditorWrapper = styled.div`
+  position: relative;
   flex: 1;
-  width: 100%;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  padding: ${({ theme }) => theme.spacing.md};
-  resize: none;
-
-  @media (max-width: 768px) {
-    min-height: 150px;
-    padding: ${({ theme }) => theme.spacing.sm};
-    font-size: 12px;
-  }
-`;
-
-const MarkdownPreview = styled.div`
   min-height: 200px;
-  flex: 1;
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.md};
   background-color: ${({ theme }) => theme.colors.inputBackground};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   overflow-y: auto;
-  color: ${({ theme }) => theme.colors.text};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  line-height: 1.7;
+  transition: border-color ${({ theme }) => theme.transitions.fast};
 
-  h1, h2, h3, h4, h5, h6 {
-    color: ${({ theme }) => theme.colors.primary};
-    margin: 0.8em 0 0.4em;
-    font-weight: 600;
-    line-height: 1.3;
-
-    &:first-child { margin-top: 0; }
-  }
-  h1 { font-size: 1.5em; }
-  h2 { font-size: 1.3em; }
-  h3 { font-size: 1.15em; }
-  h4, h5, h6 { font-size: 1em; }
-
-  p { margin: 0 0 0.6em; }
-
-  strong {
-    color: ${({ theme }) => theme.colors.primary};
-    font-weight: 700;
+  &:hover ${CopyBtn}, &:focus-within ${CopyBtn} {
+    opacity: 1;
   }
 
-  em { color: ${({ theme }) => theme.colors.textSecondary}; }
-
-  ul, ol {
-    margin: 0 0 0.6em;
-    padding-left: 1.5em;
-  }
-  li { margin-bottom: 0.25em; }
-
-  /* Task list checkboxes (remark-gfm) */
-  li.task-list-item {
-    list-style: none;
-    margin-left: -1.5em;
-    padding-left: 0;
-  }
-  input[type="checkbox"] {
-    margin-right: 6px;
-    accent-color: ${({ theme }) => theme.colors.primary};
+  &:focus-within {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => `${theme.colors.primary}33`};
   }
 
-  code {
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: 0.85em;
-    color: ${({ theme }) => theme.colors.secondary};
-  }
+  /* ProseMirror editor styles */
+  .ProseMirror {
+    padding: ${({ theme }) => theme.spacing.md};
+    min-height: 180px;
+    outline: none;
+    color: ${({ theme }) => theme.colors.text};
+    font-size: ${({ theme }) => theme.fontSizes.md};
+    line-height: 1.7;
 
-  pre {
-    background: ${({ theme }) => theme.colors.background};
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    border-radius: ${({ theme }) => theme.borderRadius.small};
-    padding: ${({ theme }) => theme.spacing.sm};
-    margin: 0.6em 0;
-    overflow-x: auto;
-
-    code {
-      background: none;
-      border: none;
-      padding: 0;
-      font-size: 0.85em;
-      color: ${({ theme }) => theme.colors.text};
+    > * + * {
+      margin-top: 0.4em;
     }
-  }
 
-  blockquote {
-    margin: 0.6em 0;
-    padding: 0.4em 0 0.4em 1em;
-    border-left: 3px solid ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.textSecondary};
+    /* Placeholder */
+    p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      float: left;
+      color: ${({ theme }) => theme.colors.textSecondary};
+      opacity: 0.4;
+      pointer-events: none;
+      height: 0;
+    }
 
-    p { margin: 0; }
-  }
+    /* Headings */
+    h1, h2, h3 {
+      color: ${({ theme }) => theme.colors.primary};
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    h1 { font-size: 1.5em; margin-top: 0.8em; }
+    h2 { font-size: 1.3em; margin-top: 0.7em; }
+    h3 { font-size: 1.15em; margin-top: 0.6em; }
+    h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.6em 0;
-  }
-  th, td {
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    padding: 6px 10px;
-    text-align: left;
-    font-size: 0.9em;
-  }
-  th {
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-    color: ${({ theme }) => theme.colors.primary};
-    font-weight: 600;
-  }
+    /* Bold & Italic */
+    strong { color: ${({ theme }) => theme.colors.primary}; font-weight: 700; }
+    em { color: ${({ theme }) => theme.colors.textSecondary}; }
 
-  hr {
-    border: none;
-    border-top: 1px solid ${({ theme }) => theme.colors.border};
-    margin: 1em 0;
+    /* Lists */
+    ul, ol {
+      padding-left: 1.4em;
+    }
+    ul { list-style: disc; }
+    ol { list-style: decimal; }
+    li {
+      list-style: inherit;
+      margin-bottom: 0.15em;
+      margin-right: 0;
+      padding: 0;
+    }
+    li p { margin: 0; }
+
+    /* Task lists */
+    ul[data-type="taskList"] {
+      list-style: none;
+      padding-left: 0;
+
+      li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+
+        > label {
+          flex-shrink: 0;
+          margin-top: 3px;
+
+          input[type="checkbox"] {
+            cursor: pointer;
+            accent-color: ${({ theme }) => theme.colors.primary};
+            width: 15px;
+            height: 15px;
+          }
+        }
+
+        > div {
+          flex: 1;
+        }
+      }
+
+      li[data-checked="true"] > div {
+        text-decoration: line-through;
+        opacity: 0.5;
+      }
+    }
+
+    /* Blockquote */
+    blockquote {
+      margin: 0.5em 0;
+      padding: 0.4em 0 0.4em 1em;
+      border-left: 3px solid ${({ theme }) => theme.colors.primary};
+      color: ${({ theme }) => theme.colors.textSecondary};
+
+      p { margin: 0; }
+    }
+
+    /* Code inline */
+    code {
+      background: ${({ theme }) => `${theme.colors.primary}11`};
+      border: 1px solid ${({ theme }) => theme.colors.border};
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85em;
+      color: ${({ theme }) => theme.colors.secondary};
+    }
+
+    /* Code block */
+    pre {
+      background: ${({ theme }) => theme.colors.background};
+      border: 1px solid ${({ theme }) => theme.colors.border};
+      border-radius: ${({ theme }) => theme.borderRadius.small};
+      padding: ${({ theme }) => theme.spacing.sm};
+      margin: 0.5em 0;
+      overflow-x: auto;
+
+      code {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 0.85em;
+        color: ${({ theme }) => theme.colors.text};
+      }
+    }
+
+    /* Horizontal rule */
+    hr {
+      border: none;
+      border-top: 1px solid ${({ theme }) => theme.colors.border};
+      margin: 1em 0;
+    }
+
+    /* Strikethrough */
+    s { color: ${({ theme }) => theme.colors.textSecondary}; opacity: 0.5; }
   }
-
-  a {
-    color: ${({ theme }) => theme.colors.primary};
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
-  }
-
-  img { max-width: 100%; border-radius: 4px; }
-
-  /* Strikethrough (remark-gfm) */
-  del { color: ${({ theme }) => theme.colors.textSecondary}; opacity: 0.6; }
 
   @media (max-width: 768px) {
     min-height: 150px;
-    padding: ${({ theme }) => theme.spacing.sm};
-    font-size: ${({ theme }) => theme.fontSizes.sm};
-  }
-`;
 
-const Placeholder = styled.p`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  opacity: 0.5;
-  font-style: italic;
+    .ProseMirror {
+      padding: ${({ theme }) => theme.spacing.sm};
+      min-height: 130px;
+      font-size: ${({ theme }) => theme.fontSizes.sm};
+    }
+  }
 `;
 
 // ─── Component ────────────────────────────────────────────────────
 
-export default function Notes({ notes, setNotes }: NotesProps) {
-  const [text, setText] = useState<{ newText: string }>({ newText: '' });
-  const [isPreview, setIsPreview] = useState(false);
+export default function Notes({ notes, setNotes, showTips: showTipsExternal, setShowTips: setShowTipsExternal }: NotesProps) {
   const [copied, setCopied] = useState(false);
-  const [showTips, setShowTips] = useState(false);
+  const [showTipsInternal, setShowTipsInternal] = useState(false);
+  const showTips = showTipsExternal !== undefined ? showTipsExternal : showTipsInternal;
+  const setShowTips = setShowTipsExternal || setShowTipsInternal;
+  const theme = useTheme();
 
-  // Load notes from localStorage on component mount and when notes prop changes
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Placeholder.configure({
+        placeholder: 'Start typing, or press / for commands...',
+      }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      SlashCommands.configure({
+        suggestion: {
+          render: createSlashCommandRender(theme),
+        },
+      }),
+    ],
+    content: migrateContent(notes),
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      setNotes(html);
+      localStorage.setItem('tilesNotes', html);
+    },
+  });
+
+  // Sync external notes prop changes (e.g., from URL sharing)
   useEffect(() => {
-    if (notes) {
-      setText({ newText: notes });
-    } else {
-      const savedNotes = localStorage.getItem('tilesNotes');
-      if (savedNotes) {
-        setText({ newText: savedNotes });
-        setNotes(savedNotes);
-      }
+    if (!editor) return;
+    const currentHtml = editor.getHTML();
+    const incoming = migrateContent(notes);
+    // Only update if the content is genuinely different (avoid cursor reset)
+    if (incoming && incoming !== currentHtml && notes !== currentHtml) {
+      editor.commands.setContent(incoming);
     }
-  }, [notes, setNotes]);
+  }, [notes, editor]);
 
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
-    setText({ ...text, [event.target.name]: newValue });
-    setNotes(newValue);
-    localStorage.setItem('tilesNotes', newValue);
-  };
+  // Load from localStorage if notes prop is empty
+  useEffect(() => {
+    if (!editor || notes) return;
+    const saved = localStorage.getItem('tilesNotes');
+    if (saved) {
+      editor.commands.setContent(migrateContent(saved));
+      setNotes(saved);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
 
   const handleCopy = useCallback(async () => {
+    if (!editor) return;
+    const text = editor.getText();
     try {
-      await navigator.clipboard.writeText(text.newText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
     } catch {
-      // Fallback for older browsers
       const ta = document.createElement('textarea');
-      ta.value = text.newText;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
-  }, [text.newText]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [editor]);
 
   return (
     <NotesCard
@@ -299,108 +316,67 @@ export default function Notes({ notes, setNotes }: NotesProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <Toolbar>
-        <ToggleGroup>
-          <ToggleBtn $active={!isPreview} onClick={() => setIsPreview(false)} title="Edit markdown">
-            <Icon icon={FaEdit} size={12} /> Edit
-          </ToggleBtn>
-          <ToggleBtn $active={isPreview} onClick={() => setIsPreview(true)} title="Preview rendered markdown">
-            <Icon icon={FaEye} size={12} /> Preview
-          </ToggleBtn>
-        </ToggleGroup>
-        <ToolbarActions>
-          <ActionBtn
-            $success={copied}
-            onClick={handleCopy}
-            title={copied ? 'Copied!' : 'Copy to clipboard'}
-          >
-            <Icon icon={copied ? FaCheck : FaCopy} size={14} />
-          </ActionBtn>
-          <ActionBtn onClick={() => setShowTips(true)} title="Markdown help">
-            <Icon icon={FaQuestionCircle} size={14} />
-          </ActionBtn>
-        </ToolbarActions>
-      </Toolbar>
-
-      {isPreview ? (
-        <MarkdownPreview>
-          {text.newText ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.newText}</ReactMarkdown>
-          ) : (
-            <Placeholder>Nothing to preview yet. Switch to Edit and start writing.</Placeholder>
-          )}
-        </MarkdownPreview>
-      ) : (
-        <StyledTextArea
-          name="newText"
-          onChange={handleChange}
-          value={text.newText}
-          placeholder="Write using markdown — use **bold**, *italic*, ## headers, - lists, and more..."
-        />
-      )}
+      <EditorWrapper>
+        <CopyBtn
+          $success={copied}
+          onClick={handleCopy}
+          title={copied ? 'Copied!' : 'Copy to clipboard'}
+        >
+          <Icon icon={copied ? FaCheck : FaCopy} size={13} />
+        </CopyBtn>
+        <EditorContent editor={editor} />
+      </EditorWrapper>
 
       <TipsModal
         isOpen={showTips}
         onClose={() => setShowTips(false)}
-        title="Notes - Markdown Guide"
+        title="Notes - Editor Guide"
         content={
           <>
-            <h3>Edit &amp; Preview</h3>
             <p>
-              Switch between <strong>Edit</strong> mode (write markdown) and <strong>Preview</strong> mode
-              (see it rendered). Your notes save automatically. Use the <strong>copy button</strong> to
-              copy the raw text to your clipboard.
+              Use this space to jot down anything related to your project — lyrics, chord ideas,
+              pedal settings, mix notes, session goals, or any creative thoughts you want to keep track of.
             </p>
 
-            <h3>Quick Reference</h3>
+            <h3>Slash Commands</h3>
             <p>
-              <code># Heading 1</code> &nbsp; <code>## Heading 2</code> &nbsp; <code>### Heading 3</code>
-            </p>
-            <p>
-              <code>**bold**</code> &nbsp; <code>*italic*</code> &nbsp; <code>~~strikethrough~~</code>
-            </p>
-            <p>
-              <code>- bullet list</code> &nbsp; <code>1. numbered list</code>
-            </p>
-            <p>
-              <code>- [ ] task</code> &nbsp; <code>- [x] done</code> — interactive checklists
-            </p>
-            <p>
-              <code>&gt; blockquote</code> — for callouts or lyric quotes
-            </p>
-            <p>
-              <code>`inline code`</code> — useful for chord names like <code>Cmaj7</code>
-            </p>
-            <p>
-              <code>---</code> — horizontal rule to separate sections
+              Type <code>/</code> anywhere to open the command menu. Choose from headings,
+              lists, checklists, blockquotes, code blocks, and dividers.
+              Filter by typing after the slash — e.g., <code>/head</code> to find headings.
             </p>
 
-            <h3>Ideas for Musicians</h3>
+            <h3>Auto-Formatting</h3>
+            <p>These shortcuts convert as you type:</p>
             <ul>
-              <li><strong>Song structure</strong> — use headings for sections: <code>## Verse 1</code>, <code>## Chorus</code>, <code>## Bridge</code></li>
-              <li><strong>Chord progressions</strong> — bold the chords: <code>**Am** - **F** - **C** - **G**</code></li>
-              <li><strong>Lyrics</strong> — write freely, use <code>&gt;</code> blockquotes for reference lyrics</li>
-              <li><strong>Practice checklist</strong> — track your session goals with task lists</li>
-              <li><strong>Arrangement notes</strong> — use tables for section breakdowns</li>
+              <li><code># </code> <code>## </code> <code>### </code> — Headings</li>
+              <li><code>- </code> or <code>* </code> — Bullet list</li>
+              <li><code>1. </code> — Numbered list</li>
+              <li><code>[] </code> — Task list (checkbox)</li>
+              <li><code>&gt; </code> — Blockquote</li>
+              <li><code>``` </code> — Code block</li>
+              <li><code>---</code> — Divider</li>
+              <li><code>**text**</code> — <strong>Bold</strong></li>
+              <li><code>*text*</code> — <em>Italic</em></li>
+              <li><code>`text`</code> — <code>Inline code</code></li>
+              <li><code>~~text~~</code> — Strikethrough</li>
             </ul>
 
-            <h3>Tables</h3>
-            <p>Great for comparing arrangements or mapping out song sections:</p>
-            <p>
-              <code>| Section | Bars | Energy |</code><br/>
-              <code>|---------|------|--------|</code><br/>
-              <code>| Intro   | 4    | Low    |</code><br/>
-              <code>| Verse   | 8    | Medium |</code>
-            </p>
+            <h3>Keyboard Shortcuts</h3>
+            <ul>
+              <li><code>Ctrl/Cmd + B</code> — Bold</li>
+              <li><code>Ctrl/Cmd + I</code> — Italic</li>
+              <li><code>Ctrl/Cmd + Z</code> — Undo</li>
+              <li><code>Ctrl/Cmd + Shift + Z</code> — Redo</li>
+            </ul>
 
-            <h3>Code Blocks</h3>
-            <p>Wrap text in triple backticks for chord charts or tab notation:</p>
-            <p>
-              <code>```</code><br/>
-              <code>Am      F        C       G</code><br/>
-              <code>Here's the verse progression</code><br/>
-              <code>```</code>
-            </p>
+            <h3>Tips for Musicians</h3>
+            <ul>
+              <li>Use <strong>headings</strong> to organize song sections — Verse, Chorus, Bridge</li>
+              <li>Use <strong>checklists</strong> to track practice goals and session tasks</li>
+              <li>Use <strong>code blocks</strong> for chord charts, tab notation, or fixed-width layouts</li>
+              <li>Use <strong>blockquotes</strong> for lyrics you're referencing or reworking</li>
+              <li>Use <strong>bullet lists</strong> to brainstorm ideas, chord options, or arrangement notes</li>
+            </ul>
           </>
         }
       />

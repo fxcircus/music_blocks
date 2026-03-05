@@ -2,7 +2,7 @@ import React, { FC, useState, useEffect } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
-import { decodeURLToState, hasStateParams } from "../../utils/urlSharing";
+import { decodeURLToAppState, hasStateParams } from "../../utils/urlSharing";
 import { AppState, BlockInstance } from "../../blocks/types";
 import { getAllBlockTypes } from "../../blocks/blockRegistry";
 import { loadBlockState, saveBlockState, updateBlockState as updateBlockStateUtil, removeBlock, addBlock } from "../../utils/blockStorage";
@@ -237,61 +237,91 @@ const CurrentProject: FC<LoaderProps> = () => {
 
     const inspirationState = getBlockState('inspirationGenerator');
 
-    // Check for URL parameters on mount (keep old URL format support for now)
+    // Check for URL parameters on mount — supports new compressed format and legacy format
     useEffect(() => {
-        if (hasStateParams(window.location.href)) {
-            const urlState = decodeURLToState(window.location.href);
+        if (!hasStateParams(window.location.href)) return;
 
-            // If URL has valid state parameters, update state with them
-            if (Object.keys(urlState).length > 0) {
-                // Convert old URL state to block updates
-                setBlockState(prevState => {
-                    let updatedBlockState = prevState;
+        const decoded = decodeURLToAppState(window.location.href);
 
-                    // Update inspiration generator state
-                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'inspirationGenerator', {
-                        rootEl: urlState.rootEl,
-                        scaleEl: urlState.scaleEl,
-                        tonesEl: urlState.tonesEl,
-                        tonesArrEl: urlState.tonesArrEl,
-                        bpmEl: urlState.bpmEl,
-                        soundEl: urlState.soundEl,
-                    });
+        if (decoded.appState?.blocks) {
+            // New format: full block state from compressed URL
+            setBlockState(prevState => {
+                let updatedBlockState = { ...prevState };
 
-                    // Update notes state
-                    if (urlState.notes !== undefined) {
-                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'notes', {
-                            notes: urlState.notes,
-                        });
+                // Merge each shared block into the current state
+                for (const sharedBlock of decoded.appState!.blocks!) {
+                    const existing = updatedBlockState.blocks.find(b => b.type === sharedBlock.type);
+                    if (existing) {
+                        // Update existing block's state and order
+                        updatedBlockState = updateBlockStateUtil(updatedBlockState, existing.instanceId, sharedBlock.state);
+                        updatedBlockState = {
+                            ...updatedBlockState,
+                            blocks: updatedBlockState.blocks.map(b =>
+                                b.instanceId === existing.instanceId
+                                    ? { ...b, order: sharedBlock.order, visible: true }
+                                    : b
+                            ),
+                        };
                     }
+                }
 
-                    // Update metronome state
-                    if (urlState.bpmEl) {
-                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'metronome', {
-                            bpm: parseInt(urlState.bpmEl, 10),
-                        });
-                    }
+                // Update chord progression
+                if (decoded.progression !== undefined) {
+                    localStorage.setItem('tilesProgression', String(decoded.progression));
+                }
 
-                    // Update arrangement template
-                    if (urlState.template) {
-                        updatedBlockState = updateBlockStateUtil(updatedBlockState, 'arrangementTool', {
-                            selectedTemplate: urlState.template,
-                        });
-                        localStorage.setItem('tilesTemplate', urlState.template);
-                    }
+                // Sync arrangement template to localStorage for legacy readers
+                const arrangementBlock = decoded.appState!.blocks!.find(b => b.type === 'arrangementTool');
+                if (arrangementBlock?.state?.selectedTemplate) {
+                    localStorage.setItem('tilesTemplate', arrangementBlock.state.selectedTemplate);
+                }
 
-                    // Update chord progression
-                    if (urlState.progression !== undefined) {
-                        localStorage.setItem('tilesProgression', String(urlState.progression));
-                    }
+                saveBlockState(updatedBlockState);
+                window.dispatchEvent(new Event('urlStateApplied'));
+                return updatedBlockState;
+            });
+        } else if (decoded.legacyState && Object.keys(decoded.legacyState).length > 0) {
+            // Legacy format: individual params (backward compat)
+            const urlState = decoded.legacyState;
+            setBlockState(prevState => {
+                let updatedBlockState = prevState;
 
-                    saveBlockState(updatedBlockState);
-
-                    // Notify components that URL state was applied
-                    window.dispatchEvent(new Event('urlStateApplied'));
-                    return updatedBlockState;
+                updatedBlockState = updateBlockStateUtil(updatedBlockState, 'inspirationGenerator', {
+                    rootEl: urlState.rootEl,
+                    scaleEl: urlState.scaleEl,
+                    tonesEl: urlState.tonesEl,
+                    tonesArrEl: urlState.tonesArrEl,
+                    bpmEl: urlState.bpmEl,
+                    soundEl: urlState.soundEl,
                 });
-            }
+
+                if (urlState.notes !== undefined) {
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'notes', {
+                        notes: urlState.notes,
+                    });
+                }
+
+                if (urlState.bpmEl) {
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'metronome', {
+                        bpm: parseInt(urlState.bpmEl, 10),
+                    });
+                }
+
+                if (urlState.template) {
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'arrangementTool', {
+                        selectedTemplate: urlState.template,
+                    });
+                    localStorage.setItem('tilesTemplate', urlState.template);
+                }
+
+                if (decoded.progression !== undefined) {
+                    localStorage.setItem('tilesProgression', String(decoded.progression));
+                }
+
+                saveBlockState(updatedBlockState);
+                window.dispatchEvent(new Event('urlStateApplied'));
+                return updatedBlockState;
+            });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Only run on mount

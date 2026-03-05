@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../theme/ThemeProvider';
 import { FaSun, FaMoon, FaFileImport, FaFileExport, FaTimes, FaLink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
-import { loadAppState } from '../../utils/storageService';
-import { copyStateURLToClipboard } from '../../utils/urlSharing';
+import { loadBlockState } from '../../utils/blockStorage';
+import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
 import Toast from '../common/Toast';
 
 interface Project {
@@ -412,8 +412,8 @@ const Nav: FC = () => {
   };
 
   const handleShareLink = async () => {
-    const currentState = loadAppState();
-    const success = await copyStateURLToClipboard(currentState);
+    const currentState = loadBlockState();
+    const success = await copyAppStateURLToClipboard(currentState);
     
     if (success) {
       setToastMessage('Link copied! Bookmark to reopen later or share with a friend.');
