@@ -73,6 +73,22 @@ function hr(s: any) {
   return s.nodes.horizontalRule.create();
 }
 
+function tableHeader(s: any, text: string) {
+  return s.nodes.tableHeader.create({},
+    s.nodes.paragraph.create({}, text ? s.text(text) : undefined),
+  );
+}
+
+function tableCell(s: any, text: string) {
+  return s.nodes.tableCell.create({},
+    s.nodes.paragraph.create({}, text ? s.text(text) : undefined),
+  );
+}
+
+function tableRow(s: any, cells: any[]) {
+  return s.nodes.tableRow.create({}, cells);
+}
+
 // ─── Template Builders ───────────────────────────────────────────────
 
 function buildLyricsTemplate(s: any) {
@@ -173,18 +189,38 @@ function buildSessionGoalsTemplate(s: any) {
 
 function buildRecordingProgressTemplate(s: any) {
   const sections = ['Intro', 'Verse', 'Chorus', 'Bridge', 'Outro'];
+  const instruments = ['Drums', 'Bass', 'Guitars', 'Vocals', 'Synths / Keys'];
+
+  // A table cell containing a single checkbox
+  function checkboxCell() {
+    return s.nodes.tableCell.create({},
+      s.nodes.taskList.create({},
+        s.nodes.taskItem.create({ checked: false },
+          s.nodes.paragraph.create(),
+        ),
+      ),
+    );
+  }
+
+  // Header row: empty corner cell + section names
+  const headerRow = tableRow(s, [
+    tableHeader(s, ''),
+    ...sections.map(sec => tableHeader(s, sec)),
+  ]);
+
+  // One row per instrument: name + checkbox cells
+  const bodyRows = instruments.map(inst =>
+    tableRow(s, [
+      tableCell(s, inst),
+      ...sections.map(() => checkboxCell()),
+    ]),
+  );
+
+  const table = s.nodes.table.create({}, [headerRow, ...bodyRows]);
+
   return [
     h(s, 1, 'Recording Progress'),
-    h(s, 2, 'Drums'),
-    tasks(s, sections),
-    h(s, 2, 'Bass'),
-    tasks(s, sections),
-    h(s, 2, 'Guitars'),
-    tasks(s, sections),
-    h(s, 2, 'Vocals'),
-    tasks(s, sections),
-    h(s, 2, 'Synths / Keys'),
-    tasks(s, sections),
+    table,
     p(s),
   ];
 }

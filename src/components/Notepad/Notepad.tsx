@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import { FaCopy } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card } from '../common/StyledComponents';
@@ -77,6 +78,7 @@ const EditorWrapper = styled.div`
   position: relative;
   flex: 1;
   min-height: 200px;
+  max-height: 500px;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.small};
@@ -222,6 +224,64 @@ const EditorWrapper = styled.div`
 
     /* Strikethrough */
     s { color: ${({ theme }) => theme.colors.textSecondary}; opacity: 0.5; }
+
+    /* Table */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5em 0;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid ${({ theme }) => theme.colors.border};
+      padding: 4px 8px;
+      min-width: 40px;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.85em;
+    }
+
+    th {
+      background: ${({ theme }) => `${theme.colors.primary}18`};
+      color: ${({ theme }) => theme.colors.primary};
+      font-weight: 600;
+      font-size: 0.8em;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td:first-child, th:first-child {
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: ${({ theme }) => `${theme.colors.primary}08`};
+    }
+
+    /* Checkbox inside table cells — compact, centered */
+    td ul[data-type="taskList"] {
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+
+      li {
+        margin: 0;
+        padding: 0;
+        gap: 0;
+
+        > label {
+          margin: 0;
+        }
+
+        > div {
+          display: none; /* hide empty text area next to checkbox */
+        }
+      }
+    }
   }
 
   @media (max-width: 768px) {
@@ -254,6 +314,10 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
       SlashCommands.configure({
         suggestion: {
           render: createSlashCommandRender(theme),
