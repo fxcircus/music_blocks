@@ -292,16 +292,28 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
 
   const handleCopy = useCallback(async () => {
     if (!editor) return;
+    const html = editor.getHTML();
     const text = editor.getText();
     try {
-      await navigator.clipboard.writeText(text);
+      // Write both HTML and plain text so rich editors (Notion, Google Docs)
+      // get formatted content while plain text fields get a fallback
+      const clipboardItem = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' }),
+      });
+      await navigator.clipboard.write([clipboardItem]);
     } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
+      // Fallback for browsers that don't support ClipboardItem
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
