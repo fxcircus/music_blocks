@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaGithub, FaReact, FaNodeJs, FaIcons, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaGithub, FaReact, FaNodeJs, FaIcons, FaDice, FaWaveSquare, FaChartBar, FaLink, FaQuestionCircle } from 'react-icons/fa';
+import { GiTomato, GiMetronome } from 'react-icons/gi';
+import { IoMdDocument } from 'react-icons/io';
+import { MdDarkMode } from 'react-icons/md';
 import { Container, Card, CardHeader, CardTitle, CardIconWrapper } from '../../components/common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
@@ -109,85 +112,14 @@ const TechItem = styled.div`
 
 const IconContainer = styled.span`
   color: ${({ theme }) => theme.colors.primary};
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-`;
-
-const TipsSection = styled.div`
-  margin-top: ${({ theme }) => theme.spacing.lg};
-`;
-
-const TipsHeader = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  color: ${({ theme }) => theme.colors.text};
-  font-size: ${({ theme }) => theme.fontSizes.lg};
-  font-weight: 600;
-  cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
-const TipsContent = styled(motion.div)`
-  margin-top: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-`;
-
-const TipsItem = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const TipsTitle = styled.h4`
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const TipsText = styled.p`
-  color: ${({ theme }) => theme.colors.text};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  line-height: 1.6;
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-
-  strong {
-    color: ${({ theme }) => theme.colors.primary};
-    font-weight: 600;
-  }
-
-  em {
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
+  vertical-align: middle;
+  margin-right: 4px;
 `;
 
 const AboutPage = () => {
-  const [showTips, setShowTips] = useState(false);
   return (
     <AboutContainer
       as={motion.div}
@@ -219,13 +151,13 @@ const AboutPage = () => {
           <SectionTitle>Features</SectionTitle>
           <List>
             <ListItem>
-              <Strong>🍅 Flow Timer:</Strong>
+              <Strong><IconContainer><Icon icon={GiTomato} size={16} /></IconContainer> Flow Timer:</Strong>
               <NestedList>
                 <ListItem>A simple Pomodoro-style timer to help you stay focused while writing, practicing, or producing.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>🎲 Inspiration Generator:</Strong>
+              <Strong><IconContainer><Icon icon={FaDice} size={16} /></IconContainer> Inspiration Generator:</Strong>
               <NestedList>
                 <ListItem>Randomize scales, BPM, and sounds. Lock in what you like and shuffle the rest.</ListItem>
                 <ListItem>Interactive chord degrees with highlighting and seventh chord support.</ListItem>
@@ -233,14 +165,14 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>🎶 Metronome:</Strong>
+              <Strong><IconContainer><Icon icon={GiMetronome} size={16} /></IconContainer> Metronome:</Strong>
               <NestedList>
                 <ListItem>Follows the BPM from the Inspiration Generator, with manual adjustment in 1-step increments.</ListItem>
                 <ListItem>Click the dial to jump to specific BPM values.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>🎸 Varispeed Calculator:</Strong>
+              <Strong><IconContainer><Icon icon={FaWaveSquare} size={16} /></IconContainer> Varispeed Calculator:</Strong>
               <NestedList>
                 <ListItem>Calculate pitch shifts for varispeed recording and tape manipulation.</ListItem>
                 <ListItem>Shows BPM changes when recording at different pitches.</ListItem>
@@ -248,7 +180,7 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>📊 Arranger:</Strong>
+              <Strong><IconContainer><Icon icon={FaChartBar} size={16} /></IconContainer> Arranger:</Strong>
               <NestedList>
                 <ListItem>Visual song structure builder with draggable sections.</ListItem>
                 <ListItem>Create arrangements using Intro, Verse, Chorus, Bridge, and Outro blocks.</ListItem>
@@ -256,28 +188,28 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>📝 Notes:</Strong>
+              <Strong><IconContainer><Icon icon={IoMdDocument} size={16} /></IconContainer> Notes:</Strong>
               <NestedList>
-                <ListItem>Write down lyrics, chord progressions, FX pedal settings, etc...</ListItem>
+                <ListItem>Notion-like WYSIWYG editor with slash commands and auto-formatting.</ListItem>
+                <ListItem>Pre-built templates for lyrics, chord charts, pedal settings, mix notes, and more.</ListItem>
                 <ListItem>Auto-saves locally as you type.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>❓ Contextual Help:</Strong>
+              <Strong><IconContainer><Icon icon={FaQuestionCircle} size={16} /></IconContainer> Contextual Help:</Strong>
               <NestedList>
                 <ListItem>Hover over any block to reveal a help button with tips and instructions.</ListItem>
                 <ListItem>Clean interface that shows help only when needed.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>🔗 Share Your Work:</Strong>
+              <Strong><IconContainer><Icon icon={FaLink} size={16} /></IconContainer> Share Your Work:</Strong>
               <NestedList>
-                <ListItem>Copy a URL with your current settings — perfect for saving or sharing.</ListItem>
-                <ListItem>(Export/import via JSON is still in the code, just commented out.)</ListItem>
+                <ListItem>Copy a compressed URL with your full project state — settings, notes, block layout, everything.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong>🌓 Dark / Light Modes:</Strong>
+              <Strong><IconContainer><Icon icon={MdDarkMode} size={16} /></IconContainer> Dark / Light Modes:</Strong>
               <NestedList>
                 <ListItem>Full theme support with carefully crafted dark and light modes.</ListItem>
               </NestedList>
@@ -325,120 +257,6 @@ const AboutPage = () => {
           </Paragraph>
         </Section>
 
-        <Section>
-          <SectionTitle>Tips & Tricks</SectionTitle>
-          <TipsSection>
-            <TipsHeader onClick={() => setShowTips(!showTips)}>
-              <span>View tips for using each block</span>
-              <Icon icon={showTips ? FaChevronUp : FaChevronDown} size={20} />
-            </TipsHeader>
-
-            {showTips && (
-              <TipsContent
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TipsItem>
-                  <TipsTitle>
-                    <span>🍅</span> Flow Timer
-                  </TipsTitle>
-                  <TipsText>
-                    This timer follows the Pomodoro technique.
-                  </TipsText>
-                  <TipsText>
-                    Work in focused intervals (typically 25 minutes), then take a short break.
-                  </TipsText>
-                  <TipsText>
-                    After several work sessions, take a longer break.
-                  </TipsText>
-                  <TipsText>
-                    Use the timer to structure focused deep work sessions.
-                  </TipsText>
-                </TipsItem>
-
-                <TipsItem>
-                  <TipsTitle>
-                    <span>🎲</span> Inspiration Generator
-                  </TipsTitle>
-                  <TipsText>
-                    Click on the dice to "roll" a new set of "rules".
-                  </TipsText>
-                  <TipsText>
-                    When you find a setting you like, click on the lock icon to keep it locked, then continue rolling to randomize the other unlocked parameters.
-                  </TipsText>
-                  <TipsText>
-                    Click on the chord degrees to highlight the different notes from the scale that form each chord.
-                  </TipsText>
-                  <TipsText>
-                    Click on the icon next to "Chord Degrees" to switch between triads and seventh chords.
-                  </TipsText>
-                </TipsItem>
-
-                <TipsItem>
-                  <TipsTitle>
-                    <span>🎶</span> Metronome
-                  </TipsTitle>
-                  <TipsText>
-                    You can click directly on the metronome dial to start or stop playback.
-                  </TipsText>
-                  <TipsText>
-                    Use the + and – controls to adjust BPM.
-                  </TipsText>
-                  <TipsText>
-                    The metronome will play at the currently displayed tempo.
-                  </TipsText>
-                </TipsItem>
-
-                <TipsItem>
-                  <TipsTitle>
-                    <span>🎸</span> Varispeed Calculator
-                  </TipsTitle>
-                  <TipsText>
-                    <strong>To pitch down:</strong> Set your DAW to the target BPM (faster), record your part, then slow playback to your original BPM.
-                  </TipsText>
-                  <TipsText>
-                    <strong>To pitch up:</strong> Set your DAW to the target BPM (slower), record your part, then speed playback to your original BPM.
-                  </TipsText>
-                  <TipsText>
-                    <em>Each semitone ≈ 5.95% speed change.</em>
-                  </TipsText>
-                </TipsItem>
-
-                <TipsItem>
-                  <TipsTitle>
-                    <span>📊</span> Arranger
-                  </TipsTitle>
-                  <TipsText>
-                    Drag and drop sections to create your song structure.
-                  </TipsText>
-                  <TipsText>
-                    Use the preset arrangements for common song structures or create your own.
-                  </TipsText>
-                  <TipsText>
-                    Each section type (Intro, Verse, Chorus, etc.) has its own color for easy visualization.
-                  </TipsText>
-                </TipsItem>
-
-                <TipsItem>
-                  <TipsTitle>
-                    <span>📝</span> Notes
-                  </TipsTitle>
-                  <TipsText>
-                    Your notes auto-save as you type, so you never lose your ideas.
-                  </TipsText>
-                  <TipsText>
-                    Use this space for lyrics, chord progressions, equipment settings, or any other creative notes.
-                  </TipsText>
-                  <TipsText>
-                    Notes persist between sessions using browser local storage.
-                  </TipsText>
-                </TipsItem>
-              </TipsContent>
-            )}
-          </TipsSection>
-        </Section>
       </AboutCard>
     </AboutContainer>
   );
