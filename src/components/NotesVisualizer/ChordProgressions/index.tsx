@@ -1,11 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import styled, { useTheme, ThemeProvider } from 'styled-components';
 import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-type Category = 'pop' | 'rock' | 'jazz' | 'blues' | 'emotional' | 'edm' | 'classical';
+type Category = 'utility' | 'pop' | 'rock' | 'jazz' | 'blues' | 'emotional' | 'edm' | 'classical';
 
 interface ChordProgressionDef {
   name: string;
@@ -124,6 +125,7 @@ function buildMidiFile(trackName: string, chords: number[][]): Uint8Array {
 // ─── Data ────────────────────────────────────────────────────────────
 
 const CATEGORIES: { key: Category; label: string }[] = [
+  { key: 'utility', label: 'Utility' },
   { key: 'pop', label: 'Pop' },
   { key: 'rock', label: 'Rock' },
   { key: 'jazz', label: 'Jazz' },
@@ -136,6 +138,9 @@ const CATEGORIES: { key: Category; label: string }[] = [
 const ROMAN_NUMERALS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
 
 const CHORD_PROGRESSIONS: ChordProgressionDef[] = [
+  // UTILITY
+  { name: 'All Scale Chords', desc: 'Play through every chord in the selected scale', category: 'utility', degrees: [0, 1, 2, 3, 4, 5, 6] },
+
   // POP
   { name: 'Anthem', desc: "Don't Stop Believin', Let It Be, No Woman No Cry", category: 'pop', degrees: [0, 4, 5, 3] },
   { name: 'Doo-Wop', desc: "Earth Angel, Stand By Me, Perfect (Ed Sheeran)", category: 'pop', degrees: [0, 5, 3, 4] },
@@ -282,6 +287,18 @@ const SelectorBtn = styled.button<{ $isOpen: boolean }>`
   }
 `;
 
+const CategoryBadge = styled.span`
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: ${({ theme }) => theme.colors.primary};
+  background: ${({ theme }) => `${theme.colors.primary}18`};
+  padding: 1px 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  flex-shrink: 0;
+`;
+
 const SelectorLabel = styled.span`
   flex: 1;
   min-width: 0;
@@ -298,17 +315,14 @@ const SelectorCaret = styled.span<{ $isOpen: boolean }>`
 `;
 
 const DropdownPanel = styled.div`
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  position: fixed;
   background: ${({ theme }) => theme.colors.card};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  z-index: 9999;
-  max-height: 320px;
+  z-index: 99999;
+  max-height: 400px;
   overflow-y: auto;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: ${({ theme }) => theme.shadows.large};
 `;
 
 const CategoryHeader = styled.div`
@@ -480,9 +494,20 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const selectorRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
+  const selectedOptionRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const currentProgression = CHORD_PROGRESSIONS[globalIndex] || CHORD_PROGRESSIONS[0];
+  const categoryLabel = CATEGORIES.find(c => c.key === currentProgression.category)?.label || '';
+
+  // Filter degrees to only valid ones for current scale
+  const effectiveDegrees = useMemo(() =>
+    currentProgression.degrees.filter(d => d < scaleNoteCount),
+    [currentProgression.degrees, scaleNoteCount]
+  );
 
   // Notify parent when progression changes (for persistence)
   useEffect(() => {
@@ -492,12 +517,25 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        selectorRef.current && !selectorRef.current.contains(target) &&
+        (!dropdownPanelRef.current || !dropdownPanelRef.current.contains(target))
+      ) {
         setDropdownOpen(false);
       }
     };
     if (dropdownOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownOpen]);
+
+  // Auto-scroll to selected item when dropdown opens
+  useEffect(() => {
+    if (dropdownOpen) {
+      requestAnimationFrame(() => {
+        selectedOptionRef.current?.scrollIntoView({ block: 'center', behavior: 'auto' });
+      });
+    }
   }, [dropdownOpen]);
 
   // Stop playback when root/scale/bpm changes
@@ -532,6 +570,14 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     } while (idx === globalIndex);
     setGlobalIndex(idx);
     stopPlayback();
+  };
+
+  const toggleDropdown = () => {
+    if (!dropdownOpen && selectorRef.current) {
+      const rect = selectorRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+    setDropdownOpen(o => !o);
   };
 
   const selectProgression = (idx: number) => {
@@ -628,7 +674,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     setIsPlaying(true);
 
     const chordDuration = (60 / bpm) * 2; // half bar per chord
-    const degrees = currentProgression.degrees;
+    const degrees = effectiveDegrees;
     const noteCount = scaleNoteCount;
 
     const playStep = (stepIdx: number) => {
@@ -639,12 +685,6 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
       }
 
       const degree = degrees[stepIdx];
-
-      // Skip invalid degrees for this scale
-      if (degree >= noteCount) {
-        timeoutRef.current = setTimeout(() => playStep(stepIdx + 1), chordDuration * 1000);
-        return;
-      }
 
       // Select chord in parent (triggers piano/guitar highlighting)
       progressionDrivenRef.current = true;
@@ -658,14 +698,13 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     };
 
     playStep(0);
-  }, [currentProgression, activeNotes, bpm, scaleNoteCount, isSeventhMode, onSelectChord, playChord, stopPlayback]);
+  }, [currentProgression, activeNotes, bpm, scaleNoteCount, isSeventhMode, onSelectChord, playChord, stopPlayback, effectiveDegrees]);
 
   const handleExport = useCallback(() => {
     if (!currentProgression) return;
 
     const allChordMidi: number[][] = [];
-    for (const degree of currentProgression.degrees) {
-      if (degree >= scaleNoteCount) continue;
+    for (const degree of effectiveDegrees) {
       const tones = buildChordTones(degree, activeNotes, scaleNoteCount, isSeventhMode);
       allChordMidi.push(tones.map(t => chromaticToMidi(t.chromatic, t.octave)));
     }
@@ -693,13 +732,19 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         <DiceBtn onClick={randomize} title="Random progression">
           <Icon icon={FaDice} size={18} />
         </DiceBtn>
-        <SelectorWrapper ref={dropdownRef}>
-          <SelectorBtn $isOpen={dropdownOpen} onClick={() => setDropdownOpen(o => !o)}>
+        <SelectorWrapper ref={selectorRef}>
+          <SelectorBtn $isOpen={dropdownOpen} onClick={toggleDropdown}>
+            <CategoryBadge>{categoryLabel}</CategoryBadge>
             <SelectorLabel>{currentProgression.name}</SelectorLabel>
             <SelectorCaret $isOpen={dropdownOpen}>&#9660;</SelectorCaret>
           </SelectorBtn>
-          {dropdownOpen && (
-            <DropdownPanel>
+        </SelectorWrapper>
+        {dropdownOpen && createPortal(
+          <ThemeProvider theme={theme}>
+            <DropdownPanel
+              ref={dropdownPanelRef}
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+            >
               {CATEGORIES.map(cat => (
                 <React.Fragment key={cat.key}>
                   <CategoryHeader>{cat.label}</CategoryHeader>
@@ -707,6 +752,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
                     p.category === cat.key ? (
                       <DropdownOption
                         key={idx}
+                        ref={idx === globalIndex ? selectedOptionRef : undefined}
                         $isSelected={idx === globalIndex}
                         onClick={() => selectProgression(idx)}
                       >
@@ -718,8 +764,9 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
                 </React.Fragment>
               ))}
             </DropdownPanel>
-          )}
-        </SelectorWrapper>
+          </ThemeProvider>,
+          document.body
+        )}
         <PlayBtn $isPlaying={isPlaying} onClick={startPlayback} title={isPlaying ? 'Stop' : 'Play progression'}>
           <Icon icon={isPlaying ? FaStop : FaPlay} size={12} />
         </PlayBtn>
@@ -729,7 +776,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
       </TopRow>
 
       <ChordPillsRow>
-        {currentProgression.degrees.map((deg, i) => (
+        {effectiveDegrees.map((deg, i) => (
           <React.Fragment key={i}>
             {i > 0 && <Arrow>{'>'}</Arrow>}
             <ChordPill
