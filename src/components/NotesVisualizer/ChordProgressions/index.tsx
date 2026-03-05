@@ -140,6 +140,9 @@ const ROMAN_NUMERALS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
 const CHORD_PROGRESSIONS: ChordProgressionDef[] = [
   // UTILITY
   { name: 'All Scale Chords', desc: 'Play through every chord in the selected scale', category: 'utility', degrees: [0, 1, 2, 3, 4, 5, 6] },
+  { name: 'Cadence Sampler', desc: 'Hear the four fundamental cadences: authentic, plagal, deceptive, half', category: 'utility', degrees: [4, 0, 3, 0, 4, 5, 0, 4] },
+  { name: 'Two-Chord Vamps', desc: 'Isolated chord pairs to internalize harmonic intervals', category: 'utility', degrees: [0, 3, 0, 4, 0, 5, 1, 4, 3, 4, 5, 3] },
+  { name: 'Circle of Fifths Walk', desc: 'Chords ordered by fifths — each resolves naturally to the next', category: 'utility', degrees: [3, 0, 4, 1, 5, 2, 6] },
 
   // POP
   { name: 'Anthem', desc: "Don't Stop Believin', Let It Be, No Woman No Cry", category: 'pop', degrees: [0, 4, 5, 3] },
