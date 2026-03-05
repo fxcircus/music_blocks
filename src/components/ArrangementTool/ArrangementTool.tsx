@@ -764,8 +764,8 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                 onClick={handleRandomTemplate}
                 title="Random template"
                 style={{
-                  background: `linear-gradient(135deg, ${CATEGORY_COLORS['BEATLES']}22, ${CATEGORY_COLORS['BRIAN ENO']}22)`,
-                  borderColor: CATEGORY_COLORS['BEATLES'] + '44'
+                  background: 'transparent',
+                  border: 'none'
                 }}
               >
                 <Icon icon={FaDice} size={20} />

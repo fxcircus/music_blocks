@@ -703,6 +703,20 @@ const Metronome: FC<LoaderProps> = ({
                 </BpmControls>
             </MetronomeDisplay>
             
+            <BeatsRow>
+                {beats.map((beat) => (
+                    <BeatIndicator
+                        key={beat}
+                        animate={{
+                            scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
+                            backgroundColor: currentBeat === beat && metronomePlaying ?
+                                ['#6c63ff', '#5ee7df', '#6c63ff'] : '#6c63ff'
+                        }}
+                        transition={{ duration: 0.2 }}
+                    />
+                ))}
+            </BeatsRow>
+
             <ControlsContainer>
                 <PlayPauseButton
                     onClick={toggleMetronome}
@@ -725,20 +739,6 @@ const Metronome: FC<LoaderProps> = ({
                     </IconWrapper>
                 </ControlButton>
             </ControlsContainer>
-            
-            <BeatsRow>
-                {beats.map((beat) => (
-                    <BeatIndicator 
-                        key={beat}
-                        animate={{ 
-                            scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
-                            backgroundColor: currentBeat === beat && metronomePlaying ? 
-                                ['#6c63ff', '#5ee7df', '#6c63ff'] : '#6c63ff'
-                        }}
-                        transition={{ duration: 0.2 }}
-                    />
-                ))}
-            </BeatsRow>
             <TipsModal
                 isOpen={showTips}
                 onClose={() => setShowTips(false)}

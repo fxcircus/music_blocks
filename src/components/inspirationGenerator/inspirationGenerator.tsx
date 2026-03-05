@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic } from 'react-icons/md';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
@@ -232,16 +232,89 @@ const ValueCell = styled.td`
   }
 `;
 
+const BpmInputCell = styled.td`
+  padding: ${({ theme }) => `${theme.spacing.xs} 0`};
+  vertical-align: middle;
+  height: 100%;
+  padding-right: ${({ theme }) => theme.spacing.lg};
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+`;
+
+const BpmAdjustBtn = styled.button`
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
+const BpmInput = styled.input`
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.fontSizes.md};
+  font-family: inherit;
+  width: 52px;
+  text-align: center;
+  padding: 2px 4px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
 const ClickableValueCell = styled(ValueCell)<{ $isLocked?: boolean }>`
   position: relative;
   cursor: ${({ $isLocked }) => $isLocked ? 'not-allowed' : 'pointer'};
-  opacity: ${({ $isLocked }) => $isLocked ? 1 : 1};
-  transition: color ${({ theme }) => theme.transitions.fast};
-  overflow: visible; /* Override parent's overflow: hidden to show dropdowns */
+  transition: all 0.15s;
+  overflow: visible;
+`;
+
+const ClickableValueInner = styled.span<{ $isLocked?: boolean }>`
+  display: inline-block;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  padding: 2px 8px;
+  min-width: 52px;
+  text-align: center;
+  opacity: ${({ $isLocked }) => $isLocked ? 0.4 : 1};
+  transition: all 0.15s;
 
   &:hover {
     color: ${({ theme, $isLocked }) =>
       $isLocked ? theme.colors.text : theme.colors.primary};
+    border-color: ${({ theme, $isLocked }) =>
+      $isLocked ? theme.colors.border : theme.colors.primary};
   }
 `;
 
@@ -745,6 +818,59 @@ export default function InspirationGenerator({
   const handleProgressionChange = useCallback((index: number) => {
     localStorage.setItem('tilesProgression', String(index));
   }, []);
+
+  // BPM manual input
+  const [bpmInput, setBpmInput] = useState(bpmEl);
+
+  // Keep input in sync with external BPM changes (dice roll, metronome sync)
+  useEffect(() => {
+    setBpmInput(bpmEl);
+  }, [bpmEl]);
+
+  const commitBpmChange = (newBpm: string) => {
+    const parsed = parseInt(newBpm, 10);
+    if (isNaN(parsed)) {
+      setBpmInput(bpmEl);
+      return;
+    }
+    const clamped = Math.max(40, Math.min(300, parsed));
+    const clampedStr = String(clamped);
+    setBpmInput(clampedStr);
+    if (onBatchUpdate) {
+      onBatchUpdate({ bpmEl: clampedStr });
+    } else {
+      setBpmEl(clampedStr);
+    }
+  };
+
+  const handleBpmInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBpmInput(e.target.value);
+  };
+
+  const handleBpmInputBlur = () => {
+    commitBpmChange(bpmInput);
+  };
+
+  const handleBpmInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      commitBpmChange(bpmInput);
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === 'Escape') {
+      setBpmInput(bpmEl);
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  const adjustBpm = (delta: number) => {
+    const current = parseInt(bpmEl, 10) || 120;
+    const clamped = Math.max(40, Math.min(300, current + delta));
+    const clampedStr = String(clamped);
+    if (onBatchUpdate) {
+      onBatchUpdate({ bpmEl: clampedStr });
+    } else {
+      setBpmEl(clampedStr);
+    }
+  };
 
   // Update localStorage whenever values change
   useEffect(() => {
@@ -1723,7 +1849,7 @@ export default function InspirationGenerator({
                 }}
                 ref={openDropdown === 'root' ? dropdownRef : undefined}
               >
-                {rootEl}
+                <ClickableValueInner $isLocked={locked.root} title={locked.root ? "Unlock row to edit" : undefined}>{rootEl}</ClickableValueInner>
                 {openDropdown === 'root' && (
                   <RootDropdown onClick={(e) => e.stopPropagation()}>
                     {notes.map((note) => (
@@ -1772,7 +1898,7 @@ export default function InspirationGenerator({
                 }}
                 ref={openDropdown === 'scale' ? dropdownRef : undefined}
               >
-                {scaleEl}
+                <ClickableValueInner $isLocked={locked.scale} title={locked.scale ? "Unlock row to edit" : undefined}>{scaleEl}</ClickableValueInner>
                 {openDropdown === 'scale' && (
                   <ScaleDropdown onClick={(e) => e.stopPropagation()}>
                     {scales.map((scale) => (
@@ -1809,7 +1935,24 @@ export default function InspirationGenerator({
                 </LockIconWrapper>
               </TableHeader>
               <LabelCell>BPM</LabelCell>
-              <ValueCell>{bpmEl}</ValueCell>
+              <BpmInputCell>
+                <BpmAdjustBtn onClick={() => adjustBpm(-1)} title={locked.bpm ? "Unlock row to edit" : "Decrease BPM"} disabled={locked.bpm}>
+                  <Icon icon={FaMinus} size={10} />
+                </BpmAdjustBtn>
+                <BpmInput
+                  type="text"
+                  inputMode="numeric"
+                  value={bpmInput}
+                  onChange={handleBpmInputChange}
+                  onBlur={handleBpmInputBlur}
+                  onKeyDown={handleBpmInputKeyDown}
+                  disabled={locked.bpm}
+                  title={locked.bpm ? "Unlock row to edit" : undefined}
+                />
+                <BpmAdjustBtn onClick={() => adjustBpm(1)} title={locked.bpm ? "Unlock row to edit" : "Increase BPM"} disabled={locked.bpm}>
+                  <Icon icon={FaPlus} size={10} />
+                </BpmAdjustBtn>
+              </BpmInputCell>
             </TableRow>
 
             {/* Separator after BPM row */}
