@@ -18,13 +18,14 @@ The workspace is made up of modular blocks that you can add, remove, and rearran
 
 The core composition tool. Roll the dice to randomize musical parameters and discover new ideas.
 
-- **🎲 Dice Roll** — Randomly generate a root note, scale, BPM, and sound
+- **🎲 Dice Roll** — Randomly generate a root note, scale, BPM, and sound from 115 instrument presets
 - **🔒 Lock Parameters** — Lock any parameter (root, scale, BPM, sound) to keep it while re-rolling the rest
 - **🎵 Chord Degrees** — Click Roman numerals (I–vii) to highlight the chord tones from the current scale. Chord qualities (major, minor, diminished, augmented) are calculated automatically
 - **7 Seventh Chords** — Toggle seventh chord mode to extend triads into four-note chords
 - **↔ Inversions** — Cycle through root position, 1st, 2nd, and 3rd inversions for the selected chord
 - **🔊 Playback** — Press the play button to hear the current scale or selected chord
 - **📏 Scale Tones with Intervals** — Each scale degree shows the semitone distance to the next note
+- **Circle of Fifths** — Switch the root note selector to a Circle of Fifths view for harmonic navigation
 
 #### 🎹 Piano Visualizer
 
@@ -53,7 +54,8 @@ Toggle from the Scale Tones row to show an interactive fretboard using the **CAG
 
 Toggle from the Scale Tones row to open the chord progressions panel. Browse and play common progressions that automatically adapt to whatever root and scale you've selected.
 
-- **66 Named Progressions** across 7 categories: Pop, Rock, Jazz, Blues, Emotional, EDM, and Classical
+- **70 Named Progressions** across 8 categories: Utility, Pop, Rock, Jazz, Blues, Emotional, EDM, and Classical
+- **Utility Progressions** — Educational tools including All Scale Chords, Cadence Sampler, Two-Chord Vamps, and Circle of Fifths Walk
 - **Dropdown Browser** — Browse all progressions organized by genre, with example songs listed for each (e.g., "Anthem — Don't Stop Believin', Let It Be, No Woman No Cry")
 - **🎲 Randomize** — Dice button picks a random progression from any category
 - **▶ Playback** — Play the full progression with chords sounding simultaneously. Piano and guitar visualizations highlight each chord in real time as it plays
@@ -66,8 +68,8 @@ Toggle from the Scale Tones row to open the chord progressions panel. Browse and
 
 Song structure templates to help plan arrangements and energy flow.
 
-- **35+ Templates** across 6 categories:
-  - **General** — Slow Burn, Two Peaks, Hook First, Loop Rider, Call & Response, and more
+- **25 Templates** across 6 categories:
+  - **General** — Slow Burn, Two Peaks, Storyteller, Hook First, Loop Rider, Call & Response, The Minimalist, The Epic, Peak & Dissolve, The Fake Out
   - **Beatles** — AABA Middle Eight, Compact & Dense, Through-Composed
   - **Pink Floyd** — Textural Expansion, Sound → Song → Sound, The Slow Boil
   - **Neil Young** — The Long Jam, Acoustic → Electric, One-Take Rawness
@@ -103,16 +105,26 @@ A Pomodoro-style countdown timer to keep sessions focused.
 
 ---
 
-### 📝 Notes
+### 📄 Notes
 
-A simple text area for capturing ideas on the fly.
+A Notion-like WYSIWYG editor for capturing ideas on the fly, powered by TipTap.
 
-- Write down lyrics, chord progressions, FX pedal settings, or anything else
-- Content is automatically saved to the browser
+- **Slash Commands** — Type `/` to open a command menu with templates and formatting blocks
+- **7 Pre-built Templates:**
+  - 🎤 **Lyrics** — Verse / Chorus / Bridge structure
+  - 🎬 **Recording Progress** — Table-based tracker with checkboxes per instrument and section
+  - 🎹 **Chord Progression** — Chord charts per section with key reference
+  - 🎛 **Pedal Settings** — Signal chain with settings per pedal
+  - 🎚 **Mix Notes** — Track-by-track EQ, compression, and effects
+  - 🏗 **Song Structure** — Sections with bar counts and energy levels
+  - 🎯 **Session Goals** — Checklist for session workflow
+- **Rich Formatting** — Headings, bullet lists, numbered lists, task lists, blockquotes, code blocks, tables, and dividers
+- **📋 Rich Clipboard Export** — Copy as formatted HTML for pasting into Notion and other rich editors
+- **💾 Auto-Save** — Content is automatically saved to the browser as you type
 
 ---
 
-### 🔀 Varispeed
+### 〰️ Varispeed
 
 Calculate pitch and tempo changes for varispeed recording effects.
 
@@ -130,8 +142,9 @@ Calculate pitch and tempo changes for varispeed recording effects.
 
 - **Drag & Drop** — Rearrange blocks by dragging them into any order
 - **➕ Add / Remove Blocks** — Use the floating + button to add blocks; remove any block with the × button
-- **🔗 Share Your Work** — Copy a URL with your current settings for saving or sharing
-- **🌓 Dark / Light Mode** — Toggle from the navigation bar
+- **🔗 Share Your Work** — Copy a compressed URL with your full project state — settings, notes, block layout, everything
+- **🌙 Dark / Light Mode** — Toggle from the navigation bar
+- **❓ Contextual Help** — Hover over any block to reveal a help button with tips and instructions
 - **💾 Auto-Save** — All block states persist in the browser automatically
 
 ## Technologies
@@ -139,9 +152,11 @@ Calculate pitch and tempo changes for varispeed recording effects.
 - **⚛️ React + TypeScript**
 - **🎵 Tone.js** — Metronome audio engine
 - **🔊 Web Audio API** — Note playback for piano and guitar visualizers
+- **✏️ TipTap** — Rich text editor framework powering the Notes block
 - **🔀 Framer Motion** — Animations and transitions
 - **🧲 dnd-kit** — Drag and drop reordering
-- **🎨 styled-components** — Themed component styling
+- **🎨 styled-components + Tailwind CSS** — Component styling and utility classes
+- **🔗 LZ-String** — URL compression for full-state sharing
 - **🎨 React Icons** — Font Awesome, Game Icons, and more
 
 ## Local Installation
