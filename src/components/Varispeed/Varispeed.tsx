@@ -459,11 +459,41 @@ const Varispeed: FC<VarispeedProps> = ({
   // Sliding offset: shift the inner container so selectedIndex is centered
   const slideY = -(selectedIndex * ITEM_H) + (ITEM_H * 3);
 
-  // Color helpers for cryptex rows
+  // HSL → hex helper for gradient computation
+  function hslToHex(h: number, s: number, l: number): string {
+    s /= 100; l /= 100;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  }
+
+  // Color gradient for cryptex rows:
+  //   −12 (red) ← amber ← [ROOT purple] → teal → +12 (green)
+  //   Root is vivid purple — orthogonal to the red↔green axis, pops on scroll
+  //   Saturation builds outward from muted (±1) to vivid (±12)
   function getColor(st: number): string {
-    if (st === 0) return theme.colors.primary;
-    if (Math.abs(st) === 12) return theme.colors.error;
-    return theme.colors.text;
+    if (st === 0) return theme.colors.primary; // vivid purple, completely off-gradient
+
+    const abs = Math.abs(st);
+    const t = abs / 12; // 0→1 progress from root to octave
+
+    if (st < 0) {
+      // Warm: near-white → Amber → Red
+      const h = 40 - t * 40;
+      const s = 12 + t * 88;   // 12% → 100%  (nearly gray at ±1)
+      const l = 55 + t * 11;   // 55% → 66%
+      return hslToHex(h, s, l);
+    } else {
+      // Cool: near-white → Teal → Green
+      const h = 185 - t * 45;
+      const s = 12 + t * 73;   // 12% → 85%   (nearly gray at ±1)
+      const l = 55 - t * 20;   // 55% → 35%
+      return hslToHex(h, s, l);
+    }
   }
 
   function getTag(st: number): string {
@@ -489,6 +519,19 @@ const Varispeed: FC<VarispeedProps> = ({
       </VarispeedHeader>
 
       <ControlSection>
+        <LinkToggle
+          $isLinked={isLinked}
+          onClick={() => setIsLinked(!isLinked)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
+        >
+          <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
+          {isLinked ? "Linked" : "Link"}
+        </LinkToggle>
+
+        <Divider $mobile={isMobile} />
+
         <ControlGroup>
           <ControlLabel>BPM</ControlLabel>
           <ControlButton
@@ -526,19 +569,6 @@ const Varispeed: FC<VarispeedProps> = ({
           <ControlLabel>Key</ControlLabel>
           <KeyPicker keyIdx={keyIdx} setKeyIdx={setKeyIdx} disabled={isLinked} displayKey={displayKey} />
         </ControlGroup>
-
-        <Divider $mobile={isMobile} />
-
-        <LinkToggle
-          $isLinked={isLinked}
-          onClick={() => setIsLinked(!isLinked)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
-        >
-          <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
-          {isLinked ? "Linked" : "Link"}
-        </LinkToggle>
       </ControlSection>
 
       {/* Cryptex drum-roller */}
@@ -569,15 +599,21 @@ const Varispeed: FC<VarispeedProps> = ({
           style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 3, zIndex: 8 }}
         />
 
-        {/* Center highlight band */}
-        <div style={{
-          position: "absolute",
-          top: ITEM_H * 3, left: 0, right: 0, height: ITEM_H,
-          background: `${theme.colors.primary}14`,
-          borderTop: `1px solid ${theme.colors.primary}4D`,
-          borderBottom: `1px solid ${theme.colors.primary}4D`,
-          zIndex: 5, pointerEvents: "none",
-        }} />
+        {/* Center highlight band — tints to match selected row's gradient color */}
+        {(() => {
+          const bandColor = getColor(calculations[selectedIndex].semitones);
+          return (
+            <div style={{
+              position: "absolute",
+              top: ITEM_H * 3, left: 0, right: 0, height: ITEM_H,
+              background: `${bandColor}14`,
+              borderTop: `1px solid ${bandColor}4D`,
+              borderBottom: `1px solid ${bandColor}4D`,
+              zIndex: 5, pointerEvents: "none",
+              transition: "background 0.25s ease, border-color 0.25s ease",
+            }} />
+          );
+        })()}
 
         {/* Sliding inner container — all 25 rows, translated smoothly */}
         <div style={{
@@ -590,6 +626,9 @@ const Varispeed: FC<VarispeedProps> = ({
             const atCenter = dist === 0;
             const isLandmark = calc.semitones === 0 || Math.abs(calc.semitones) === 12;
             const color = getColor(calc.semitones);
+            // Landmarks always show their color; others only when selected
+            const showColor = isLandmark || atCenter;
+            const displayColor = showColor ? color : theme.colors.text;
 
             // Smooth opacity/scale falloff
             const opacity = dist === 0 ? 1 : dist === 1 ? 0.6 : dist === 2 ? 0.5 : dist === 3 ? 0.4 : 0;
@@ -613,10 +652,12 @@ const Varispeed: FC<VarispeedProps> = ({
                   padding: isMobile ? "0 8px" : "0 16px",
                   opacity,
                   transform: `scale(${scale})`,
-                  transition: "opacity 0.25s ease, transform 0.25s ease",
-                  color,
-                  fontWeight: atCenter ? 700 : 400,
+                  transition: "opacity 0.25s ease, transform 0.25s ease, color 0.25s ease, background 0.25s ease",
+                  color: displayColor,
+                  fontWeight: (atCenter || isLandmark) ? 700 : 400,
                   position: "relative",
+                  background: isLandmark ? `${color}20` : (atCenter ? `${color}18` : undefined),
+                  borderRadius: (atCenter || isLandmark) ? theme.borderRadius.small : undefined,
                 }}
               >
                 {/* Faint divider line — width follows scale for 3D taper */}
@@ -636,7 +677,7 @@ const Varispeed: FC<VarispeedProps> = ({
                   fontSize: 10,
                   letterSpacing: "1px",
                   textTransform: "uppercase",
-                  color: isLandmark ? color : undefined,
+                  color: displayColor,
                 }}>
                   {getTag(calc.semitones)}
                 </div>
@@ -648,8 +689,10 @@ const Varispeed: FC<VarispeedProps> = ({
                   fontSize,
                   transition: "font-size 0.25s ease",
                   fontFamily: "'Courier New', monospace",
-                  color: isLandmark ? color : undefined,
-                  textShadow: isLandmark ? `0 0 20px ${color}66` : undefined,
+                  color: displayColor,
+                  textShadow: isLandmark
+                    ? `0 0 24px ${color}88, 0 0 48px ${color}44`
+                    : atCenter ? `0 0 16px ${color}55` : undefined,
                 }}>
                   {calc.name}
                 </div>
