@@ -16,6 +16,8 @@ The workspace is made up of modular blocks that you can add, remove, and rearran
 
 ### 🎲 Inspiration Generator
 
+![Inspiration Generator](screenshots/inspiration_generator.png)
+
 The core composition tool. Roll the dice to randomize musical parameters and discover new ideas.
 
 - **🎲 Dice Roll** — Randomly generate a root note, scale, BPM, and sound from 115 instrument presets
@@ -66,6 +68,8 @@ Toggle from the Scale Tones row to open the chord progressions panel. Browse and
 
 ### 📊 Arrangement
 
+![Arrangement](screenshots/arrangement.png)
+
 Song structure templates to help plan arrangements and energy flow.
 
 - **25 Templates** across 6 categories:
@@ -84,6 +88,8 @@ Song structure templates to help plan arrangements and energy flow.
 
 ### 🎵 Metronome
 
+![Metronome](screenshots/metronome.png)
+
 Audio-visual metronome that syncs with the Inspiration Generator's BPM.
 
 - **Animated Pendulum** — Swinging visual synchronized to the tempo
@@ -96,6 +102,8 @@ Audio-visual metronome that syncs with the Inspiration Generator's BPM.
 
 ### 🍅 Flow Timer
 
+![Flow Timer](screenshots/flow_timer.png)
+
 A Pomodoro-style countdown timer to keep sessions focused.
 
 - **25-Minute Work Sessions** — Default interval with play/pause
@@ -106,6 +114,8 @@ A Pomodoro-style countdown timer to keep sessions focused.
 ---
 
 ### 📄 Notes
+
+![Notes](screenshots/notes.png)
 
 A Notion-like WYSIWYG editor for capturing ideas on the fly, powered by TipTap.
 
@@ -126,15 +136,16 @@ A Notion-like WYSIWYG editor for capturing ideas on the fly, powered by TipTap.
 
 ### 〰️ Varispeed
 
+![Varispeed](screenshots/varispeed.png)
+
 Calculate pitch and tempo changes for varispeed recording effects.
 
 - **BPM and Key Input** — Set a base tempo and key
-- **Transposition Table** — Shows 6 semitones down to 5 semitones up with:
-  - Target note name
-  - Calculated BPM for each transposition
-  - Visual bar chart of relative tempos
+- **Cryptex Drum-Roller** — Scrollable interface showing 12 semitones up and down (full octave each direction) with note names and target BPMs
+- **Color-Coded Landmarks** — Root note (purple) and octave boundaries (red) are always visible for quick orientation
+- **Scroll, Drag & Tap** — Navigate with mouse wheel, click-drag, or tap the edges
 - **🔗 Link to Generator** — Sync BPM and key with the Inspiration Generator
-- Includes a tips modal explaining the technique with the famous "Strawberry Fields Forever" example
+- Includes a tips modal with the "Strawberry Fields Forever" example and an Ableton Live Re-Pitch warp mode workflow
 
 ---
 
