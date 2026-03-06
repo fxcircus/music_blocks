@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, useRef, FC } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FaChartBar, FaDice } from 'react-icons/fa';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
@@ -498,7 +498,7 @@ const SelectorButton = styled.button<{ $isOpen?: boolean }>`
   text-align: left;
   font-weight: 600;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
   position: relative;
   transition: all 0.2s;
@@ -690,7 +690,19 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     return saved && ALL_TEMPLATES[saved] ? saved : 'Two Peaks';
   });
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   const template = ALL_TEMPLATES[selected];
   const totalBars = template.scenes.reduce((a, s) => a + s.bars, 0);
@@ -727,27 +739,34 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     <ThemeAwareWrapper>
       <ArrangementCard className="arrangement-card">
         <TemplateSelector>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{
-              fontSize: '9px',
-              color: 'var(--text-secondary)',
-              marginBottom: '5px',
-              letterSpacing: '1px',
-              opacity: 0.7
-            }}>
-              TEMPLATE
-            </div>
-            <div style={{ position: 'relative', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <RandomButton
+              onClick={handleRandomTemplate}
+              title="Random template"
+              style={{
+                background: 'transparent',
+                border: 'none'
+              }}
+            >
+              <Icon icon={FaDice} size={20} />
+            </RandomButton>
+            <div ref={dropdownRef} style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
               <SelectorButton onClick={() => setIsOpen(!isOpen)} $isOpen={isOpen}>
-                <span style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '1px',
-                  background: CATEGORY_COLORS[template.category || ''] || '#888',
-                  flexShrink: 0
-                }} />
-                {selected}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
+                  <span style={{
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    letterSpacing: '0.5px',
+                    padding: '2px 6px',
+                    borderRadius: '3px',
+                    background: CATEGORY_COLORS[template.category || ''] || '#888',
+                    color: '#fff',
+                    textTransform: 'uppercase'
+                  }}>
+                    {template.category || ''}
+                  </span>
+                  <span>{selected}</span>
+                </div>
                 <span style={{
                   position: 'absolute',
                   right: '12px',
@@ -759,18 +778,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                   {isOpen ? '▲' : '▼'}
                 </span>
               </SelectorButton>
-
-              <RandomButton
-                onClick={handleRandomTemplate}
-                title="Random template"
-                style={{
-                  background: 'transparent',
-                  border: 'none'
-                }}
-              >
-                <Icon icon={FaDice} size={20} />
-              </RandomButton>
-
               {isOpen && (
                 <Dropdown>
                   {CATEGORIES.map((cat) => (
@@ -822,12 +829,24 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                             <div style={{
                               fontSize: '9px',
                               color: 'var(--text-secondary)',
-                              marginTop: '1px',
+                              marginTop: '2px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical'
+                            }}>
+                              {tmpl.desc}
+                            </div>
+                            <div style={{
+                              fontSize: '9px',
+                              color: 'var(--text-secondary)',
+                              marginTop: '2px',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
                             }}>
-                              {tmpl.vibe}
+                              <span style={{ color: 'var(--primary)', opacity: 0.7 }}>Heard in </span>{tmpl.vibe}
                             </div>
                           </div>
                         </TemplateOption>
@@ -837,36 +856,34 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                 </Dropdown>
               )}
             </div>
+            <div style={{ display: 'flex', gap: '16px', flexShrink: 0, alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>
+                  SECTIONS
+                </div>
+                <div style={{ fontSize: '18px', color: 'var(--primary)', fontWeight: 700 }}>
+                  {template.scenes.length}
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>
+                  BARS
+                </div>
+                <div style={{ fontSize: '18px', color: 'var(--primary)', fontWeight: 700 }}>
+                  {totalBars}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style={{ flex: 1, minWidth: '160px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+          <div style={{ textAlign: 'left', marginTop: '4px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {template.desc}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              → {template.vibe}
+            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+              <span style={{ color: 'var(--primary)', opacity: 0.7 }}>Heard in </span>{template.vibe}
             </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '16px', flexShrink: 0 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
-                SECTIONS
-              </div>
-              <div style={{ fontSize: '20px', color: 'var(--primary)', fontWeight: 700 }}>
-                {template.scenes.length}
-              </div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '4px' }}>
-                BARS
-              </div>
-              <div style={{ fontSize: '20px', color: 'var(--primary)', fontWeight: 700 }}>
-                {totalBars}
-              </div>
-            </div>
-          </div>
-        </div>
       </TemplateSelector>
 
       <SceneList>

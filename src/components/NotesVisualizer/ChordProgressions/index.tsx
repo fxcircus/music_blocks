@@ -381,6 +381,18 @@ const OptionDesc = styled.span`
   text-overflow: ellipsis;
 `;
 
+const HeardInLabel = styled.span`
+  color: ${({ theme }) => theme.colors.primary};
+  opacity: 0.7;
+`;
+
+const HeardInRow = styled.div`
+  font-size: 10px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-left: 38px;
+  text-align: left;
+`;
+
 const PlayBtn = styled.button<{ $isPlaying: boolean }>`
   background: ${({ $isPlaying, theme }) =>
     $isPlaying ? theme.colors.primary : 'transparent'};
@@ -410,6 +422,7 @@ const ChordPillsRow = styled.div`
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
+  margin-left: 38px;
 `;
 
 const ChordPill = styled.button<{ $isActive: boolean; $isPlaying: boolean }>`
@@ -760,7 +773,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
                         onClick={() => selectProgression(idx)}
                       >
                         <OptionName>{p.name}</OptionName>
-                        <OptionDesc>{'\u2192'} {p.desc}</OptionDesc>
+                        <OptionDesc>{p.category !== 'utility' && <HeardInLabel>Heard in </HeardInLabel>}{p.desc}</OptionDesc>
                       </DropdownOption>
                     ) : null
                   )}
@@ -777,6 +790,12 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
           <Icon icon={FaDownload} size={12} />
         </ExportBtn>
       </TopRow>
+
+      {currentProgression.desc && (
+        <HeardInRow>
+          {currentProgression.category !== 'utility' && <HeardInLabel>Heard in </HeardInLabel>}{currentProgression.desc}
+        </HeardInRow>
+      )}
 
       <ChordPillsRow>
         {effectiveDegrees.map((deg, i) => (
