@@ -6,7 +6,7 @@ A modular set of tools to help musicians stay creative and focused. Randomize mu
 
 Try the [live version](https://fxcircus.github.io/music_blocks) on GitHub Pages, or follow the [Local Installation](#local-installation) instructions.
 
-![Blocks](public/tiles_app_screenshot_dark_2025.png)
+![Blocks](screenshots/full.png)
 
 ## Blocks
 
