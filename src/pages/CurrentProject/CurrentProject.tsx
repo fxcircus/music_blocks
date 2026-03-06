@@ -60,7 +60,7 @@ const TwoColumnGrid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: ${({ theme }) => theme.spacing.xs};
+    gap: ${({ theme }) => theme.spacing.md};
   }
 `;
 
@@ -99,7 +99,7 @@ const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverla
     margin-top: ${({ theme }) => theme.spacing.md};
 
     @media (max-width: 768px) {
-      margin-top: ${({ theme }) => theme.spacing.sm};
+      margin-top: ${({ theme }) => theme.spacing.md};
     }
   }
 `;
