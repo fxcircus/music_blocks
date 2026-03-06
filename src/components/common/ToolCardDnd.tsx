@@ -80,6 +80,12 @@ const ControlButton = styled.button<{ $visible?: boolean }>`
   height: 28px;
   pointer-events: ${({ $visible }) => $visible ? 'auto' : 'none'};
 
+  /* Always visible on mobile/tablet (no hover available) */
+  @media (max-width: 768px) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   /* Show on card hover or when active */
   .tool-card:hover & {
     opacity: 1;

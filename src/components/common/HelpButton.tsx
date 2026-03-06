@@ -21,6 +21,11 @@ const StyledHelpButton = styled.button`
   transition: all ${({ theme }) => theme.transitions.fast};
   opacity: 0;
 
+  /* Always visible on mobile/tablet (no hover available) */
+  @media (max-width: 768px) {
+    opacity: 1;
+  }
+
   /* Show on parent hover or when focused */
   .tool-card:hover &,
   .inspiration-card:hover &,
