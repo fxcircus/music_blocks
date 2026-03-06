@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
-import styled from 'styled-components';
+import styled, { useTheme as useStyledTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
@@ -43,22 +43,13 @@ const NOTE_TO_INDEX: Record<string, number> = {
   'B': 11, 'C♭': 11, 'Cb': 11
 };
 
-const NOTE_COLORS: { [key: number]: string } = {
-  0: "#e8a849", 1: "#d4834e", 2: "#c96b5a", 3: "#b85565",
-  4: "#a74270", 5: "#963e7a", 6: "#7e4a8a", 7: "#65569a",
-  8: "#4c62aa", 9: "#3a78b0", 10: "#4a8ea0", 11: "#5aa490"
-};
-
-// Using the same color scheme as Arrangement block for consistency
-const ENERGY_COLORS: Record<number, { bg: string; fill: string; clip: string }> = {
-  1: { bg: "#1E3A52", fill: "#2B5B84", clip: "#3A7BBF" },
-  2: { bg: "#3D3818", fill: "#8B7E2A", clip: "#C4B236" },
-  3: { bg: "#3D2510", fill: "#9B5E28", clip: "#E08A3A" },
-  4: { bg: "#3D1515", fill: "#8B2E2E", clip: "#D14545" },
-};
-
 const BPM_MIN = 10;
 const BPM_MAX = 200;
+
+// Cryptex constants
+const ITEM_H = 64;   // Row height in pixels
+const TOTAL = 25;     // -12 to +12 semitones
+const VISIBLE = 7;    // 3 above + center + 3 below
 
 const VarispeedCard = styled(Card)`
   max-width: 100%;
@@ -245,79 +236,6 @@ const Divider = styled.div<{ $mobile?: boolean }>`
   background: ${({ theme }) => theme.colors.border};
 `;
 
-const CalculationRow = styled.div<{ $isSource?: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: ${({ theme, $isSource }) =>
-    $isSource ? theme.spacing.sm : `${theme.spacing.xs} 0`};
-  background: ${({ theme, $isSource }) =>
-    $isSource ? theme.colors.primary + '10' : 'transparent'};
-  border-top: ${({ theme, $isSource }) =>
-    $isSource ? `1px solid ${theme.colors.primary}30` : 'none'};
-  border-bottom: ${({ theme, $isSource }) =>
-    $isSource ? `1px solid ${theme.colors.primary}30` : 'none'};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  transition: all 0.15s;
-
-  &:hover {
-    background: ${({ theme, $isSource }) =>
-      $isSource ? theme.colors.primary + '15' : theme.colors.primary + '05'};
-  }
-`;
-
-const NoteName = styled.div<{ $isSource?: boolean; $color?: string }>`
-  width: 50px;
-  font-size: ${({ theme, $isSource }) =>
-    $isSource ? theme.fontSizes.lg : theme.fontSizes.sm};
-  font-weight: ${({ $isSource }) => ($isSource ? 700 : 400)};
-  color: ${({ theme, $isSource, $color }) =>
-    $isSource ? theme.colors.primary : $color || theme.colors.text};
-  text-shadow: ${({ $isSource }) =>
-    $isSource ? '0 0 15px rgba(232,168,73,0.4)' : 'none'};
-
-  @media (max-width: 768px) {
-    width: 32px;
-    text-align: center;
-  }
-`;
-
-const BpmBar = styled.div<{ $isSource?: boolean }>`
-  flex: 1;
-  height: ${({ $isSource }) => ($isSource ? '34px' : '22px')};
-  position: relative;
-  background: ${({ theme }) => `${theme.colors.background}44`};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  overflow: hidden;
-  border: 1px solid ${({ theme, $isSource }) =>
-    $isSource ? theme.colors.primary + '60' : theme.colors.border};
-
-  @media (max-width: 768px) {
-    height: ${({ $isSource }) => ($isSource ? '34px' : '24px')};
-  }
-`;
-
-const BpmBarFill = styled.div<{ $width: number; $isSource?: boolean; $color?: string }>`
-  width: ${({ $width }) => `${$width}%`};
-  height: 100%;
-  background: ${({ theme, $isSource, $color }) =>
-    $isSource
-      ? theme.colors.primary
-      : $color};
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-`;
-
-const BpmValue = styled.div<{ $isSource?: boolean }>`
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: ${({ theme, $isSource }) =>
-    $isSource ? theme.fontSizes.sm : theme.fontSizes.xs};
-  color: ${({ theme, $isSource }) =>
-    $isSource ? theme.colors.primary : theme.colors.textSecondary};
-  font-weight: ${({ $isSource }) => ($isSource ? 700 : 400)};
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-`;
 
 
 function KeyPicker({ keyIdx, setKeyIdx, disabled, displayKey }: { keyIdx: number; setKeyIdx: (idx: number) => void; disabled?: boolean; displayKey?: string }) {
@@ -464,7 +382,7 @@ const Varispeed: FC<VarispeedProps> = ({
     // When linked and we have a flat root, use flats for the display
     const useFlats = isLinked && generatorRoot && generatorRoot.includes('♭');
 
-    for (let st = -6; st <= 5; st++) {
+    for (let st = -12; st <= 12; st++) {
       const noteIdx = ((keyIdx + st) % 12 + 12) % 12;
       // If linked with a flat root, use flats throughout
       // Otherwise use flats for downward transpositions, sharps for upward
@@ -476,9 +394,80 @@ const Varispeed: FC<VarispeedProps> = ({
     return result;
   }, [bpm, keyIdx, isLinked, generatorRoot]);
 
-  const maxBpm = Math.max(...calculations.map(c => c.targetBpm));
+  // Cryptex state: index 12 = root (0 semitones)
+  const [selectedIndex, setSelectedIndex] = useState(12);
+  const drumRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ active: false, startY: 0, startIdx: 0 });
+  const theme = useStyledTheme();
 
-  const formatBpm = (bpm: number) => bpm.toFixed(2);
+  function clampIdx(idx: number) {
+    return Math.max(0, Math.min(TOTAL - 1, idx));
+  }
+
+  // Wheel handler — debounce trackpad to one step at a time
+  const wheelCooldown = useRef(false);
+  useEffect(() => {
+    const el = drumRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      if (wheelCooldown.current) return;
+      wheelCooldown.current = true;
+      setSelectedIndex(prev => clampIdx(prev + (e.deltaY > 0 ? 1 : -1)));
+      setTimeout(() => { wheelCooldown.current = false; }, 120);
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
+
+  // Drag handlers — attach move/up to document so dragging works outside the component
+  const handleStart = useCallback((clientY: number) => {
+    dragRef.current = { active: true, startY: clientY, startIdx: selectedIndex };
+  }, [selectedIndex]);
+
+  const handleMove = useCallback((clientY: number) => {
+    if (!dragRef.current.active) return;
+    const dy = clientY - dragRef.current.startY;
+    const steps = Math.round(dy / (ITEM_H * 0.6));
+    setSelectedIndex(clampIdx(dragRef.current.startIdx - steps));
+  }, []);
+
+  const handleEnd = useCallback(() => {
+    dragRef.current.active = false;
+  }, []);
+
+  // Global mouse listeners for drag-outside-component support
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+    const onMouseUp = () => handleEnd();
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [handleMove, handleEnd]);
+
+  const shift = useCallback((direction: number) => {
+    setSelectedIndex(prev => clampIdx(prev + direction));
+  }, []);
+
+  // Sliding offset: shift the inner container so selectedIndex is centered
+  const slideY = -(selectedIndex * ITEM_H) + (ITEM_H * 3);
+
+  // Color helpers for cryptex rows
+  function getColor(st: number): string {
+    if (st === 0) return theme.colors.primary;
+    if (Math.abs(st) === 12) return theme.colors.error;
+    return theme.colors.text;
+  }
+
+  function getTag(st: number): string {
+    if (st === 0) return "ROOT";
+    if (st === -12) return "\u22121 OCT";
+    if (st === 12) return "+1 OCT";
+    return (st > 0 ? "+" : "") + st + " st";
+  }
 
   return (
     <VarispeedCard
@@ -548,63 +537,150 @@ const Varispeed: FC<VarispeedProps> = ({
         </LinkToggle>
       </ControlSection>
 
-      <div>
-        {calculations.map((calc) => {
-          const isSource = calc.semitones === 0;
-          const barRatio = calc.targetBpm / maxBpm;
+      {/* Cryptex drum-roller */}
+      <div
+        ref={drumRef}
+        onMouseDown={e => handleStart(e.clientY)}
+        onTouchStart={e => handleStart(e.touches[0].clientY)}
+        onTouchMove={e => handleMove(e.touches[0].clientY)}
+        onTouchEnd={handleEnd}
+        style={{
+          position: "relative",
+          height: ITEM_H * VISIBLE,
+          overflow: "hidden",
+          cursor: "ns-resize",
+          userSelect: "none",
+          touchAction: "none",
+          borderRadius: theme.borderRadius.medium,
+        }}
+      >
+        {/* Top tap zone (step up / lower index) */}
+        <div
+          onClick={() => shift(-1)}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H * 3, zIndex: 8 }}
+        />
+        {/* Bottom tap zone (step down / higher index) */}
+        <div
+          onClick={() => shift(1)}
+          style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 3, zIndex: 8 }}
+        />
 
-          // Map semitones to energy levels for consistent coloring with Arrangement block
-          const getEnergyLevel = (semitones: number) => {
-            const abs = Math.abs(semitones);
-            if (abs <= 1) return 1;
-            if (abs <= 3) return 2;
-            if (abs <= 4) return 3;
-            return 4;
-          };
+        {/* Center highlight band */}
+        <div style={{
+          position: "absolute",
+          top: ITEM_H * 3, left: 0, right: 0, height: ITEM_H,
+          background: `${theme.colors.primary}14`,
+          borderTop: `1px solid ${theme.colors.primary}4D`,
+          borderBottom: `1px solid ${theme.colors.primary}4D`,
+          zIndex: 5, pointerEvents: "none",
+        }} />
 
-          const energyLevel = getEnergyLevel(calc.semitones);
-          const color = ENERGY_COLORS[energyLevel].fill;
+        {/* Sliding inner container — all 25 rows, translated smoothly */}
+        <div style={{
+          transform: `translateY(${slideY}px)`,
+          transition: "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+          pointerEvents: "none",
+        }}>
+          {calculations.map((calc, idx) => {
+            const dist = Math.abs(idx - selectedIndex);
+            const atCenter = dist === 0;
+            const isLandmark = calc.semitones === 0 || Math.abs(calc.semitones) === 12;
+            const color = getColor(calc.semitones);
 
-          // Format semitone notation
-          const getSemitoneNotation = (semitones: number) => {
-            if (semitones === 0) return '0';
-            const abs = Math.abs(semitones);
-            const sign = semitones > 0 ? '+' : '-';
-            const suffix = abs === 1 ? 'st' : abs === 2 ? 'nd' : abs === 3 ? 'rd' : 'th';
-            return `${sign}${abs}${suffix}`;
-          };
+            // Smooth opacity/scale falloff
+            const opacity = dist === 0 ? 1 : dist === 1 ? 0.6 : dist === 2 ? 0.5 : dist === 3 ? 0.4 : 0;
+            const scale = dist === 0 ? 1 : dist === 1 ? 0.92 : dist === 2 ? 0.84 : dist === 3 ? 0.78 : 0.75;
+            const fontSize = atCenter ? 30 : 20;
+            const bpmFontSize = atCenter ? 24 : 16;
+            const bpmLabelSize = atCenter ? 11 : 9;
 
-          return (
-            <CalculationRow key={calc.semitones} $isSource={isSource}>
-              <NoteName $isSource={isSource} $color={color}>
-                {calc.name}
-              </NoteName>
+            // Divider width matches scale so lines taper toward edges
+            // Hide dividers on the selected row and the row just above it
+            const hideDivider = dist === 0 || idx === selectedIndex - 1;
+            const dividerOpacity = hideDivider ? 0 : dist === 1 ? 0.4 : dist === 2 ? 0.3 : 0.2;
 
-              <BpmBar $isSource={isSource}>
-                <BpmBarFill
-                  $width={barRatio * 100}
-                  $isSource={isSource}
-                  $color={color}
-                />
-                <BpmValue $isSource={isSource}>
-                  {formatBpm(calc.targetBpm)} BPM
-                </BpmValue>
-              </BpmBar>
-
-              {!isMobile && (
+            return (
+              <div
+                key={calc.semitones}
+                style={{
+                  height: ITEM_H,
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "0 16px",
+                  opacity,
+                  transform: `scale(${scale})`,
+                  transition: "opacity 0.25s ease, transform 0.25s ease",
+                  color,
+                  fontWeight: atCenter ? 700 : 400,
+                  position: "relative",
+                }}
+              >
+                {/* Faint divider line — width follows scale for 3D taper */}
                 <div style={{
-                  width: 60,
-                  textAlign: 'right',
-                  fontSize: '11px',
-                  color: isSource ? '#e8a849' : calc.ratio > 1 ? '#a0c070' : '#c07070',
-                  marginLeft: '8px'
+                  position: "absolute",
+                  bottom: 0,
+                  left: "5%",
+                  right: "5%",
+                  height: 1,
+                  background: theme.colors.border,
+                  opacity: dividerOpacity / opacity,
+                  transition: "opacity 0.25s ease",
+                }} />
+                {/* Semitone tag */}
+                <div style={{
+                  flex: "0 0 60px",
+                  fontSize: 10,
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  color: isLandmark ? color : undefined,
                 }}>
-                  {getSemitoneNotation(calc.semitones)}
+                  {getTag(calc.semitones)}
                 </div>
-              )}
-            </CalculationRow>
-          );
-        })}
+
+                {/* Note name */}
+                <div style={{
+                  flex: 1,
+                  textAlign: "center",
+                  fontSize,
+                  transition: "font-size 0.25s ease",
+                  fontFamily: "'Courier New', monospace",
+                  color: isLandmark ? color : undefined,
+                  textShadow: isLandmark ? `0 0 20px ${color}66` : undefined,
+                }}>
+                  {calc.name}
+                </div>
+
+                {/* Target BPM */}
+                <div style={{ flex: "0 0 130px", textAlign: "right" }}>
+                  <span style={{
+                    fontSize: bpmFontSize,
+                    transition: "font-size 0.25s ease",
+                    fontFamily: "'Courier New', monospace",
+                  }}>
+                    {calc.targetBpm.toFixed(2)}
+                  </span>
+                  <span style={{ fontSize: bpmLabelSize, opacity: 0.5 }}>
+                    {" "}BPM
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Top gradient fade */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H * 1.2,
+          background: `linear-gradient(to bottom, ${theme.colors.card} 20%, transparent)`,
+          zIndex: 10, pointerEvents: "none",
+        }} />
+
+        {/* Bottom gradient fade */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 1.2,
+          background: `linear-gradient(to top, ${theme.colors.card} 20%, transparent)`,
+          zIndex: 10, pointerEvents: "none",
+        }} />
       </div>
 
       <TipsModal
@@ -613,7 +689,6 @@ const Varispeed: FC<VarispeedProps> = ({
         title="How to Use the Varispeed Calculator"
         content={
           <>
-            <h3>The Magic of Varispeed Recording</h3>
             <p>
               Varispeed recording is a classic studio technique pioneered by 1960s artists like The Beatles. By changing the tape machine's playback speed during recording, you can achieve unique tonal qualities that are impossible to recreate with digital pitch shifting alone.
             </p>
@@ -623,23 +698,34 @@ const Varispeed: FC<VarispeedProps> = ({
               The Beatles' <strong>"Strawberry Fields Forever"</strong> (1967) is perhaps the most famous use of varispeed. Producer George Martin combined two different takes recorded in different keys and tempos:
             </p>
             <ul>
-              <li>Take 7 was recorded in C major at a slower tempo</li>
-              <li>Take 26 was recorded in A major at a faster tempo</li>
-              <li>By speeding up Take 7 and slowing down Take 26, Martin matched both the pitch and tempo, creating the song's distinctive, dreamlike quality</li>
+              <li>— Take 7 was recorded in C major at a slower tempo</li>
+              <li>— Take 26 was recorded in A major at a faster tempo</li>
+              <li>— By speeding up Take 7 and slowing down Take 26, Martin matched both the pitch and tempo, creating the song's distinctive, dreamlike quality</li>
             </ul>
             <p>
               The result? That slightly "wobbly," ethereal sound that makes the track so memorable. The formant shifts from varispeed give John Lennon's voice its unique character on the recording.
             </p>
 
-            <h3>Using This Calculator</h3>
+            <h3>Using Re-Pitch in Ableton Live</h3>
             <p>
-              <strong>To pitch down:</strong> Set your DAW to the target BPM (faster), record your part, then slow playback to your original BPM.
+              Ableton Live has a built-in warp mode called <strong>Re-Pitch</strong> that behaves exactly like varispeed on a tape machine — changing the BPM changes the pitch of the sample.
             </p>
+            <img
+              src={process.env.PUBLIC_URL + '/ableton_re_pitch_warp_mode.png'}
+              alt="Ableton Live Re-Pitch warp mode"
+              style={{ width: '50%', borderRadius: '8px', margin: '12px 0' }}
+            />
             <p>
-              <strong>To pitch up:</strong> Set your DAW to the target BPM (slower), record your part, then speed playback to your original BPM.
+              To use it with this calculator:
             </p>
+            <ul>
+              <li>1. Decide what pitch shift you want and find the target BPM in the calculator</li>
+              <li>2. Set your Ableton project to that target BPM and record your part</li>
+              <li>3. Set the recorded clip's warp mode to <strong>Re-Pitch</strong></li>
+              <li>4. Change the project BPM back to your original BPM — the sample will shift in pitch automatically</li>
+            </ul>
             <p>
-              <em>Each semitone equals approximately 5.95% speed change — the same ratio used on analog tape machines.</em>
+              <em>This gives you the classic varispeed tape effect entirely within Ableton, with precise control over the resulting pitch.</em>
             </p>
           </>
         }

@@ -98,11 +98,15 @@ const ModalBody = styled.div`
     text-align: left;
   }
 
-  ul {
+  ul, ol {
     margin-left: ${({ theme }) => theme.spacing.lg};
     margin-bottom: ${({ theme }) => theme.spacing.md};
     text-align: left;
+    padding-left: 1.2em;
   }
+
+  ul { list-style: disc; }
+  ol { list-style: decimal; }
 
   li {
     margin-bottom: ${({ theme }) => theme.spacing.xs};
