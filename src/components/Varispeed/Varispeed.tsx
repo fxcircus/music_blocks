@@ -721,6 +721,8 @@ const Varispeed: FC<VarispeedProps> = ({
               Varispeed recording is a classic studio technique pioneered by 1960s artists like The Beatles. By changing the tape machine's playback speed during recording, you can achieve unique tonal qualities that are impossible to recreate with digital pitch shifting alone.
             </p>
 
+            <p>This calculator helps you quickly find the target BPM for each semitone shift up to an octave higher or lower. Each semitone shift corresponds to a ~5.95% change in BPM — for example, a track in C at 100 BPM pitched up one semitone to C# would play back at ~105.95 BPM.</p>
+
             <h3>Famous Example: "Strawberry Fields Forever"</h3>
             <p>
               The Beatles' <strong>"Strawberry Fields Forever"</strong> (1967) is perhaps the most famous use of varispeed. Producer George Martin and engineer Geoff Emerick combined two different takes recorded in different keys and tempos:
