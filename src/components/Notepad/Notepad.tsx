@@ -111,6 +111,7 @@ const EditorWrapper = styled.div`
     padding: ${({ theme }) => theme.spacing.md};
     min-height: 180px;
     outline: none;
+    cursor: text;
     color: ${({ theme }) => theme.colors.text};
     font-size: ${({ theme }) => theme.fontSizes.md};
     line-height: 1.7;
