@@ -723,17 +723,14 @@ const Varispeed: FC<VarispeedProps> = ({
 
             <h3>Famous Example: "Strawberry Fields Forever"</h3>
             <p>
-              The Beatles' <strong>"Strawberry Fields Forever"</strong> (1967) is perhaps the most famous use of varispeed. Producer George Martin combined two different takes recorded in different keys and tempos:
+              The Beatles' <strong>"Strawberry Fields Forever"</strong> (1967) is perhaps the most famous use of varispeed. Producer George Martin and engineer Geoff Emerick combined two different takes recorded in different keys and tempos:
             </p>
             <ul>
-              <li>— Take 7 was recorded in C major at a slower tempo</li>
-              <li>— Take 26 was recorded in A major at a faster tempo</li>
-              <li>— By speeding up Take 7 and slowing down Take 26, Martin matched both the pitch and tempo, creating the song's distinctive, dreamlike quality</li>
+              <li>— Take 7 was recorded in A major at a slower tempo (~90 BPM)</li>
+              <li>— Take 26 was recorded in C major at a faster tempo (~108 BPM)</li>
+              <li>— By speeding up Take 7 and slowing down Take 26 (by about 11.5%), Martin and Emerick matched both the pitch and tempo, splicing them together at exactly the one-minute mark</li>
+              <li>— <u><b>*Note:</b></u> the tempos are approximate, the Beatles didn't use a click track, which was typical for the era. The result lands in a key somewhere between A and B♭ at roughly 103 BPM, with that slightly "off-pitch," ethereal quality that makes the track so dreamlike. The formant shifts from varispeed give John Lennon's voice its unique, swimming character on the recording.</li>
             </ul>
-            <p>
-              The result? That slightly "wobbly," ethereal sound that makes the track so memorable. The formant shifts from varispeed give John Lennon's voice its unique character on the recording.
-            </p>
-
             <h3>Using Re-Pitch in Ableton Live</h3>
             <p>
               Ableton Live has a built-in warp mode called <strong>Re-Pitch</strong> that behaves exactly like varispeed on a tape machine — changing the BPM changes the pitch of the sample.
