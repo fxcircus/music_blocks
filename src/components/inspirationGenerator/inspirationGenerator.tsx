@@ -214,7 +214,7 @@ const ValueCell = styled.td`
   overflow: hidden;
   vertical-align: middle;
   height: 100%;
-  padding-right: ${({ theme }) => theme.spacing.lg};
+  padding-right: 0;
 
   // Dynamically adjust font size for long content
   &.long-content {
@@ -227,9 +227,9 @@ const ValueCell = styled.td`
   
   @media (max-width: 768px) {
     padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-    padding-right: ${({ theme }) => theme.spacing.md};
+    padding-right: 0;
     font-size: ${({ theme }) => theme.fontSizes.sm};
-    
+
     &.long-content, &.very-long-content {
       font-size: ${({ theme }) => theme.fontSizes.xs};
     }
@@ -240,7 +240,7 @@ const BpmInputCell = styled.td`
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
   vertical-align: middle;
   height: 100%;
-  padding-right: ${({ theme }) => theme.spacing.lg};
+  padding-right: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
