@@ -6,7 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
-import { FaCopy } from 'react-icons/fa';
+import { FaCopy, FaUndo, FaTrashAlt, FaPlus } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
@@ -48,11 +48,14 @@ const NotesCard = styled(Card)`
   }
 `;
 
-const CopyBtn = styled.button<{ $success?: boolean }>`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 5;
+const Toolbar = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-bottom: 4px;
+`;
+
+const ActionBtn = styled.button<{ $success?: boolean; $danger?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,10 +70,22 @@ const CopyBtn = styled.button<{ $success?: boolean }>`
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => `${theme.colors.primary}11`};
+    color: ${({ $danger, theme }) =>
+      $danger ? theme.colors.error : theme.colors.primary};
+    background: ${({ $danger, theme }) =>
+      $danger ? `${theme.colors.error}11` : `${theme.colors.primary}11`};
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+    &:hover {
+      color: ${({ theme }) => theme.colors.textSecondary};
+      background: ${({ theme }) => theme.colors.card};
+    }
   }
 `;
 
@@ -383,20 +398,72 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
     setTimeout(() => setCopied(false), 2000);
   }, [editor]);
 
+  const handleUndo = useCallback(() => {
+    if (!editor) return;
+    editor.commands.undo();
+  }, [editor]);
+
+  const handleClear = useCallback(() => {
+    if (!editor) return;
+    editor.commands.clearContent();
+    setNotes('');
+    localStorage.removeItem('tilesNotes');
+  }, [editor, setNotes]);
+
+  const handleInsert = useCallback(() => {
+    if (!editor) return;
+    // Move cursor to the very end, then type "/" to trigger slash commands
+    editor.commands.focus('end');
+    // Ensure we're on a new empty line if there's existing content
+    if (!editor.isEmpty) {
+      const { doc } = editor.state;
+      const lastNode = doc.lastChild;
+      const isLastLineEmpty = lastNode && lastNode.textContent === '';
+      if (!isLastLineEmpty) {
+        editor.commands.enter();
+      }
+    }
+    editor.commands.insertContent('/');
+  }, [editor]);
+
   return (
     <NotesCard
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <EditorWrapper>
-        <CopyBtn
+      <Toolbar>
+        <ActionBtn
+          onClick={handleInsert}
+          title="Insert block (slash commands)"
+        >
+          <Icon icon={FaPlus} size={11} />
+        </ActionBtn>
+        <ActionBtn
+          onClick={handleUndo}
+          disabled={!editor?.can().undo()}
+          title="Undo"
+        >
+          <Icon icon={FaUndo} size={11} />
+        </ActionBtn>
+        <ActionBtn
           $success={copied}
           onClick={handleCopy}
+          disabled={editor?.isEmpty}
           title="Copy to clipboard"
         >
-          {copied ? 'Copied to clipboard!' : <Icon icon={FaCopy} size={13} />}
-        </CopyBtn>
+          {copied ? 'Copied!' : <Icon icon={FaCopy} size={13} />}
+        </ActionBtn>
+        <ActionBtn
+          $danger
+          onClick={handleClear}
+          disabled={editor?.isEmpty}
+          title="Clear all"
+        >
+          <Icon icon={FaTrashAlt} size={12} />
+        </ActionBtn>
+      </Toolbar>
+      <EditorWrapper>
         <EditorContent editor={editor} />
       </EditorWrapper>
 

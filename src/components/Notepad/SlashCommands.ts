@@ -238,7 +238,7 @@ function insertTemplate(editor: Editor, range: Range, buildContent: (schema: any
       const start = $pos.before($pos.depth);
       const end = $pos.after($pos.depth);
 
-      const nodes = buildContent(state.schema);
+      const nodes = [...buildContent(state.schema), hr(state.schema)];
       tr.replaceWith(start, end, nodes);
 
       // Position cursor in the last node (empty paragraph)
