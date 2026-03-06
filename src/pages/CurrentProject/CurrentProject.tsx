@@ -91,7 +91,7 @@ const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverla
   display: flex;
   position: relative;
   opacity: ${({ $isDragging, $isOverlay }) => $isOverlay ? 1 : $isDragging ? 0.5 : 1};
-  cursor: ${({ $isDragging }) => $isDragging ? 'grabbing' : 'grab'};
+  cursor: ${({ $isDragging }) => $isDragging ? 'grabbing' : 'default'};
 
   & > * {
     flex: 1;
