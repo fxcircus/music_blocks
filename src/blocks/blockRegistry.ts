@@ -17,8 +17,9 @@ import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
 
 // Import icons
 import { GiTomato, GiMetronome } from 'react-icons/gi';
-import { FaDice, FaWaveSquare, FaChartBar } from 'react-icons/fa';
+import { FaWaveSquare, FaChartBar } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
+import { MdAutoAwesome } from 'react-icons/md';
 
 /**
  * Block Registry - Array of all available block types
@@ -48,7 +49,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
   {
     id: 'inspirationGenerator',
     name: 'Inspiration Generator',
-    icon: FaDice,
+    icon: MdAutoAwesome,
     component: InspirationGenerator,
     defaultState: {
       rootEl: 'C',

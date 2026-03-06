@@ -14,7 +14,7 @@ The workspace is made up of modular blocks that you can add, remove, and rearran
 
 ---
 
-### 🎲 Inspiration Generator
+### ✨ Inspiration Generator
 
 ![Inspiration Generator](screenshots/inspiration_generator.png)
 
@@ -104,12 +104,15 @@ Audio-visual metronome that syncs with the Inspiration Generator's BPM.
 
 ![Flow Timer](screenshots/flow_timer.png)
 
-A Pomodoro-style countdown timer to keep sessions focused.
+A feature-rich Pomodoro timer designed to support deep work sessions with intelligent break management.
 
-- **25-Minute Work Sessions** — Default interval with play/pause
-- **5-Minute Breaks** — Quick switch to break mode
-- **Reset** — Return to a fresh 25-minute session
-- Click the timer display to start/pause
+- **Three Timer Modes** — 25-minute focus sessions, 5-minute breaks, and 15-minute long breaks (all customizable)
+- **Automatic Session Cycling** — Cycles through 4 work-break sequences before triggering a longer break
+- **Session Progress Tracking** — 4 visual dots show progress through the work-break cycle
+- **Dynamic Progress Ring** — Animated circular display that depletes with color changes: green → orange → red
+- **Distinct Audio Cues** — Three different sounds for work completion, break completion, and full cycle completion (mutable)
+- **Persistent Settings** — Customize work, break, and long-break durations; all settings saved to browser
+- **Click-to-Play** — Click the timer display itself to start/pause
 
 ---
 

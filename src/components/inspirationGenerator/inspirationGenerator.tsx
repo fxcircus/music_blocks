@@ -5,7 +5,7 @@ import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
-import { MdQueueMusic } from 'react-icons/md';
+import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
 import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
@@ -1955,7 +1955,7 @@ export default function InspirationGenerator({
         <InspirationCardHeader>
           <DragHandle dragHandleProps={dragHandleProps} />
           <CardIconWrapper>
-            <Icon icon={FaMusic} size={20} />
+            <Icon icon={MdAutoAwesome} size={20} />
           </CardIconWrapper>
           <CardTitle>Inspiration Generator</CardTitle>
         </InspirationCardHeader>
@@ -2248,7 +2248,7 @@ export default function InspirationGenerator({
                   onClick={playSequence}
                   title={isPlaying ? "Stop playback" : "Play scale/chord"}
                 >
-                  <Icon icon={isPlaying ? FaStop : FaVolumeUp} size={14} />
+                  <Icon icon={isPlaying ? FaStop : FaMusic} size={14} />
                 </PlayButton>
               </TableHeader>
               <LabelCell>
@@ -2360,7 +2360,7 @@ export default function InspirationGenerator({
                 When you find a setting you like, click on the lock icon to keep it locked, then continue rolling to randomize the other unlocked parameters.
               </p>
               <p>
-                <Icon icon={FaMusic} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                <Icon icon={MdAutoAwesome} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Click on the chord degrees to highlight the different notes from the scale that form each chord.
               </p>
               <p>

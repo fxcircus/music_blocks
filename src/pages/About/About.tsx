@@ -1,10 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaGithub, FaReact, FaNodeJs, FaIcons, FaDice, FaWaveSquare, FaChartBar, FaLink, FaQuestionCircle } from 'react-icons/fa';
+import { FaGithub, FaReact, FaIcons, FaWaveSquare, FaChartBar, FaLink, FaQuestionCircle } from 'react-icons/fa';
 import { GiTomato, GiMetronome } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
-import { MdDarkMode } from 'react-icons/md';
+import { MdDarkMode, MdAutoAwesome } from 'react-icons/md';
 import { Container, Card, CardHeader, CardTitle, CardIconWrapper } from '../../components/common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
@@ -153,11 +153,13 @@ const AboutPage = () => {
             <ListItem>
               <Strong><IconContainer><Icon icon={GiTomato} size={16} /></IconContainer> Flow Timer:</Strong>
               <NestedList>
-                <ListItem>A simple Pomodoro-style timer to help you stay focused while writing, practicing, or producing.</ListItem>
+                <ListItem>A feature-rich Pomodoro timer with 25-minute focus sessions, 5-minute breaks, and 15-minute long breaks (all customizable).</ListItem>
+                <ListItem>Automatic session cycling through 4 work-break sequences with visual progress dots and a dynamic color-changing progress ring.</ListItem>
+                <ListItem>Distinct audio cues for work completion, break completion, and full cycle completion. All settings persist in the browser.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong><IconContainer><Icon icon={FaDice} size={16} /></IconContainer> Inspiration Generator:</Strong>
+              <Strong><IconContainer><Icon icon={MdAutoAwesome} size={16} /></IconContainer> Inspiration Generator:</Strong>
               <NestedList>
                 <ListItem>Randomize scales, BPM, and sounds. Lock in what you like and shuffle the rest.</ListItem>
                 <ListItem>Interactive chord degrees with highlighting and seventh chord support.</ListItem>
@@ -233,28 +235,34 @@ const AboutPage = () => {
               Tone.js
             </TechItem>
             <TechItem>
+              <IconContainer>🔊</IconContainer>
+              Web Audio API
+            </TechItem>
+            <TechItem>
+              <IconContainer>✏️</IconContainer>
+              TipTap
+            </TechItem>
+            <TechItem>
               <IconContainer>🔀</IconContainer>
               Framer Motion
             </TechItem>
             <TechItem>
-              <IconContainer><Icon icon={FaNodeJs} size={16} /></IconContainer>
-              Node.js
+              <IconContainer>🧲</IconContainer>
+              dnd-kit
+            </TechItem>
+            <TechItem>
+              <IconContainer>🎨</IconContainer>
+              styled-components + Tailwind CSS
+            </TechItem>
+            <TechItem>
+              <IconContainer>🔗</IconContainer>
+              LZ-String
             </TechItem>
             <TechItem>
               <IconContainer><Icon icon={FaIcons} size={16} /></IconContainer>
               React Icons
             </TechItem>
           </TechList>
-          <Paragraph style={{ marginTop: '1rem' }}>
-            <StyledLink href="https://www.npmjs.com/package/tone" target="_blank" rel="noopener noreferrer">
-              Tone.js
-            </StyledLink> Audio engine for the metronome.
-          </Paragraph>
-          <Paragraph>
-            <StyledLink href="https://react-icons.github.io/react-icons/" target="_blank" rel="noopener noreferrer">
-              React Icons
-            </StyledLink> providing Font Awesome, Game Icons and more icon collections.
-          </Paragraph>
         </Section>
 
       </AboutCard>

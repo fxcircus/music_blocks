@@ -1,7 +1,8 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaDrum, FaBug } from 'react-icons/fa';
+import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
+import { GiMetronome } from 'react-icons/gi';
 import { Icon } from '../../utils/IconHelper';
 import ToolCardDnd from '../common/ToolCardDnd';
 import TipsModal from '../common/TipsModal';
@@ -618,7 +619,7 @@ const Metronome: FC<LoaderProps> = ({
     return (
         <ToolCardDnd
             title="Metronome"
-            icon={FaDrum}
+            icon={GiMetronome}
             onRemove={onRemove}
             canRemove={canRemove}
             dragHandleProps={dragHandleProps}
