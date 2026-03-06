@@ -508,6 +508,16 @@ const SelectorButton = styled.button<{ $isOpen?: boolean }>`
   }
 `;
 
+const diceShake = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-2px, 0) rotate(-12deg); }
+  30% { transform: translate(2px, 0) rotate(10deg); }
+  45% { transform: translate(-2px, 0) rotate(-8deg); }
+  60% { transform: translate(2px, 0) rotate(5deg); }
+  75% { transform: translate(-1px, 0) rotate(-3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+`;
+
 const RandomButton = styled.button`
   background: transparent;
   border: none;
@@ -518,24 +528,18 @@ const RandomButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: color 0.2s;
   position: relative;
 
   &:hover {
     color: ${({ theme }) => theme.colors.secondary};
-    transform: scale(1.1);
+    animation: ${diceShake} 0.5s ease infinite;
+    animation-delay: 0.3s;
   }
 
   &:active {
-    transform: scale(0.95);
-  }
-
-  svg {
-    transition: transform 0.3s ease;
-  }
-
-  &:hover svg {
-    transform: rotate(15deg);
+    transform: scale(0.9);
+    animation: none;
   }
 `;
 

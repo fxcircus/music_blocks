@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import styled, { useTheme, ThemeProvider } from 'styled-components';
+import styled, { useTheme, ThemeProvider, keyframes } from 'styled-components';
 import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
 
@@ -244,6 +244,16 @@ const TopRow = styled.div`
   flex-wrap: wrap;
 `;
 
+const diceShake = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-2px, 0) rotate(-12deg); }
+  30% { transform: translate(2px, 0) rotate(10deg); }
+  45% { transform: translate(-2px, 0) rotate(-8deg); }
+  60% { transform: translate(2px, 0) rotate(5deg); }
+  75% { transform: translate(-1px, 0) rotate(-3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+`;
+
 const DiceBtn = styled.button`
   background: transparent;
   border: none;
@@ -254,10 +264,17 @@ const DiceBtn = styled.button`
   justify-content: center;
   font-size: 18px;
   padding: 4px;
-  transition: all 0.15s;
+  transition: color 0.15s;
 
   &:hover {
-    transform: scale(1.15) rotate(12deg);
+    color: ${({ theme }) => theme.colors.secondary};
+    animation: ${diceShake} 0.5s ease infinite;
+    animation-delay: 0.3s;
+  }
+
+  &:active {
+    transform: scale(0.9);
+    animation: none;
   }
 `;
 

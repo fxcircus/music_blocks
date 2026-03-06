@@ -111,7 +111,11 @@ const DiceButton = styled(motion.button)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.xxxl};
   margin: ${({ theme }) => theme.spacing.xs} auto;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: color ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.secondary};
+  }
 `;
 
 const StyledTable = styled.table`
@@ -1957,10 +1961,14 @@ export default function InspirationGenerator({
         </InspirationCardHeader>
         
         <DiceButton
-          whileHover={{ rotate: 12, scale: 1.1 }}
-          whileTap={{ rotate: 360, scale: 0.9 }}
+          whileHover={{ rotate: [0, -12, 10, -8, 5, 0], transition: { duration: 0.5, repeat: Infinity, repeatDelay: 0.3 } }}
+          whileTap={{ scale: 0.9 }}
           onClick={rollDice}
-          animate={animate ? { rotate: [0, 360], scale: [1, 1.2, 1] } : {}}
+          animate={animate ? {
+            x: [0, -3, 3, -4, 4, -2, 2, 0],
+            rotate: [0, -15, 12, -18, 15, -8, 5, 0],
+            scale: [1, 1.05, 1.08, 1.1, 1.08, 1.05, 1.02, 1],
+          } : {}}
           transition={animate ? { duration: 0.5, ease: "easeOut" } : {}}
         >
           <IconWrapper><Icon icon={FaDice} size={24} /></IconWrapper>
