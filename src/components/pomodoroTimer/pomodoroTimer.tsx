@@ -9,9 +9,27 @@ import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
 
 // Styled components
-const TimerDisplay = styled(motion.div)`
+const TimerWrapper = styled(motion.div)`
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+  cursor: pointer;
+  --ring-primary: ${({ theme }) => theme.colors.primary};
+`;
+
+const ProgressRingSvg = styled.svg`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+`;
+
+const TimerDisplay = styled.div`
   background-color: ${({ theme }) => theme.colors.timerBackground};
-  border: 4px solid ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.round};
   box-shadow: ${({ theme }) => theme.shadows.medium};
   color: ${({ theme }) => theme.colors.text};
@@ -20,11 +38,8 @@ const TimerDisplay = styled(motion.div)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.timer};
   font-weight: 700;
-  height: 180px;
-  width: 180px;
-  margin: 0 auto;
-  transition: all ${({ theme }) => theme.transitions.normal};
-  cursor: pointer;
+  height: 100%;
+  width: 100%;
 `;
 
 const TimerControls = styled.div`
@@ -61,6 +76,13 @@ const IconWrapper = styled.span`
   justify-content: center;
 `;
 
+
+const getProgressColor = (fraction: number): string => {
+  if (fraction > 0.6) return '#4caf50';
+  if (fraction > 0.3) return '#ff9800';
+  return '#f44336';
+};
+
 interface PomodoroTimerProps {
   onRemove?: () => void;
   canRemove?: boolean;
@@ -75,6 +97,7 @@ export default function PomodoroTimer({
   isRecentlyDragged
 }: PomodoroTimerProps = {}) {
   const [time, setTime] = useState(1500);
+  const [totalTime, setTotalTime] = useState(1500);
   const [isCounting, setIsCounting] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
@@ -92,10 +115,12 @@ export default function PomodoroTimer({
   const resetTimer = (interval: number) => {
     setIsCounting(false);
     setTime(interval);
+    setTotalTime(interval);
   }
 
   const takeBreak = () => {
     setTime(300);
+    setTotalTime(300);
   }
 
   const toggleCountdown = () => {
@@ -135,41 +160,77 @@ export default function PomodoroTimer({
       canRemove={canRemove}
       additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
     >
-      <TimerDisplay
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.05, boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)' }}
-        transition={{ type: 'spring', stiffness: 300 }}
-        onClick={toggleCountdown}
-        whileTap={{ scale: 0.95 }}
-        aria-label={isCounting ? "Pause timer" : "Start timer"}
-      >
-        {secondsToMinutes(time)}
-      </TimerDisplay>
+      {(() => {
+        const fraction = totalTime > 0 ? time / totalTime : 1;
+        const radius = 85;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference * fraction;
+        const color = getProgressColor(fraction);
+        return (
+          <TimerWrapper
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            onClick={toggleCountdown}
+            aria-label={isCounting ? "Pause timer" : "Start timer"}
+          >
+            <ProgressRingSvg viewBox="0 0 180 180">
+              <circle
+                cx="90"
+                cy="90"
+                r={radius}
+                fill="none"
+                stroke="var(--ring-primary)"
+                strokeWidth="4"
+              />
+              <circle
+                cx="90"
+                cy="90"
+                r={radius}
+                fill="none"
+                stroke={color}
+                strokeWidth="4"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.4s ease' }}
+              />
+            </ProgressRingSvg>
+            <TimerDisplay>
+              {secondsToMinutes(time)}
+            </TimerDisplay>
+          </TimerWrapper>
+        );
+      })()}
 
       <TimerControls>
-        <TimerButton 
-          whileHover={{ scale: 1.2 }} 
+        <TimerButton
+          whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => resetTimer(1500)}
+          title="Reset timer"
         >
           <IconWrapper><Icon icon={FaUndo} size={20} /></IconWrapper>
         </TimerButton>
 
-        <PlayPauseButton 
-          whileHover={{ scale: 1.2 }} 
+        <PlayPauseButton
+          whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={toggleCountdown}
+          title={isCounting ? "Pause" : "Play"}
         >
           <IconWrapper>
             {isCounting ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
           </IconWrapper>
         </PlayPauseButton>
 
-        <TimerButton 
-          whileHover={{ scale: 1.2 }} 
+        <TimerButton
+          whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={takeBreak}
+          title="Take a break"
         >
           <IconWrapper><Icon icon={FaCoffee} size={20} /></IconWrapper>
         </TimerButton>
