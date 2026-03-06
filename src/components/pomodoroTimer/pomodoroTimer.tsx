@@ -37,8 +37,11 @@ const TimerDisplay = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
+  height: calc(100% - 8px);
+  width: calc(100% - 8px);
+  position: absolute;
+  top: 4px;
+  left: 4px;
 `;
 
 const TimerTime = styled.span`
@@ -53,13 +56,15 @@ const InnerModeLabel = styled.span`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  margin-top: 10px;
+  position: absolute;
+  bottom: 50px;
 `;
 
 const InnerSessionDots = styled.div`
   display: flex;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 8px;
+  justify-content: center;
+  margin: ${({ theme }) => theme.spacing.md} 0;
 `;
 
 const InnerDot = styled.div<{ $completed: boolean }>`
@@ -75,7 +80,6 @@ const TimerControls = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
   justify-content: center;
-  margin-top: ${({ theme }) => theme.spacing.lg};
 `;
 
 const TimerButton = styled(motion.button)`
@@ -194,6 +198,20 @@ const playTone = (ctx: AudioContext, freq: number, startTime: number, duration: 
   osc.stop(startTime + duration);
 };
 
+const STORAGE_KEY = 'flowTimerSettings';
+
+const loadSettings = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return null;
+};
+
+const saveSettings = (settings: { workMinutes: number; breakMinutes: number; longBreakMinutes: number; muteAlert: boolean }) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+};
+
 interface PomodoroTimerProps {
   onRemove?: () => void;
   canRemove?: boolean;
@@ -207,18 +225,20 @@ export default function PomodoroTimer({
   dragHandleProps,
   isRecentlyDragged
 }: PomodoroTimerProps = {}) {
-  const [time, setTime] = useState(1500);
-  const [totalTime, setTotalTime] = useState(1500);
+  const initialWork = (loadSettings()?.workMinutes ?? 25) * 60;
+  const [time, setTime] = useState(initialWork);
+  const [totalTime, setTotalTime] = useState(initialWork);
   const [isCounting, setIsCounting] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
-  const [muteAlert, setMuteAlert] = useState(false);
+  const saved = useRef(loadSettings());
+  const [muteAlert, setMuteAlert] = useState(saved.current?.muteAlert ?? false);
   const [isLongBreak, setIsLongBreak] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [workMinutes, setWorkMinutes] = useState(25);
-  const [breakMinutes, setBreakMinutes] = useState(5);
-  const [longBreakMinutes, setLongBreakMinutes] = useState(15);
+  const [workMinutes, setWorkMinutes] = useState(saved.current?.workMinutes ?? 25);
+  const [breakMinutes, setBreakMinutes] = useState(saved.current?.breakMinutes ?? 5);
+  const [longBreakMinutes, setLongBreakMinutes] = useState(saved.current?.longBreakMinutes ?? 15);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -371,6 +391,11 @@ export default function PomodoroTimer({
     }
   }, [longBreakMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Persist settings to localStorage
+  useEffect(() => {
+    saveSettings({ workMinutes, breakMinutes, longBreakMinutes, muteAlert });
+  }, [workMinutes, breakMinutes, longBreakMinutes, muteAlert]);
+
   // Show all 4 dots filled during a long break after completing 4 sessions
   const sessionsInCycle = sessionsCompleted % 4;
   const dotsToShow = mode === 'break' && sessionsInCycle === 0 && sessionsCompleted > 0
@@ -412,7 +437,7 @@ export default function PomodoroTimer({
                 r={radius}
                 fill="none"
                 stroke="var(--ring-primary)"
-                strokeWidth="4"
+                strokeWidth="10"
               />
               <circle
                 cx="105"
@@ -420,7 +445,7 @@ export default function PomodoroTimer({
                 r={radius}
                 fill="none"
                 stroke={color}
-                strokeWidth="4"
+                strokeWidth="10"
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
@@ -430,15 +455,16 @@ export default function PomodoroTimer({
             <TimerDisplay>
               <TimerTime>{secondsToMinutes(time)}</TimerTime>
               <InnerModeLabel>{modeLabel}</InnerModeLabel>
-              <InnerSessionDots>
-                {[0, 1, 2, 3].map(i => (
-                  <InnerDot key={i} $completed={i < dotsToShow} />
-                ))}
-              </InnerSessionDots>
             </TimerDisplay>
           </TimerWrapper>
         );
       })()}
+
+      <InnerSessionDots>
+        {[0, 1, 2, 3].map(i => (
+          <InnerDot key={i} $completed={i < dotsToShow} />
+        ))}
+      </InnerSessionDots>
 
       <TimerControls>
         <TimerButton
