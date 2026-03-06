@@ -3,9 +3,8 @@ import styled, { useTheme as useStyledTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
-import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
+import { Card } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
-import DragHandle from '../common/DragHandle';
 
 interface VarispeedProps {
   bpm?: number;
@@ -59,16 +58,6 @@ const VarispeedCard = styled(Card)`
     padding: ${({ theme }) => theme.spacing.xs} 0;
   }
 `;
-
-const VarispeedHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  position: relative;
-`;
-
 
 const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   background: ${({ theme, $isLinked }) =>
@@ -510,14 +499,6 @@ const Varispeed: FC<VarispeedProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <VarispeedHeader>
-        <DragHandle dragHandleProps={dragHandleProps} />
-        <CardIconWrapper>
-          <Icon icon={FaWaveSquare} size={20} />
-        </CardIconWrapper>
-        <CardTitle>Varispeed Calculator</CardTitle>
-      </VarispeedHeader>
-
       <ControlSection>
         <LinkToggle
           $isLinked={isLinked}

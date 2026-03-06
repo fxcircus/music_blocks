@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
-import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
+import { Card } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
   generateDiatonicScale,
@@ -15,7 +15,7 @@ import {
 } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
-import DragHandle from '../common/DragHandle';
+
 
 // Chord quality mapping for different modes
 const chordQualities: Record<string, (string | null)[]> = {
@@ -503,15 +503,6 @@ const IconWrapper = styled.span`
   align-items: center;
   justify-content: center;
 `;
-
-const InspirationCardHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  position: relative;
-`;
-
 
 const ChordDegree = styled.div<{ $isSelected: boolean }>`
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
@@ -1952,14 +1943,6 @@ export default function InspirationGenerator({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <InspirationCardHeader>
-          <DragHandle dragHandleProps={dragHandleProps} />
-          <CardIconWrapper>
-            <Icon icon={MdAutoAwesome} size={20} />
-          </CardIconWrapper>
-          <CardTitle>Inspiration Generator</CardTitle>
-        </InspirationCardHeader>
-        
         <DiceButton
           whileHover={{ rotate: [0, -12, 10, -8, 5, 0], transition: { duration: 0.5, repeat: Infinity, repeatDelay: 0.3 } }}
           whileTap={{ scale: 0.9 }}

@@ -85,7 +85,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   const hasOwnToolCard = blocksWithOwnToolCard.includes(block.type);
 
   // Blocks that have their own header styling (don't need ToolCard wrapper)
-  const blocksWithOwnHeader = ['inspirationGenerator', 'varispeed'];
+  const blocksWithOwnHeader: string[] = [];
   const hasOwnHeader = blocksWithOwnHeader.includes(block.type);
 
   // Render the block content
@@ -130,8 +130,6 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           soundEl={block.state.soundEl || 'Electric Guitar'}
           setSoundEl={(soundEl: string) => updateBlockState({ soundEl })}
           onBatchUpdate={(updates: Record<string, any>) => updateBlockState(updates)}
-          dragHandleProps={dragHandleProps}
-          isRecentlyDragged={isRecentlyDragged}
           showTips={showTips}
           setShowTips={setShowTips}
         />
@@ -179,8 +177,6 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           setLinkedToGenerator={(linked: boolean) => updateBlockState({ linkedToGenerator: linked })}
           generatorBpm={globalBpm}
           generatorRoot={generatorRoot}
-          dragHandleProps={dragHandleProps}
-          isRecentlyDragged={isRecentlyDragged}
           showTips={showTips}
           setShowTips={setShowTips}
         />
@@ -284,7 +280,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         canRemove={canRemove}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
-        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : block.type === 'notes' ? () => setShowTips(true) : undefined}
+        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
       >
         {blockContent}
       </ToolCardDnd>

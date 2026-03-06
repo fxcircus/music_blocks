@@ -88,7 +88,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
   },
   {
     id: 'varispeed',
-    name: 'Varispeed',
+    name: 'Varispeed Calculator',
     icon: FaWaveSquare,
     component: Varispeed,
     defaultState: {
