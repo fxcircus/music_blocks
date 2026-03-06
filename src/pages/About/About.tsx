@@ -141,7 +141,7 @@ const AboutPage = () => {
             Tools for creative flow
           </Paragraph>
           <Paragraph style={{ textAlign: 'center' }}>
-             <StyledLink href="https://github.com/fxcircus/music-tools-studio" target="_blank" rel="noopener noreferrer">
+             <StyledLink href="https://github.com/fxcircus/music_blocks" target="_blank" rel="noopener noreferrer">
               View the source code on GitHub <Icon icon={FaGithub} size={16} />
             </StyledLink>
           </Paragraph>
