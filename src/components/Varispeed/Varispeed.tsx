@@ -56,7 +56,7 @@ const VarispeedCard = styled(Card)`
   padding: ${({ theme }) => theme.spacing.md};
 
   @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing.sm};
+    padding: ${({ theme }) => theme.spacing.xs} 0;
   }
 `;
 
@@ -96,6 +96,7 @@ const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
 const ControlSection = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
   justify-content: center;
   align-items: center;
@@ -106,9 +107,8 @@ const ControlSection = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.medium};
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    gap: ${({ theme }) => theme.spacing.sm};
-    padding: ${({ theme }) => theme.spacing.sm};
+    gap: ${({ theme }) => theme.spacing.xs};
+    padding: ${({ theme }) => theme.spacing.xs};
   }
 `;
 
@@ -234,6 +234,10 @@ const Divider = styled.div<{ $mobile?: boolean }>`
   width: ${({ $mobile }) => ($mobile ? '80%' : '1px')};
   height: ${({ $mobile }) => ($mobile ? '1px' : '32px')};
   background: ${({ theme }) => theme.colors.border};
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 
@@ -606,7 +610,7 @@ const Varispeed: FC<VarispeedProps> = ({
                   height: ITEM_H,
                   display: "flex",
                   alignItems: "center",
-                  padding: "0 16px",
+                  padding: isMobile ? "0 8px" : "0 16px",
                   opacity,
                   transform: `scale(${scale})`,
                   transition: "opacity 0.25s ease, transform 0.25s ease",
@@ -628,7 +632,7 @@ const Varispeed: FC<VarispeedProps> = ({
                 }} />
                 {/* Semitone tag */}
                 <div style={{
-                  flex: "0 0 60px",
+                  flex: isMobile ? "0 0 45px" : "0 0 60px",
                   fontSize: 10,
                   letterSpacing: "1px",
                   textTransform: "uppercase",
@@ -651,7 +655,7 @@ const Varispeed: FC<VarispeedProps> = ({
                 </div>
 
                 {/* Target BPM */}
-                <div style={{ flex: "0 0 130px", textAlign: "right" }}>
+                <div style={{ flex: isMobile ? "0 0 90px" : "0 0 130px", textAlign: "right" }}>
                   <span style={{
                     fontSize: bpmFontSize,
                     transition: "font-size 0.25s ease",
