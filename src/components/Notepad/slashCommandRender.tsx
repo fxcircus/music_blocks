@@ -8,7 +8,7 @@ import { SlashCommandItem } from './SlashCommands';
  * Creates a Tiptap suggestion render function that mounts the
  * SlashCommandMenu React component imperatively.
  */
-export function createSlashCommandRender(theme: any) {
+export function createSlashCommandRender(themeRef: React.RefObject<any>) {
   return () => {
     let container: HTMLDivElement | null = null;
     let root: Root | null = null;
@@ -25,7 +25,7 @@ export function createSlashCommandRender(theme: any) {
         root = createRoot(container);
 
         root.render(
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={themeRef.current}>
             <SlashCommandMenu
               ref={(ref) => { menuRef = ref; }}
               items={props.items}
@@ -44,7 +44,7 @@ export function createSlashCommandRender(theme: any) {
         if (!root) return;
 
         root.render(
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={themeRef.current}>
             <SlashCommandMenu
               ref={(ref) => { menuRef = ref; }}
               items={props.items}

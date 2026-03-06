@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled, { useTheme } from 'styled-components';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -318,6 +318,8 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
   const showTips = showTipsExternal !== undefined ? showTipsExternal : showTipsInternal;
   const setShowTips = setShowTipsExternal || setShowTipsInternal;
   const theme = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   const editor = useEditor({
     extensions: [
@@ -335,7 +337,7 @@ export default function Notes({ notes, setNotes, showTips: showTipsExternal, set
       TableCell,
       SlashCommands.configure({
         suggestion: {
-          render: createSlashCommandRender(theme),
+          render: createSlashCommandRender(themeRef),
         },
       }),
     ],
