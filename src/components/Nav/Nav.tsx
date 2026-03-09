@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../theme/ThemeProvider';
-import { FaSun, FaMoon, FaTimes, FaLink } from 'react-icons/fa';
+import { FaSun, FaMoon, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { loadBlockState } from '../../utils/blockStorage';
 import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
@@ -137,6 +137,33 @@ const ActionButton = styled(motion.button)`
       display: none;
     }
   }
+`;
+
+const SupportButton = styled(motion.a)`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  background: linear-gradient(135deg, #FFDD00 0%, #FBB034 100%);
+  color: #1a1a1a;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: ${({ theme }) => theme.shadows.small};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  text-decoration: none;
+  font-size: ${({ theme }) => theme.fontSizes.md};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 221, 0, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
 `;
 
 const ThemeToggleButton = styled(motion.button)`
@@ -425,6 +452,19 @@ const Nav: FC = () => {
               <span>Share</span>
             </ActionButton>
             
+            <SupportButton
+              href="https://buymeacoffee.com/fxcircus"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Support this project (on Buy Me Coffee)"
+            >
+              <IconWrapper>
+                <Icon icon={FaCoffee} size={16} />
+              </IconWrapper>
+            </SupportButton>
+
             {/* Legacy JSON export option. Can be re-enabled if needed.
             <ActionButton 
               onClick={exportProject}

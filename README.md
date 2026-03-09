@@ -2,6 +2,8 @@
 
 A modular set of tools to help musicians stay creative and focused. Randomize musical ideas, visualize scales and chords on piano and guitar, keep time, plan arrangements, and capture inspiration — all in one place.
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Support-Buy%20Me%20a%20Coffee-yellow)](https://buymeacoffee.com/fxcircus)
+
 ## Live Version
 
 Try the [live version](https://fxcircus.github.io/music_blocks) on GitHub Pages, or follow the [Local Installation](#local-installation) instructions.
@@ -172,6 +174,12 @@ Song structure templates to help plan arrangements and energy flow.
 - **🎨 styled-components + Tailwind CSS** — Component styling and utility classes
 - **🔗 LZ-String** — URL compression for full-state sharing
 - **🎨 React Icons** — Font Awesome, Game Icons, and more
+
+## Support the Project
+
+If you find Music Blocks useful, consider supporting its development:
+
+[Buy me a coffee](https://buymeacoffee.com/fxcircus)
 
 ## Local Installation
 

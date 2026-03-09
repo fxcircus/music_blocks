@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ThemeProvider from './theme/ThemeProvider';
 import { AppWrapper } from './components/common/StyledComponents';
 import Nav from './components/Nav/Nav';
+import Footer from './components/Footer/Footer';
 import CurrentProject from './pages/CurrentProject/CurrentProject';
 import AboutPage from './pages/About/About';
 import './App.css';
@@ -28,6 +29,7 @@ export default function App(): JSX.Element {
             <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Footer />
         </BrowserRouter>
       </AppWrapper>
     </ThemeProvider>
