@@ -23,11 +23,11 @@ export const getDefaultAppState = (): AppState => {
   // Define default block configuration with specific order and visibility
   const defaultBlockConfig = [
     { id: 'inspirationGenerator', order: 0, visible: true },  // Row 1 left
-    { id: 'arrangementTool', order: 1, visible: true },       // Row 1 right
-    { id: 'metronome', order: 2, visible: true },             // Row 2 left
-    { id: 'flowTimer', order: 3, visible: true },             // Row 2 right
-    { id: 'notes', order: 4, visible: true },                 // Row 3 left
-    { id: 'varispeed', order: 5, visible: true },             // Row 3 right
+    { id: 'flowTimer', order: 1, visible: true },             // Row 1 right
+    { id: 'notes', order: 2, visible: true },                 // Row 2 left
+    { id: 'metronome', order: 3, visible: true },             // Row 2 right
+    { id: 'varispeed', order: 4, visible: true },             // Row 3 left
+    { id: 'arrangementTool', order: 5, visible: true },       // Row 3 right
   ];
 
   const blocks: BlockInstance[] = defaultBlockConfig.map(config => ({
@@ -90,20 +90,9 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
       },
     },
     {
-      instanceId: 'metronome',
-      type: 'metronome',
-      order: 1,
-      visible: true,
-      state: {
-        bpm: parseInt(oldState.bpmEl || DEFAULT_STATE.bpmEl, 10),
-        isRunning: false,
-        isMuted: false,
-      },
-    },
-    {
       instanceId: 'flowTimer',
       type: 'flowTimer',
-      order: 2,
+      order: 1,
       visible: true,
       state: {
         time: 1500, // Default 25 minutes
@@ -113,29 +102,40 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'notes',
       type: 'notes',
-      order: 3,
+      order: 2,
       visible: true,
       state: {
         notes: oldState.notes || DEFAULT_STATE.notes,
       },
     },
     {
-      instanceId: 'arrangementTool',
-      type: 'arrangementTool',
-      order: 4,
+      instanceId: 'metronome',
+      type: 'metronome',
+      order: 3,
       visible: true,
       state: {
-        selectedTemplate: 'Two Peaks',
+        bpm: parseInt(oldState.bpmEl || DEFAULT_STATE.bpmEl, 10),
+        isRunning: false,
+        isMuted: false,
       },
     },
     {
       instanceId: 'varispeed',
       type: 'varispeed',
-      order: 5,
+      order: 4,
       visible: true,
       state: {
         bpm: 120,
         keyIdx: 0,
+      },
+    },
+    {
+      instanceId: 'arrangementTool',
+      type: 'arrangementTool',
+      order: 5,
+      visible: true,
+      state: {
+        selectedTemplate: 'Two Peaks',
       },
     },
   ];

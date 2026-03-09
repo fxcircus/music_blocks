@@ -66,40 +66,6 @@ Toggle from the Scale Tones row to open the chord progressions panel. Browse and
 
 ---
 
-### 📊 Arrangement
-
-![Arrangement](screenshots/arrangement.png)
-
-Song structure templates to help plan arrangements and energy flow.
-
-- **25 Templates** across 6 categories:
-  - **General** — Slow Burn, Two Peaks, Storyteller, Hook First, Loop Rider, Call & Response, The Minimalist, The Epic, Peak & Dissolve, The Fake Out
-  - **Beatles** — AABA Middle Eight, Compact & Dense, Through-Composed
-  - **Pink Floyd** — Textural Expansion, Sound → Song → Sound, The Slow Boil
-  - **Neil Young** — The Long Jam, Acoustic → Electric, One-Take Rawness
-  - **King Crimson** — Ballad to Chaos, Interlocking Machine, Multi-Part Suite
-  - **Brian Eno** — Generative Layers, Oblique Strategy, Treated Studio
-- **🎲 Shuffle** — Random template button for quick inspiration
-- **Energy Arc Chart** — Visual graph showing the emotional intensity across the arrangement
-- **Scene Breakdown** — Each section listed with name, bar count, and energy level
-- **Quick Stats** — Total sections and bars at a glance
-
----
-
-### 🎵 Metronome
-
-![Metronome](screenshots/metronome.png)
-
-Audio-visual metronome that syncs with the Inspiration Generator's BPM.
-
-- **Animated Pendulum** — Swinging visual synchronized to the tempo
-- **Beat Indicators** — 4 dots showing the current beat in 4/4 time
-- **BPM Controls** — Adjust tempo (40–300 BPM) with +/- buttons
-- **🔇 Mute Toggle** — Silence the click while keeping the visual animation
-- **Accent on Beat 1** — Higher pitch click on downbeats
-
----
-
 ### 🍅 Flow Timer
 
 ![Flow Timer](screenshots/flow_timer.png)
@@ -137,6 +103,20 @@ A Notion-like WYSIWYG editor for capturing ideas on the fly, powered by TipTap.
 
 ---
 
+### 🎵 Metronome
+
+![Metronome](screenshots/metronome.png)
+
+Audio-visual metronome that syncs with the Inspiration Generator's BPM.
+
+- **Animated Pendulum** — Swinging visual synchronized to the tempo
+- **Beat Indicators** — 4 dots showing the current beat in 4/4 time
+- **BPM Controls** — Adjust tempo (40–300 BPM) with +/- buttons
+- **🔇 Mute Toggle** — Silence the click while keeping the visual animation
+- **Accent on Beat 1** — Higher pitch click on downbeats
+
+---
+
 ### 〰️ Varispeed
 
 ![Varispeed](screenshots/varispeed.png)
@@ -149,6 +129,26 @@ Calculate pitch and tempo changes for varispeed recording effects.
 - **Scroll, Drag & Tap** — Navigate with mouse wheel, click-drag, or tap the edges
 - **🔗 Link to Generator** — Sync BPM and key with the Inspiration Generator
 - Includes a tips modal with the "Strawberry Fields Forever" example and an Ableton Live Re-Pitch warp mode workflow
+
+---
+
+### 📊 Arrangement
+
+![Arrangement](screenshots/arrangement.png)
+
+Song structure templates to help plan arrangements and energy flow.
+
+- **25 Templates** across 6 categories:
+  - **General** — Slow Burn, Two Peaks, Storyteller, Hook First, Loop Rider, Call & Response, The Minimalist, The Epic, Peak & Dissolve, The Fake Out
+  - **Beatles** — AABA Middle Eight, Compact & Dense, Through-Composed
+  - **Pink Floyd** — Textural Expansion, Sound → Song → Sound, The Slow Boil
+  - **Neil Young** — The Long Jam, Acoustic → Electric, One-Take Rawness
+  - **King Crimson** — Ballad to Chaos, Interlocking Machine, Multi-Part Suite
+  - **Brian Eno** — Generative Layers, Oblique Strategy, Treated Studio
+- **🎲 Shuffle** — Random template button for quick inspiration
+- **Energy Arc Chart** — Visual graph showing the emotional intensity across the arrangement
+- **Scene Breakdown** — Each section listed with name, bar count, and energy level
+- **Quick Stats** — Total sections and bars at a glance
 
 ---
 

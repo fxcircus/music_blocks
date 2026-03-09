@@ -2095,44 +2095,6 @@ export default function InspirationGenerator({
             <TableRow>
               <SpacerCell />
               <TableHeader>
-                <LockIconWrapper $isLocked={locked.bpm} onClick={() => toggleLock("bpm")}>
-                  <IconWrapper>
-                    {locked.bpm ? <Icon icon={FaLock} size={16} /> : <Icon icon={FaUnlock} size={16} />}
-                  </IconWrapper>
-                </LockIconWrapper>
-              </TableHeader>
-              <LabelCell>BPM</LabelCell>
-              <BpmInputCell>
-                <BpmAdjustBtn onClick={() => adjustBpm(-1)} title={locked.bpm ? "Unlock row to edit" : "Decrease BPM"} disabled={locked.bpm}>
-                  <Icon icon={FaMinus} size={10} />
-                </BpmAdjustBtn>
-                <BpmInput
-                  type="text"
-                  inputMode="numeric"
-                  value={bpmInput}
-                  onChange={handleBpmInputChange}
-                  onBlur={handleBpmInputBlur}
-                  onKeyDown={handleBpmInputKeyDown}
-                  onFocus={(e) => e.target.select()}
-                  disabled={locked.bpm}
-                  title={locked.bpm ? "Unlock row to edit" : undefined}
-                />
-                <BpmAdjustBtn onClick={() => adjustBpm(1)} title={locked.bpm ? "Unlock row to edit" : "Increase BPM"} disabled={locked.bpm}>
-                  <Icon icon={FaPlus} size={10} />
-                </BpmAdjustBtn>
-              </BpmInputCell>
-            </TableRow>
-
-            {/* Separator after BPM row */}
-            <tr>
-              <SeparatorCell colSpan={4}>
-                <Divider />
-              </SeparatorCell>
-            </tr>
-
-            <TableRow>
-              <SpacerCell />
-              <TableHeader>
                 <LockIconWrapper $isLocked={locked.timeSignature} onClick={() => toggleLock("timeSignature")}>
                   <IconWrapper>
                     {locked.timeSignature ? <Icon icon={FaLock} size={16} /> : <Icon icon={FaUnlock} size={16} />}
@@ -2178,6 +2140,44 @@ export default function InspirationGenerator({
             </TableRow>
 
             {/* Separator after Time Signature row */}
+            <tr>
+              <SeparatorCell colSpan={4}>
+                <Divider />
+              </SeparatorCell>
+            </tr>
+
+            <TableRow>
+              <SpacerCell />
+              <TableHeader>
+                <LockIconWrapper $isLocked={locked.bpm} onClick={() => toggleLock("bpm")}>
+                  <IconWrapper>
+                    {locked.bpm ? <Icon icon={FaLock} size={16} /> : <Icon icon={FaUnlock} size={16} />}
+                  </IconWrapper>
+                </LockIconWrapper>
+              </TableHeader>
+              <LabelCell>BPM</LabelCell>
+              <BpmInputCell>
+                <BpmAdjustBtn onClick={() => adjustBpm(-1)} title={locked.bpm ? "Unlock row to edit" : "Decrease BPM"} disabled={locked.bpm}>
+                  <Icon icon={FaMinus} size={10} />
+                </BpmAdjustBtn>
+                <BpmInput
+                  type="text"
+                  inputMode="numeric"
+                  value={bpmInput}
+                  onChange={handleBpmInputChange}
+                  onBlur={handleBpmInputBlur}
+                  onKeyDown={handleBpmInputKeyDown}
+                  onFocus={(e) => e.target.select()}
+                  disabled={locked.bpm}
+                  title={locked.bpm ? "Unlock row to edit" : undefined}
+                />
+                <BpmAdjustBtn onClick={() => adjustBpm(1)} title={locked.bpm ? "Unlock row to edit" : "Increase BPM"} disabled={locked.bpm}>
+                  <Icon icon={FaPlus} size={10} />
+                </BpmAdjustBtn>
+              </BpmInputCell>
+            </TableRow>
+
+            {/* Separator after BPM row */}
             <tr>
               <SeparatorCell colSpan={4}>
                 <Divider />
