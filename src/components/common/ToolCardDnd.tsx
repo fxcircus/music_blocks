@@ -36,8 +36,10 @@ const StyledToolCard = styled(Card)`
 
 const ContentWrapper = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   width: 100%;
 `;
