@@ -353,11 +353,12 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
 
   // Cleanup oscillators on unmount
   useEffect(() => {
+    const oscillators = activeOscillatorsRef.current;
     return () => {
-      activeOscillatorsRef.current.forEach(entry => {
+      oscillators.forEach(entry => {
         try { entry.oscillator.stop(); } catch {}
       });
-      activeOscillatorsRef.current.clear();
+      oscillators.clear();
     };
   }, []);
 
