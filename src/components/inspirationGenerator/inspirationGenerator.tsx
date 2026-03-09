@@ -2120,57 +2120,64 @@ export default function InspirationGenerator({
                 <BpmAdjustBtn onClick={() => adjustBpm(1)} title={locked.bpm ? "Unlock row to edit" : "Increase BPM"} disabled={locked.bpm}>
                   <Icon icon={FaPlus} size={10} />
                 </BpmAdjustBtn>
+              </BpmInputCell>
+            </TableRow>
 
-                <span style={{ width: '12px' }} />
+            {/* Separator after BPM row */}
+            <tr>
+              <SeparatorCell colSpan={4}>
+                <Divider />
+              </SeparatorCell>
+            </tr>
 
+            <TableRow>
+              <SpacerCell />
+              <TableHeader>
                 <LockIconWrapper $isLocked={locked.timeSignature} onClick={() => toggleLock("timeSignature")}>
                   <IconWrapper>
                     {locked.timeSignature ? <Icon icon={FaLock} size={16} /> : <Icon icon={FaUnlock} size={16} />}
                   </IconWrapper>
                 </LockIconWrapper>
-
-                <span style={{ color: 'inherit', opacity: 0.5, fontWeight: 500, fontSize: '13px', marginLeft: '4px', marginRight: '4px' }}>Time</span>
-
-                <ClickableValueCell
-                  as="div"
-                  ref={openDropdown === 'timeSignature' ? dropdownRef as any : undefined}
-                  $isLocked={locked.timeSignature}
-                  style={{ position: 'relative', display: 'inline-block', padding: 0, overflow: 'visible' }}
-                  onClick={() => {
-                    if (!locked.timeSignature) {
-                      setOpenDropdown(openDropdown === 'timeSignature' ? null : 'timeSignature');
-                    }
-                  }}
-                >
-                  <ClickableValueInner $isLocked={locked.timeSignature} title={locked.timeSignature ? "Unlock row to edit" : undefined}>
-                    {timeSignatureEl}
-                  </ClickableValueInner>
-                  {openDropdown === 'timeSignature' && (
-                    <TimeSignatureDropdown onClick={(e) => e.stopPropagation()}>
-                      {TIME_SIGNATURE_OPTIONS.map((ts) => (
-                        <DropdownOption
-                          key={ts}
-                          $isSelected={timeSignatureEl === ts}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            if (onBatchUpdate) {
-                              onBatchUpdate({ timeSignatureEl: ts });
-                            } else {
-                              setTimeSignatureEl(ts);
-                            }
-                            setOpenDropdown(null);
-                          }}
-                        >
-                          {ts}
-                        </DropdownOption>
-                      ))}
-                    </TimeSignatureDropdown>
-                  )}
-                </ClickableValueCell>
-              </BpmInputCell>
+              </TableHeader>
+              <LabelCell>Time Signature</LabelCell>
+              <ClickableValueCell
+                ref={openDropdown === 'timeSignature' ? dropdownRef as any : undefined}
+                $isLocked={locked.timeSignature}
+                style={{ position: 'relative', overflow: 'visible' }}
+                onClick={() => {
+                  if (!locked.timeSignature) {
+                    setOpenDropdown(openDropdown === 'timeSignature' ? null : 'timeSignature');
+                  }
+                }}
+              >
+                <ClickableValueInner $isLocked={locked.timeSignature} title={locked.timeSignature ? "Unlock row to edit" : undefined}>
+                  {timeSignatureEl}
+                </ClickableValueInner>
+                {openDropdown === 'timeSignature' && (
+                  <TimeSignatureDropdown onClick={(e) => e.stopPropagation()}>
+                    {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                      <DropdownOption
+                        key={ts}
+                        $isSelected={timeSignatureEl === ts}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          if (onBatchUpdate) {
+                            onBatchUpdate({ timeSignatureEl: ts });
+                          } else {
+                            setTimeSignatureEl(ts);
+                          }
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        {ts}
+                      </DropdownOption>
+                    ))}
+                  </TimeSignatureDropdown>
+                )}
+              </ClickableValueCell>
             </TableRow>
 
-            {/* Separator after BPM / Time Signature row */}
+            {/* Separator after Time Signature row */}
             <tr>
               <SeparatorCell colSpan={4}>
                 <Divider />

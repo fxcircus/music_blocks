@@ -79,51 +79,52 @@ const DialDisplay = styled.div`
   position: absolute;
   bottom: 12px;
   left: 50%;
-  transform: translate(-50%, 50%);
+  transform: translate(-52%, 50%);
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
 
   .bpm-input {
     font-size: ${({ theme }) => theme.fontSizes.lg};
     font-weight: 700;
     color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
-    border-radius: ${({ theme }) => theme.borderRadius.medium};
-    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    padding: 4px 0;
     text-align: center;
     outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     cursor: pointer;
-    width: 56px;
+    width: 36px;
+    margin-right: 25px;
+    // margin-left: 1px;
+  }
 
-    &:focus, &:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.5);
-    }
+  .dial-label {
+    font-size: ${({ theme }) => theme.fontSizes.xs};
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    margin: 0;
+    padding: 0 2px;
   }
 
   .ts-button {
     font-size: ${({ theme }) => theme.fontSizes.md};
     font-weight: 700;
     color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
-    border-radius: ${({ theme }) => theme.borderRadius.medium};
-    padding: 4px 10px;
+    background: transparent;
+    border: none;
+    padding: 4px 2px;
     text-align: center;
     outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     cursor: pointer;
     white-space: nowrap;
     position: relative;
-
-    &:focus, &:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.5);
-    }
   }
 `;
 
@@ -588,6 +589,14 @@ const Metronome: FC<LoaderProps> = ({
         }
     }, [muteSound, debugLog]);
 
+    // Handle external time signature changes (from props)
+    useEffect(() => {
+        if (initialTimeSignature !== timeSignature) {
+            setTimeSignature(initialTimeSignature);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialTimeSignature]);
+
     // Update time signature in metronome engine
     useEffect(() => {
         if (metronomeRef.current) {
@@ -771,6 +780,7 @@ const Metronome: FC<LoaderProps> = ({
 
             <MetronomeDisplay>
                 <DialDisplay>
+                    <span className="dial-label">BPM |</span>
                     <input
                         className="bpm-input"
                         type="text"
@@ -783,6 +793,7 @@ const Metronome: FC<LoaderProps> = ({
                         onFocus={(e) => e.target.select()}
                         aria-label="BPM value"
                     />
+                    <span className="dial-label">Time |</span>
                     <div ref={tsDropdownRef} style={{ position: 'relative' }}>
                         <button
                             className="ts-button"
