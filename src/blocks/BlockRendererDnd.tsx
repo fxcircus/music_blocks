@@ -12,7 +12,6 @@ import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCardDnd from '../components/common/ToolCardDnd';
 import TipsModal from '../components/common/TipsModal';
-import HelpButton from '../components/common/HelpButton';
 
 // Special wrapper for Notes block to override centering from ToolCard
 const NotesWrapper = styled.div`

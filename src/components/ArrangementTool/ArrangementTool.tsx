@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, FC } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaChartBar, FaDice } from 'react-icons/fa';
-import { Card, CardTitle, CardIconWrapper } from '../common/StyledComponents';
+import { FaDice } from 'react-icons/fa';
+import { Card } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
 interface Scene {
@@ -468,14 +468,6 @@ const ArrangementCard = styled(Card)`
   }
 `;
 
-const Header = styled.div`
-  background: ${({ theme }) => theme.colors.card};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 
 const TemplateSelector = styled.div`
   background: ${({ theme }) => theme.colors.card};

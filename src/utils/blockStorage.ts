@@ -6,7 +6,7 @@
  */
 
 import { AppState, BlockInstance } from '../blocks/types';
-import { getAllBlockTypes, getDefaultBlockState } from '../blocks/blockRegistry';
+import { getDefaultBlockState } from '../blocks/blockRegistry';
 import { TilesState } from './types';
 import { STORAGE_KEYS, DEFAULT_STATE } from './storageService';
 

@@ -755,6 +755,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentProgression, activeNotes, scaleNoteCount, isSeventhMode, rootNote, scaleName]);
 
   if (!currentProgression) return null;

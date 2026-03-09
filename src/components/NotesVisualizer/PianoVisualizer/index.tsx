@@ -315,11 +315,6 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
 
     // Determine which octave to start highlighting from
     // We want to show the scale starting from the first occurrence of the root
-    let scaleStartOctave = 0;
-    if (rootChromatic > 0) { // If root is not C, we might need to start from octave 0
-      scaleStartOctave = 0;
-    }
-
     // Create 2 octaves worth of keys
     for (let octave = 0; octave < 2; octave++) {
       // Create white keys for this octave
@@ -398,6 +393,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     }
 
     return keys.sort((a, b) => a.position - b.position);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord]);
 
   // Calculate black key positions for 2 octaves

@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
-import { Card, CardHeader, CardTitle, CardIconWrapper } from './StyledComponents';
+import { Card, CardTitle, CardIconWrapper } from './StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import { IconType } from 'react-icons';
 import { FaTimes } from 'react-icons/fa';

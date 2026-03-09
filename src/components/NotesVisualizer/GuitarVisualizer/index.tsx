@@ -590,13 +590,11 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
     const chordRoot = getNoteChromatic(activeNotes[selectedChord]);
     return computeChordVoicing(chordTones, chordRoot,
       currentPosition.startFret, currentPosition.endFret);
-  }, [selectedChord, highlightedNotes, activeNotes, currentPosition, isSeventhMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChord, highlightedNotes, activeNotes, currentPosition]);
 
   const fretboard = useMemo(() => {
     const strings: GuitarString[] = [];
-
-    // Guitar string octaves (from low to high)
-    const stringOctaves = [2, 2, 3, 3, 3, 4];
 
     STANDARD_TUNING.forEach((openNote, stringIndex) => {
       const frets: GuitarFret[] = [];
@@ -643,7 +641,8 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
 
     // Reverse so low E is at bottom (like looking at a guitar)
     return strings.reverse();
-  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, isSeventhMode, selectedChord, chordVoicing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNotes, highlightedNotes, playingNoteIndex, rootNote, selectedChord, chordVoicing]);
 
   const isFirstPosition = currentPositionIndex === 0;
   const isLastPosition = currentPositionIndex === positions.length - 1;

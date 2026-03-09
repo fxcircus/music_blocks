@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import styled, { useTheme as useStyledTheme } from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaWaveSquare, FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
+import { FaPlus, FaMinus, FaChevronDown, FaLink, FaUnlink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { Card } from '../common/StyledComponents';
 import TipsModal from '../common/TipsModal';
@@ -321,7 +321,8 @@ const Varispeed: FC<VarispeedProps> = ({
 
   const bpm = effectiveBpm;
   const keyIdx = effectiveKeyIdx;
-  const setBpm = isLinked ? () => {} : (propSetBpm || setLocalBpm);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const setBpm = useMemo(() => isLinked ? () => {} : (propSetBpm || setLocalBpm), [isLinked, propSetBpm]);
   const setKeyIdx = isLinked ? () => {} : (propSetKeyIdx || setLocalKeyIdx);
 
   // When linked, use the actual generator root for display (preserves enharmonic spelling)

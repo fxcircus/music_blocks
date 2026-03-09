@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../theme/ThemeProvider';
-import { FaSun, FaMoon, FaFileImport, FaFileExport, FaTimes, FaLink } from 'react-icons/fa';
+import { FaSun, FaMoon, FaTimes, FaLink } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { loadBlockState } from '../../utils/blockStorage';
 import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
@@ -262,74 +262,6 @@ const Nav: FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { isDarkMode, toggleTheme } = useTheme();
-
-  // Legacy JSON export option. Can be re-enabled if needed.
-  const exportProject = () => {
-    // Try to get values from localStorage if they exist
-    let notes = localStorage.getItem('tilesNotes') || '';
-    let rootEl = localStorage.getItem('tilesRootEl') || 'C';
-    let scaleEl = localStorage.getItem('tilesScaleEl') || 'Major';
-    let tonesEl = localStorage.getItem('tilesTonesEl') || 'T - T - S - T - T - T - S';
-    
-    // Parse tonesArrEl from localStorage or use default
-    let tonesArrEl;
-    try {
-      const savedTonesArrEl = localStorage.getItem('tilesTonesArrEl');
-      tonesArrEl = savedTonesArrEl ? JSON.parse(savedTonesArrEl) : ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
-    } catch (error) {
-      console.error("Error parsing tonesArrEl:", error);
-      tonesArrEl = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
-    }
-    
-    let bpmEl = localStorage.getItem('tilesBpmEl') || '100';
-    let soundEl = localStorage.getItem('tilesSoundEl') || 'Guitar';
-    
-    // Format date for the filename
-    const dateString = new Date().toLocaleDateString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      year: 'numeric'
-    }).replace(/,/g, '');
-    
-    // Create project data object with app metadata
-    const currentProject = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      app: "Blocks",
-      appVersion: "1.0.0",
-      appURL: "https://fxcircus.github.io/music-tools-studio",
-      notes,
-      rootEl,
-      scaleEl,
-      tonesEl,
-      tonesArrEl,
-      bpmEl,
-      soundEl
-    };
-
-    // Convert to JSON string
-    const jsonData = JSON.stringify(currentProject, null, 2);
-    
-    // Create download link
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create temporary link element and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Music-Project-${dateString}.json`;
-    document.body.appendChild(link);
-    link.click();
-    
-    // Clean up
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Legacy JSON import option. Can be re-enabled if needed.
-  const handleImportClick = () => {
-    setShowImportModal(true);
-  };
 
   const handleCloseModal = () => {
     setShowImportModal(false);

@@ -477,6 +477,7 @@ const Metronome: FC<LoaderProps> = ({
                 metronomeRef.current = null;
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty deps = only run once on mount
     
     // Effect for animation frame

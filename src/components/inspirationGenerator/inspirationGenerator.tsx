@@ -190,20 +190,6 @@ const LabelCell = styled.td`
   }
 `;
 
-const TableCell = styled.td`
-  padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-weight: 500;
-  width: 40%;
-  vertical-align: middle;
-  height: 100%;
-  
-  @media (max-width: 768px) {
-    padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-    font-size: ${({ theme }) => theme.fontSizes.sm};
-  }
-`;
-
 const ValueCell = styled.td`
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
   color: ${({ theme }) => theme.colors.text};
@@ -1162,7 +1148,8 @@ export default function InspirationGenerator({
       // Fallback to C Major if mode is invalid
       return ["C", "D", "E", "F", "G", "A", "B", "C"];
     },
-    [scaleIntervals, scaleNoteCounts]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scaleIntervals]
   );
 
   // Close dropdowns when clicking outside

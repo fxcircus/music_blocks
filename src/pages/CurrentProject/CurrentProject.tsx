@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect } from "react";
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
 import { decodeURLToAppState, hasStateParams } from "../../utils/urlSharing";
 import { AppState, BlockInstance } from "../../blocks/types";

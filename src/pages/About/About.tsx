@@ -5,7 +5,7 @@ import { FaGithub, FaReact, FaIcons, FaWaveSquare, FaChartBar, FaLink, FaQuestio
 import { GiTomato, GiMetronome } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
 import { MdDarkMode, MdAutoAwesome } from 'react-icons/md';
-import { Container, Card, CardHeader, CardTitle, CardIconWrapper } from '../../components/common/StyledComponents';
+import { Container, Card, CardHeader, CardTitle } from '../../components/common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
 const AboutContainer = styled(Container)`
