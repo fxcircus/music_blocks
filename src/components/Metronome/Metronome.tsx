@@ -83,52 +83,89 @@ const DialDisplay = styled.div`
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 
-  input, select {
+  .bpm-input {
     font-size: ${({ theme }) => theme.fontSizes.lg};
     font-weight: 700;
     color: #fff;
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
     border-radius: ${({ theme }) => theme.borderRadius.medium};
     padding: 4px 8px;
     text-align: center;
     outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     cursor: pointer;
+    width: 56px;
 
     &:focus, &:hover {
       background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.5);
     }
   }
 
-  .bpm-input {
-    width: 52px;
-  }
-
-  .ts-select {
-    width: auto;
-    min-width: 48px;
+  .ts-button {
     font-size: ${({ theme }) => theme.fontSizes.md};
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 20px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.7)'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
-  }
-
-  .dial-label {
-    font-size: 9px;
-    font-weight: 600;
+    font-weight: 700;
     color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: ${({ theme }) => theme.borderRadius.medium};
+    padding: 4px 10px;
+    text-align: center;
+    outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-    pointer-events: none;
+    cursor: pointer;
     white-space: nowrap;
-  }
+    position: relative;
 
+    &:focus, &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+`;
+
+const TsDropdownWrapper = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+`;
+
+const TsDropdown = styled.div`
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  min-width: 180px;
+`;
+
+const TsDropdownOption = styled.button<{ $isSelected: boolean }>`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
+  background: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary + '30' : theme.colors.background};
+  border: 1px solid ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : theme.colors.border};
+  color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.primary : theme.colors.text};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  text-align: center;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary}20;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const ControlsContainer = styled.div`
@@ -410,6 +447,8 @@ const Metronome: FC<LoaderProps> = ({
     const [showTips, setShowTips] = useState(false);
     const [bpmInput, setBpmInput] = useState(String(initialBpm));
     const [timeSignature, setTimeSignature] = useState(initialTimeSignature);
+    const [showTsDropdown, setShowTsDropdown] = useState(false);
+    const tsDropdownRef = useRef<HTMLDivElement>(null);
 
     // Derive beats array and accent pattern from current time signature
     const tsConfig = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
@@ -670,12 +709,27 @@ const Metronome: FC<LoaderProps> = ({
         setShowDebug(!showDebug);
     };
 
-    const handleTsSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newTs = e.target.value;
+    const handleTsSelect = (newTs: string) => {
         debugLog(`Time signature change: ${timeSignature} → ${newTs}`);
         setTimeSignature(newTs);
         setCurrentBeat(0);
+        setShowTsDropdown(false);
     };
+
+    // Close TS dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (showTsDropdown && tsDropdownRef.current && !tsDropdownRef.current.contains(event.target as Node)) {
+                setShowTsDropdown(false);
+            }
+        };
+        if (showTsDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showTsDropdown]);
 
     return (
         <ToolCardDnd
@@ -729,17 +783,30 @@ const Metronome: FC<LoaderProps> = ({
                         onFocus={(e) => e.target.select()}
                         aria-label="BPM value"
                     />
-                    <select
-                        className="ts-select"
-                        value={timeSignature}
-                        onChange={handleTsSelectChange}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label="Time signature"
-                    >
-                        {TIME_SIGNATURE_OPTIONS.map((ts) => (
-                            <option key={ts} value={ts}>{ts}</option>
-                        ))}
-                    </select>
+                    <div ref={tsDropdownRef} style={{ position: 'relative' }}>
+                        <button
+                            className="ts-button"
+                            onClick={(e) => { e.stopPropagation(); setShowTsDropdown(!showTsDropdown); }}
+                            aria-label="Time signature"
+                        >
+                            {timeSignature}
+                        </button>
+                        {showTsDropdown && (
+                            <TsDropdownWrapper>
+                                <TsDropdown>
+                                    {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                                        <TsDropdownOption
+                                            key={ts}
+                                            $isSelected={ts === timeSignature}
+                                            onClick={(e) => { e.stopPropagation(); handleTsSelect(ts); }}
+                                        >
+                                            {ts}
+                                        </TsDropdownOption>
+                                    ))}
+                                </TsDropdown>
+                            </TsDropdownWrapper>
+                        )}
+                    </div>
                 </DialDisplay>
                 <MetronomeBase
                     onClick={toggleMetronome}

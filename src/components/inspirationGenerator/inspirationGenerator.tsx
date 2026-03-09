@@ -58,11 +58,14 @@ const scaleNoteCounts: Record<string, number> = {
   "Phrygian Dominant": 7,
 };
 
+const TIME_SIGNATURE_OPTIONS = ['2/4', '3/4', '4/4', '5/4', '6/8', '7/4'];
+
 type LockedState = {
   root: boolean;
   scale: boolean;
   bpm: boolean;
   sound: boolean;
+  timeSignature: boolean;
 };
 
 interface componentProps {
@@ -78,6 +81,8 @@ interface componentProps {
   setTonesArrEl: (tonesArrEl: string[]) => void;
   bpmEl: string;
   setBpmEl: (bpmEl: string) => void;
+  timeSignatureEl: string;
+  setTimeSignatureEl: (ts: string) => void;
   soundEl: string;
   setSoundEl: (soundEl: string) => void;
   dragHandleProps?: any;
@@ -360,6 +365,12 @@ const ViewToggleOption = styled.button<{ $isActive: boolean }>`
 const ScaleDropdown = styled(ValueDropdown)`
   grid-template-columns: repeat(2, 1fr);
   width: 320px;
+`;
+
+const TimeSignatureDropdown = styled(ValueDropdown)`
+  grid-template-columns: repeat(3, 1fr);
+  width: 200px;
+  min-width: 200px;
 `;
 
 const DropdownOption = styled.button<{ $isSelected: boolean }>`
@@ -889,6 +900,8 @@ export default function InspirationGenerator({
   setTonesArrEl,
   bpmEl,
   setBpmEl,
+  timeSignatureEl,
+  setTimeSignatureEl,
   soundEl,
   setSoundEl,
   onBatchUpdate,
@@ -902,6 +915,7 @@ export default function InspirationGenerator({
     scale: false,
     bpm: false,
     sound: false,
+    timeSignature: false,
   });
   
   // Add state for selected chord
@@ -921,7 +935,7 @@ export default function InspirationGenerator({
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
 
   // Add state for dropdown menus
-  const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | 'timeSignature' | null>(null);
   const [rootDropdownView, setRootDropdownView] = useState<'grid' | 'circle'>('grid');
   const dropdownRef = useRef<HTMLTableCellElement>(null);
 
@@ -1018,6 +1032,10 @@ export default function InspirationGenerator({
   useEffect(() => {
     localStorage.setItem('tilesSoundEl', soundEl);
   }, [soundEl]);
+
+  useEffect(() => {
+    localStorage.setItem('tilesTimeSignatureEl', timeSignatureEl);
+  }, [timeSignatureEl]);
 
   // Click outside handler to close dropdowns
   useEffect(() => {
@@ -1347,7 +1365,7 @@ export default function InspirationGenerator({
   };
 
   const rollDice = () => {
-    console.log('Rolling dice...', { locked, currentValues: { rootEl, scaleEl, bpmEl, soundEl } });
+    console.log('Rolling dice...', { locked, currentValues: { rootEl, scaleEl, bpmEl, soundEl, timeSignatureEl } });
     setAnimate(false);
 
     // Collect all updates to batch them
@@ -1358,6 +1376,7 @@ export default function InspirationGenerator({
     let newScale = scaleEl;
     let newSound = soundEl;
     let newBpm = bpmEl;
+    let newTs = timeSignatureEl;
 
     // ROOT
     if (!locked.root) {
@@ -1392,6 +1411,13 @@ export default function InspirationGenerator({
       updates.bpmEl = newBpm;
     }
 
+    // TIME SIGNATURE
+    if (!locked.timeSignature) {
+      newTs = getRandomValueDifferentFromCurrent(TIME_SIGNATURE_OPTIONS, timeSignatureEl);
+      console.log('New Time Signature:', newTs, 'Old:', timeSignatureEl);
+      updates.timeSignatureEl = newTs;
+    }
+
     // Apply all updates at once if batch update function is available
     if (onBatchUpdate && Object.keys(updates).length > 0) {
       console.log('Batching updates:', updates);
@@ -1404,6 +1430,7 @@ export default function InspirationGenerator({
       if (updates.tonesArrEl) setTonesArrEl(updates.tonesArrEl);
       if (updates.soundEl) setSoundEl(updates.soundEl);
       if (updates.bpmEl) setBpmEl(updates.bpmEl);
+      if (updates.timeSignatureEl) setTimeSignatureEl(updates.timeSignatureEl);
     }
 
     setAnimate(true);
@@ -2086,16 +2113,64 @@ export default function InspirationGenerator({
                   onChange={handleBpmInputChange}
                   onBlur={handleBpmInputBlur}
                   onKeyDown={handleBpmInputKeyDown}
+                  onFocus={(e) => e.target.select()}
                   disabled={locked.bpm}
                   title={locked.bpm ? "Unlock row to edit" : undefined}
                 />
                 <BpmAdjustBtn onClick={() => adjustBpm(1)} title={locked.bpm ? "Unlock row to edit" : "Increase BPM"} disabled={locked.bpm}>
                   <Icon icon={FaPlus} size={10} />
                 </BpmAdjustBtn>
+
+                <span style={{ width: '12px' }} />
+
+                <LockIconWrapper $isLocked={locked.timeSignature} onClick={() => toggleLock("timeSignature")}>
+                  <IconWrapper>
+                    {locked.timeSignature ? <Icon icon={FaLock} size={16} /> : <Icon icon={FaUnlock} size={16} />}
+                  </IconWrapper>
+                </LockIconWrapper>
+
+                <span style={{ color: 'inherit', opacity: 0.5, fontWeight: 500, fontSize: '13px', marginLeft: '4px', marginRight: '4px' }}>Time</span>
+
+                <ClickableValueCell
+                  as="div"
+                  ref={openDropdown === 'timeSignature' ? dropdownRef as any : undefined}
+                  $isLocked={locked.timeSignature}
+                  style={{ position: 'relative', display: 'inline-block', padding: 0, overflow: 'visible' }}
+                  onClick={() => {
+                    if (!locked.timeSignature) {
+                      setOpenDropdown(openDropdown === 'timeSignature' ? null : 'timeSignature');
+                    }
+                  }}
+                >
+                  <ClickableValueInner $isLocked={locked.timeSignature} title={locked.timeSignature ? "Unlock row to edit" : undefined}>
+                    {timeSignatureEl}
+                  </ClickableValueInner>
+                  {openDropdown === 'timeSignature' && (
+                    <TimeSignatureDropdown onClick={(e) => e.stopPropagation()}>
+                      {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                        <DropdownOption
+                          key={ts}
+                          $isSelected={timeSignatureEl === ts}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (onBatchUpdate) {
+                              onBatchUpdate({ timeSignatureEl: ts });
+                            } else {
+                              setTimeSignatureEl(ts);
+                            }
+                            setOpenDropdown(null);
+                          }}
+                        >
+                          {ts}
+                        </DropdownOption>
+                      ))}
+                    </TimeSignatureDropdown>
+                  )}
+                </ClickableValueCell>
               </BpmInputCell>
             </TableRow>
 
-            {/* Separator after BPM row */}
+            {/* Separator after BPM / Time Signature row */}
             <tr>
               <SeparatorCell colSpan={4}>
                 <Divider />

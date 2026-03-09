@@ -138,6 +138,7 @@ interface SortableBlockItemProps {
   onRemove?: () => void;
   canRemove: boolean;
   globalBpm: string;
+  globalTimeSignature: string;
   generatorRoot: string;
   activeId: string | null;
   isRecentlyDragged: boolean;
@@ -149,6 +150,7 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
   onRemove,
   canRemove,
   globalBpm,
+  globalTimeSignature,
   generatorRoot,
   activeId,
   isRecentlyDragged,
@@ -189,6 +191,7 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
         onRemove={onRemove}
         canRemove={canRemove}
         globalBpm={globalBpm}
+        globalTimeSignature={globalTimeSignature}
         generatorRoot={generatorRoot}
         dragHandleProps={{
           ref: setActivatorNodeRef,
@@ -359,6 +362,7 @@ const CurrentProject: FC<LoaderProps> = () => {
 
     // Get global values for synchronization
     const globalBpm = inspirationState.bpmEl;
+    const globalTimeSignature = inspirationState.timeSignatureEl || '4/4';
     const generatorRoot = inspirationState.rootEl;
 
     // Drag and drop handlers
@@ -436,6 +440,7 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     onRemove={visibleBlocks.length > 1 ? () => handleRemoveBlock(block.instanceId) : undefined}
                                     canRemove={visibleBlocks.length > 1}
                                     globalBpm={globalBpm}
+                                    globalTimeSignature={globalTimeSignature}
                                     generatorRoot={generatorRoot}
                                     activeId={activeId}
                                     isRecentlyDragged={recentlyDraggedIds.has(block.instanceId)}
@@ -452,6 +457,7 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     onUpdateState={() => {}}
                                     canRemove={false}
                                     globalBpm={globalBpm}
+                                    globalTimeSignature={globalTimeSignature}
                                     generatorRoot={generatorRoot}
                                 />
                             </SortableItemWrapper>

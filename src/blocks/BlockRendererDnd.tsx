@@ -38,6 +38,7 @@ interface BlockRendererDndProps {
   onRemove?: () => void;
   canRemove?: boolean;
   globalBpm?: string; // For BPM synchronization
+  globalTimeSignature?: string; // For time signature synchronization
   generatorRoot?: string; // For Varispeed linking
   dragHandleProps?: any; // Props for the drag handle
   isRecentlyDragged?: boolean; // Show controls after drag
@@ -52,6 +53,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   onRemove,
   canRemove = true,
   globalBpm,
+  globalTimeSignature,
   generatorRoot,
   dragHandleProps,
   isRecentlyDragged = false,
@@ -126,6 +128,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           setTonesArrEl={(tonesArrEl: string[]) => updateBlockState({ tonesArrEl })}
           bpmEl={block.state.bpmEl || '100'}
           setBpmEl={(bpmEl: string) => updateBlockState({ bpmEl })}
+          timeSignatureEl={block.state.timeSignatureEl || '4/4'}
+          setTimeSignatureEl={(ts: string) => updateBlockState({ timeSignatureEl: ts })}
           soundEl={block.state.soundEl || 'Electric Guitar'}
           setSoundEl={(soundEl: string) => updateBlockState({ soundEl })}
           onBatchUpdate={(updates: Record<string, any>) => updateBlockState(updates)}
@@ -139,9 +143,11 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
       // Metronome expects BPM as a number prop
       // Use globalBpm if provided (for synchronization), otherwise use block state
       const bpm = globalBpm ? parseInt(globalBpm, 10) : (block.state.bpm || 100);
+      const timeSignature = globalTimeSignature || block.state.timeSignature || '4/4';
       blockContent = (
         <BlockComponent
           bpm={bpm}
+          timeSignature={timeSignature}
           onRemove={onRemove}
           canRemove={canRemove}
           dragHandleProps={dragHandleProps}

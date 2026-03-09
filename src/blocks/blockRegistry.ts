@@ -57,6 +57,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
       tonesEl: 'T - T - S - T - T - T - S',
       tonesArrEl: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'],
       bpmEl: '100',
+      timeSignatureEl: '4/4',
       soundEl: 'Electric Guitar',
     },
     category: 'music',
