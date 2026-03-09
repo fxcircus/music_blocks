@@ -71,6 +71,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
       bpm: 100,
       isRunning: false,
       isMuted: false,
+      timeSignature: '4/4',
     },
     category: 'music',
     description: 'Audio-visual metronome synced with BPM',

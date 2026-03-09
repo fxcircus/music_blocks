@@ -140,10 +140,12 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
       // Metronome expects BPM as a number prop
       // Use globalBpm if provided (for synchronization), otherwise use block state
       const bpm = globalBpm ? parseInt(globalBpm, 10) : (block.state.bpm || 100);
+      const timeSignature = block.state.timeSignature || '4/4';
       // It already has ToolCard built in, pass control props
       blockContent = (
         <BlockComponent
           bpm={bpm}
+          timeSignature={timeSignature}
           onRemove={onRemove ? () => onRemove(block.instanceId) : undefined}
           onMoveUp={onMoveUp ? () => onMoveUp(block.instanceId) : undefined}
           onMoveDown={onMoveDown ? () => onMoveDown(block.instanceId) : undefined}

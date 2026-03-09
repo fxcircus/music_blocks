@@ -9,8 +9,21 @@ import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
 import config from '../../config';
 
+// Supported time signatures and their accent patterns
+const TIME_SIGNATURES: Record<string, { beats: number; accents: number[] }> = {
+  '2/4': { beats: 2, accents: [0] },
+  '3/4': { beats: 3, accents: [0] },
+  '4/4': { beats: 4, accents: [0] },
+  '5/4': { beats: 5, accents: [0, 3] },       // 3+2 grouping
+  '6/8': { beats: 6, accents: [0, 3] },       // two groups of 3
+  '7/4': { beats: 7, accents: [0, 4] },       // 4+3 grouping
+};
+
+const TIME_SIGNATURE_OPTIONS = Object.keys(TIME_SIGNATURES);
+
 interface LoaderProps {
     bpm: number;
+    timeSignature?: string;
     onRemove?: () => void;
     canRemove?: boolean;
     dragHandleProps?: any;
@@ -62,12 +75,15 @@ const MetronomeBase = styled(motion.div)`
   cursor: pointer;
 `;
 
-const BpmDisplay = styled.div`
+const DialDisplay = styled.div`
   position: absolute;
   bottom: 12px;
   left: 50%;
   transform: translate(-50%, 50%);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 
   input {
     font-size: ${({ theme }) => theme.fontSizes.lg};
@@ -77,7 +93,6 @@ const BpmDisplay = styled.div`
     border: none;
     border-radius: ${({ theme }) => theme.borderRadius.medium};
     padding: 2px 4px;
-    width: 52px;
     text-align: center;
     outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
@@ -87,15 +102,30 @@ const BpmDisplay = styled.div`
     }
   }
 
-  .bpm-label {
-    position: absolute;
-    right: -16px;
-    bottom: 4px;
+  .bpm-input {
+    width: 42px;
+  }
+
+  .ts-input {
+    width: 32px;
+    font-size: ${({ theme }) => theme.fontSizes.md};
+  }
+
+  .dial-label {
     font-size: 9px;
     font-weight: 600;
     color: #fff;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .dial-separator {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: ${({ theme }) => theme.fontSizes.md};
+    font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    user-select: none;
   }
 `;
 
@@ -205,11 +235,12 @@ class MetronomeEngine {
   timerID: number | null = null;
   currentBeat: number = 0;
   beatsPerMeasure: number = 4;
+  accentBeats: Set<number> = new Set([0]);
   tempo: number = 120;
   running: boolean = false;
   muted: boolean = false;
   onBeatChange: ((beat: number) => void) | null = null;
-  
+
   constructor(tempo: number, onBeatChange?: (beat: number) => void) {
     this.tempo = tempo;
     if (onBeatChange) {
@@ -265,6 +296,11 @@ class MetronomeEngine {
   setMuted(muted: boolean) {
     this.muted = muted;
   }
+
+  setTimeSignature(beats: number, accents: number[]) {
+    this.beatsPerMeasure = beats;
+    this.accentBeats = new Set(accents);
+  }
   
   private clearTimer() {
     if (this.timerID !== null) {
@@ -313,8 +349,8 @@ class MetronomeEngine {
     // Add note to queue for UI updates
     this.scheduledNotes.push({ beat: beatNumber, time: time });
     
-    // Play the note
-    this.playNote(time, beatNumber === 0);
+    // Play the note — accent on strong beats
+    this.playNote(time, this.accentBeats.has(beatNumber));
   }
   
   private advanceNote() {
@@ -358,6 +394,7 @@ class MetronomeEngine {
 
 const Metronome: FC<LoaderProps> = ({
     bpm: initialBpm,
+    timeSignature: initialTimeSignature = '4/4',
     onRemove,
     canRemove,
     dragHandleProps,
@@ -370,7 +407,12 @@ const Metronome: FC<LoaderProps> = ({
     const [currentBeat, setCurrentBeat] = useState(0);
     const [showTips, setShowTips] = useState(false);
     const [bpmInput, setBpmInput] = useState(String(initialBpm));
-    const beats = [0, 1, 2, 3]; // 4/4 time signature
+    const [timeSignature, setTimeSignature] = useState(initialTimeSignature);
+    const [tsInput, setTsInput] = useState(initialTimeSignature);
+
+    // Derive beats array and accent pattern from current time signature
+    const tsConfig = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
+    const beats = Array.from({ length: tsConfig.beats }, (_, i) => i);
     
     // Refs
     const metronomeRef = useRef<MetronomeEngine | null>(null);
@@ -504,6 +546,16 @@ const Metronome: FC<LoaderProps> = ({
             metronomeRef.current.setMuted(muteSound);
         }
     }, [muteSound, debugLog]);
+
+    // Update time signature in metronome engine
+    useEffect(() => {
+        if (metronomeRef.current) {
+            const cfg = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
+            debugLog(`Setting time signature to ${timeSignature}`);
+            metronomeRef.current.setTimeSignature(cfg.beats, cfg.accents);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeSignature]);
     
     // Start/stop metronome when playing state changes
     useEffect(() => {
@@ -616,6 +668,34 @@ const Metronome: FC<LoaderProps> = ({
         setShowDebug(!showDebug);
     };
 
+    const handleTsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTsInput(e.target.value);
+    };
+
+    const commitTsInput = () => {
+        const normalized = tsInput.trim();
+        if (TIME_SIGNATURES[normalized]) {
+            debugLog(`Time signature change: ${timeSignature} → ${normalized}`);
+            setTimeSignature(normalized);
+            setTsInput(normalized);
+            // Reset beat when changing time signature
+            setCurrentBeat(0);
+        } else {
+            // Revert to current value
+            setTsInput(timeSignature);
+        }
+    };
+
+    const handleTsInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            commitTsInput();
+            (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'Escape') {
+            setTsInput(timeSignature);
+            (e.target as HTMLInputElement).blur();
+        }
+    };
+
     return (
         <ToolCardDnd
             title="Metronome"
@@ -655,8 +735,9 @@ const Metronome: FC<LoaderProps> = ({
             </PlayPauseButton>
 
             <MetronomeDisplay>
-                <BpmDisplay>
+                <DialDisplay>
                     <input
+                        className="bpm-input"
                         type="text"
                         inputMode="numeric"
                         value={bpmInput}
@@ -666,8 +747,19 @@ const Metronome: FC<LoaderProps> = ({
                         onClick={(e) => e.stopPropagation()}
                         aria-label="BPM value"
                     />
-                    <span className="bpm-label">BPM</span>
-                </BpmDisplay>
+                    <span className="dial-separator">|</span>
+                    <input
+                        className="ts-input"
+                        type="text"
+                        value={tsInput}
+                        onChange={handleTsInputChange}
+                        onBlur={commitTsInput}
+                        onKeyDown={handleTsInputKeyDown}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Time signature"
+                        title={`Supported: ${TIME_SIGNATURE_OPTIONS.join(', ')}`}
+                    />
+                </DialDisplay>
                 <MetronomeBase
                     onClick={toggleMetronome}
                     whileHover={{ scale: 1.05 }}
@@ -754,7 +846,10 @@ const Metronome: FC<LoaderProps> = ({
                             Use the + and – controls to adjust BPM, or click directly on the BPM input field to change the tempo.
                         </p>
                         <p>
-                            The metronome will play at the currently displayed tempo.
+                            Click the time signature on the dial to change it. Supported: {TIME_SIGNATURE_OPTIONS.join(', ')}.
+                        </p>
+                        <p>
+                            The beat dots reflect the current time signature, with accented beats highlighted.
                         </p>
                     </>
                 }

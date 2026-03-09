@@ -127,6 +127,7 @@ export interface MetronomeState {
   bpm: number;
   isRunning: boolean;
   isMuted: boolean;
+  timeSignature: string;
 }
 
 export interface NotesState {
