@@ -1,6 +1,9 @@
-import React, { useMemo, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PianoVisualizerProps, PianoKey, getNoteChromatic } from '../types';
+
+// Inline SVG piano keyboard cursor (16x16, 3 white keys + 2 black keys)
+const musicalNoteCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='14' height='14' rx='1.5' fill='%23f5f5f0' stroke='%23444' stroke-width='1'/%3E%3Cline x1='5.7' y1='1' x2='5.7' y2='15' stroke='%23bbb' stroke-width='0.5'/%3E%3Cline x1='10.3' y1='1' x2='10.3' y2='15' stroke='%23bbb' stroke-width='0.5'/%3E%3Crect x='4.2' y='1' width='3' height='8.5' rx='0.5' fill='%23333'/%3E%3Crect x='8.8' y='1' width='3' height='8.5' rx='0.5' fill='%23333'/%3E%3C/svg%3E") 8 15, pointer`;
 
 const PianoContainer = styled.div`
   display: flex;
@@ -10,6 +13,7 @@ const PianoContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.sm};
   overflow: hidden;
   min-height: 120px;
+  touch-action: none;
 `;
 
 const KeysContainer = styled.div`
@@ -41,7 +45,7 @@ const WhiteKey = styled.div<{
   border-radius: 0 0 4px 4px;
   margin: 0 1px;
   position: relative;
-  cursor: pointer;
+  cursor: ${musicalNoteCursor};
   transition: all ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -99,7 +103,7 @@ const BlackKey = styled.div<{
   left: ${({ $leftOffset }) => $leftOffset}px;
   z-index: 2;
   border-radius: 0 0 3px 3px;
-  cursor: pointer;
+  cursor: ${musicalNoteCursor};
   transition: all ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -141,12 +145,21 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
-  // State to track which keys are currently pressed
+  // Visual state for pressed keys (triggers re-render)
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+
+  // Ref mirror of pressedKeys for synchronous checks in event handlers
+  const pressedKeysRef = useRef<Set<string>>(new Set());
+
+  // Dragging state for glissando
+  const isDraggingRef = useRef(false);
+
+  // Last key touched (for touch move detection)
+  const lastTouchKeyRef = useRef<string | null>(null);
 
   // Audio context and oscillators management
   const audioContextRef = useRef<AudioContext | null>(null);
-  const activeOscillatorsRef = useRef<Map<string, OscillatorNode>>(new Map());
+  const activeOscillatorsRef = useRef<Map<string, { oscillator: OscillatorNode; gain: GainNode }>>(new Map());
 
   // Initialize audio context lazily
   const getAudioContext = useCallback(() => {
@@ -191,9 +204,9 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
       const keyId = `${note}-${octave}`;
 
       // Stop any existing oscillator for this key
-      const existingOsc = activeOscillatorsRef.current.get(keyId);
-      if (existingOsc) {
-        existingOsc.stop();
+      const existing = activeOscillatorsRef.current.get(keyId);
+      if (existing) {
+        try { existing.oscillator.stop(); } catch {}
         activeOscillatorsRef.current.delete(keyId);
       }
 
@@ -216,26 +229,27 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
       // Start playing
       oscillator.start(context.currentTime);
 
-      // Store the oscillator
-      activeOscillatorsRef.current.set(keyId, oscillator);
+      // Store oscillator and gain for later release
+      activeOscillatorsRef.current.set(keyId, { oscillator, gain: gainNode });
     } catch (error) {
       console.error('Error playing note:', error);
     }
   }, [getAudioContext, calculateFrequency]);
 
-  // Stop a note
+  // Stop a note with fade-out
   const stopNote = useCallback((note: string, octave: number) => {
     try {
       const keyId = `${note}-${octave}`;
-      const oscillator = activeOscillatorsRef.current.get(keyId);
+      const entry = activeOscillatorsRef.current.get(keyId);
 
-      if (oscillator && audioContextRef.current) {
+      if (entry && audioContextRef.current) {
         const context = audioContextRef.current;
-        const gainNode = context.createGain();
+        const { oscillator, gain } = entry;
 
-        // Quick fade out to avoid clicks
-        gainNode.gain.setValueAtTime(0.15, context.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+        // Fade out using the original gain node to avoid clicks
+        gain.gain.cancelScheduledValues(context.currentTime);
+        gain.gain.setValueAtTime(gain.gain.value, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
 
         oscillator.stop(context.currentTime + 0.1);
         activeOscillatorsRef.current.delete(keyId);
@@ -245,23 +259,108 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     }
   }, []);
 
-  // Handle key press
-  const handleKeyPress = useCallback((key: PianoKey, octave: number) => {
-    const keyId = `${key.note}-${octave}`;
-    setPressedKeys(prev => new Set([...prev, keyId]));
-    playNote(key.note, octave + 3); // Adjust octave for proper pitch
+  // Handle key press (by note name and raw octave)
+  const handleKeyPress = useCallback((note: string, octave: number) => {
+    const keyId = `${note}-${octave}`;
+    if (pressedKeysRef.current.has(keyId)) return; // Already playing
+    pressedKeysRef.current.add(keyId);
+    setPressedKeys(new Set(pressedKeysRef.current));
+    playNote(note, octave + 3); // Adjust octave for proper pitch
   }, [playNote]);
 
-  // Handle key release
-  const handleKeyRelease = useCallback((key: PianoKey, octave: number) => {
-    const keyId = `${key.note}-${octave}`;
-    setPressedKeys(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(keyId);
-      return newSet;
-    });
-    stopNote(key.note, octave + 3);
+  // Handle key release (by note name and raw octave)
+  const handleKeyRelease = useCallback((note: string, octave: number) => {
+    const keyId = `${note}-${octave}`;
+    if (!pressedKeysRef.current.has(keyId)) return; // Not playing
+    pressedKeysRef.current.delete(keyId);
+    setPressedKeys(new Set(pressedKeysRef.current));
+    stopNote(note, octave + 3);
   }, [stopNote]);
+
+  // Stop all currently pressed notes
+  const stopAllNotes = useCallback(() => {
+    pressedKeysRef.current.forEach(keyId => {
+      const lastDash = keyId.lastIndexOf('-');
+      const note = keyId.substring(0, lastDash);
+      const octave = parseInt(keyId.substring(lastDash + 1), 10);
+      stopNote(note, octave + 3);
+    });
+    pressedKeysRef.current.clear();
+    setPressedKeys(new Set());
+  }, [stopNote]);
+
+  // Find key data from a DOM element at a given point (for touch)
+  const getKeyFromPoint = useCallback((x: number, y: number): { note: string; octave: number } | null => {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    if (!el) return null;
+    const keyEl = el.closest('[data-note]') as HTMLElement | null;
+    if (!keyEl?.dataset.note || keyEl.dataset.octave === undefined) return null;
+    return { note: keyEl.dataset.note, octave: parseInt(keyEl.dataset.octave, 10) };
+  }, []);
+
+  // Container-level touch handlers for glissando + scroll prevention
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    isDraggingRef.current = true;
+    const touch = e.touches[0];
+    const keyData = getKeyFromPoint(touch.clientX, touch.clientY);
+    if (keyData) {
+      handleKeyPress(keyData.note, keyData.octave);
+      lastTouchKeyRef.current = `${keyData.note}-${keyData.octave}`;
+    }
+  }, [getKeyFromPoint, handleKeyPress]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const keyData = getKeyFromPoint(touch.clientX, touch.clientY);
+    const newKeyId = keyData ? `${keyData.note}-${keyData.octave}` : null;
+
+    if (newKeyId !== lastTouchKeyRef.current) {
+      // Release the previous key
+      if (lastTouchKeyRef.current) {
+        const lastDash = lastTouchKeyRef.current.lastIndexOf('-');
+        const prevNote = lastTouchKeyRef.current.substring(0, lastDash);
+        const prevOctave = parseInt(lastTouchKeyRef.current.substring(lastDash + 1), 10);
+        handleKeyRelease(prevNote, prevOctave);
+      }
+      // Press the new key
+      if (keyData) {
+        handleKeyPress(keyData.note, keyData.octave);
+      }
+      lastTouchKeyRef.current = newKeyId;
+    }
+  }, [getKeyFromPoint, handleKeyPress, handleKeyRelease]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    isDraggingRef.current = false;
+    lastTouchKeyRef.current = null;
+    stopAllNotes();
+  }, [stopAllNotes]);
+
+  // Global mouseup listener to catch releases outside the piano
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        stopAllNotes();
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [stopAllNotes]);
+
+  // Cleanup oscillators on unmount
+  useEffect(() => {
+    return () => {
+      activeOscillatorsRef.current.forEach(entry => {
+        try { entry.oscillator.stop(); } catch {}
+      });
+      activeOscillatorsRef.current.clear();
+    };
+  }, []);
+
   // Helper function to determine highlight type
   const getHighlightType = (
     noteIndex: number,
@@ -419,7 +518,12 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   const blackKeys = pianoKeys.filter(key => key.isBlack);
 
   return (
-    <PianoContainer>
+    <PianoContainer
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
       <KeysContainer>
         {/* Render white keys */}
         {whiteKeys.map((key, index) => {
@@ -430,26 +534,28 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
           return (
             <WhiteKey
               key={`white-${key.note}-${index}`}
+              data-note={key.note}
+              data-octave={octave}
               $isHighlighted={key.isHighlighted}
               $highlightType={key.highlightType}
               $isPlaying={key.isPlaying}
               $isPressed={isPressed}
               title={key.note}
-              onMouseDown={() => handleKeyPress(key, octave)}
-              onMouseUp={() => handleKeyRelease(key, octave)}
-              onMouseLeave={() => {
-                // Also release on mouse leave to prevent stuck notes
-                if (isPressed) {
-                  handleKeyRelease(key, octave);
+              onMouseDown={() => {
+                isDraggingRef.current = true;
+                handleKeyPress(key.note, octave);
+              }}
+              onMouseUp={() => {
+                isDraggingRef.current = false;
+                handleKeyRelease(key.note, octave);
+              }}
+              onMouseEnter={() => {
+                if (isDraggingRef.current) {
+                  handleKeyPress(key.note, octave);
                 }
               }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                handleKeyPress(key, octave);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleKeyRelease(key, octave);
+              onMouseLeave={() => {
+                handleKeyRelease(key.note, octave);
               }}
             />
           );
@@ -464,6 +570,8 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
           return (
             <BlackKey
               key={`black-${key.note}-${index}`}
+              data-note={key.note}
+              data-octave={octave}
               $isHighlighted={key.isHighlighted}
               $highlightType={key.highlightType}
               $isPlaying={key.isPlaying}
@@ -472,27 +580,21 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
               title={key.note}
               onMouseDown={(e) => {
                 e.stopPropagation();
-                handleKeyPress(key, octave);
+                isDraggingRef.current = true;
+                handleKeyPress(key.note, octave);
               }}
               onMouseUp={(e) => {
                 e.stopPropagation();
-                handleKeyRelease(key, octave);
+                isDraggingRef.current = false;
+                handleKeyRelease(key.note, octave);
               }}
-              onMouseLeave={() => {
-                // Also release on mouse leave to prevent stuck notes
-                if (isPressed) {
-                  handleKeyRelease(key, octave);
+              onMouseEnter={() => {
+                if (isDraggingRef.current) {
+                  handleKeyPress(key.note, octave);
                 }
               }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleKeyPress(key, octave);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleKeyRelease(key, octave);
+              onMouseLeave={() => {
+                handleKeyRelease(key.note, octave);
               }}
             />
           );
