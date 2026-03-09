@@ -14,9 +14,9 @@ const TIME_SIGNATURES: Record<string, { beats: number; accents: number[] }> = {
   '2/4': { beats: 2, accents: [0] },
   '3/4': { beats: 3, accents: [0] },
   '4/4': { beats: 4, accents: [0] },
-  '5/4': { beats: 5, accents: [0, 3] },       // 3+2 grouping
-  '6/8': { beats: 6, accents: [0, 3] },       // two groups of 3
-  '7/4': { beats: 7, accents: [0, 4] },       // 4+3 grouping
+  '5/4': { beats: 5, accents: [0] },
+  '6/8': { beats: 6, accents: [0] },
+  '7/4': { beats: 7, accents: [0] },
 };
 
 const TIME_SIGNATURE_OPTIONS = Object.keys(TIME_SIGNATURES);
@@ -85,30 +85,39 @@ const DialDisplay = styled.div`
   align-items: center;
   gap: 6px;
 
-  input {
+  input, select {
     font-size: ${({ theme }) => theme.fontSizes.lg};
     font-weight: 700;
     color: #fff;
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: ${({ theme }) => theme.borderRadius.medium};
-    padding: 2px 4px;
+    padding: 4px 8px;
     text-align: center;
     outline: none;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
 
-    &:focus {
-      background: rgba(255, 255, 255, 0.1);
+    &:focus, &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
     }
   }
 
   .bpm-input {
-    width: 42px;
+    width: 52px;
   }
 
-  .ts-input {
-    width: 32px;
+  .ts-select {
+    width: auto;
+    min-width: 48px;
     font-size: ${({ theme }) => theme.fontSizes.md};
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.7)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
   }
 
   .dial-label {
@@ -120,13 +129,6 @@ const DialDisplay = styled.div`
     white-space: nowrap;
   }
 
-  .dial-separator {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: ${({ theme }) => theme.fontSizes.md};
-    font-weight: 700;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-    user-select: none;
-  }
 `;
 
 const ControlsContainer = styled.div`
@@ -408,7 +410,6 @@ const Metronome: FC<LoaderProps> = ({
     const [showTips, setShowTips] = useState(false);
     const [bpmInput, setBpmInput] = useState(String(initialBpm));
     const [timeSignature, setTimeSignature] = useState(initialTimeSignature);
-    const [tsInput, setTsInput] = useState(initialTimeSignature);
 
     // Derive beats array and accent pattern from current time signature
     const tsConfig = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
@@ -669,32 +670,11 @@ const Metronome: FC<LoaderProps> = ({
         setShowDebug(!showDebug);
     };
 
-    const handleTsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setTsInput(e.target.value);
-    };
-
-    const commitTsInput = () => {
-        const normalized = tsInput.trim();
-        if (TIME_SIGNATURES[normalized]) {
-            debugLog(`Time signature change: ${timeSignature} → ${normalized}`);
-            setTimeSignature(normalized);
-            setTsInput(normalized);
-            // Reset beat when changing time signature
-            setCurrentBeat(0);
-        } else {
-            // Revert to current value
-            setTsInput(timeSignature);
-        }
-    };
-
-    const handleTsInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            commitTsInput();
-            (e.target as HTMLInputElement).blur();
-        } else if (e.key === 'Escape') {
-            setTsInput(timeSignature);
-            (e.target as HTMLInputElement).blur();
-        }
+    const handleTsSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newTs = e.target.value;
+        debugLog(`Time signature change: ${timeSignature} → ${newTs}`);
+        setTimeSignature(newTs);
+        setCurrentBeat(0);
     };
 
     return (
@@ -746,20 +726,20 @@ const Metronome: FC<LoaderProps> = ({
                         onBlur={commitBpmInput}
                         onKeyDown={handleBpmInputKeyDown}
                         onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.target.select()}
                         aria-label="BPM value"
                     />
-                    <span className="dial-separator">|</span>
-                    <input
-                        className="ts-input"
-                        type="text"
-                        value={tsInput}
-                        onChange={handleTsInputChange}
-                        onBlur={commitTsInput}
-                        onKeyDown={handleTsInputKeyDown}
+                    <select
+                        className="ts-select"
+                        value={timeSignature}
+                        onChange={handleTsSelectChange}
                         onClick={(e) => e.stopPropagation()}
                         aria-label="Time signature"
-                        title={`Supported: ${TIME_SIGNATURE_OPTIONS.join(', ')}`}
-                    />
+                    >
+                        {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                            <option key={ts} value={ts}>{ts}</option>
+                        ))}
+                    </select>
                 </DialDisplay>
                 <MetronomeBase
                     onClick={toggleMetronome}
