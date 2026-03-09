@@ -413,33 +413,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 // Animations (must be defined before usage)
-const fadeSlideIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const fillIn = keyframes`
-  from {
-    width: 0%;
-  }
-`;
-
-const growUp = keyframes`
-  from {
-    transform: scaleY(0);
-    transform-origin: bottom;
-  }
-  to {
-    transform: scaleY(1);
-    transform-origin: bottom;
-  }
-`;
 
 // Styled Components
 const ThemeAwareWrapper = styled.div`
@@ -614,7 +587,7 @@ const SceneList = styled.div`
   background: ${({ theme }) => theme.colors.card};
 `;
 
-const SceneItem = styled.div<{ $energy: number; $delay: number }>`
+const SceneItem = styled.div<{ $energy: number }>`
   position: relative;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   overflow: hidden;
@@ -622,19 +595,15 @@ const SceneItem = styled.div<{ $energy: number; $delay: number }>`
   border: 1px solid ${({ theme, $energy }) =>
     `${ENERGY_COLORS[$energy].fill}44`};
   margin-bottom: ${({ theme }) => theme.spacing.xs};
-  animation: ${fadeSlideIn} 0.3s ease both;
-  animation-delay: ${({ $delay }) => `${$delay}s`};
 `;
 
-const SceneEnergyBar = styled.div<{ $energy: number; $delay: number }>`
+const SceneEnergyBar = styled.div<{ $energy: number }>`
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   width: ${({ $energy }) => `${($energy / 4) * 100}%`};
   background: ${({ $energy }) => ENERGY_COLORS[$energy].fill};
-  animation: ${fillIn} 0.5s ease both;
-  animation-delay: ${({ $delay }) => `${$delay}s`};
 `;
 
 const SceneContent = styled.div`
@@ -658,13 +627,11 @@ const EnergyArcChart = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const ArcEnergyBar = styled.div<{ $width: number; $height: number; $delay: number; $fill: string }>`
+const ArcEnergyBar = styled.div<{ $width: number; $height: number; $fill: string }>`
   width: ${({ $width }) => `${$width}%`};
   height: ${({ $height }) => `${$height}%`};
   background: ${({ $fill }) => $fill};
   border-radius: 3px 3px 0 0;
-  animation: ${growUp} 0.5s ease both;
-  animation-delay: ${({ $delay }) => `${$delay}s`};
 `;
 
 // Helper functions
@@ -687,7 +654,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   });
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -715,7 +681,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   };
 
   useEffect(() => {
-    setAnimKey((k) => k + 1);
     localStorage.setItem('tilesTemplate', selected);
   }, [selected]);
 
@@ -883,12 +848,12 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
       </TemplateSelector>
 
       <SceneList>
-        <div key={animKey} style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {template.scenes.map((scene, si) => {
             const colors = ENERGY_COLORS[scene.energy];
             return (
-              <SceneItem key={si} $energy={scene.energy} $delay={si * 0.04}>
-                <SceneEnergyBar $energy={scene.energy} $delay={si * 0.04 + 0.1} />
+              <SceneItem key={si} $energy={scene.energy}>
+                <SceneEnergyBar $energy={scene.energy} />
                 <SceneContent>
                   <span style={{ fontSize: '9px', color: 'var(--text-secondary)', width: '16px', textAlign: 'right', flexShrink: 0 }}>
                     {si + 1}
@@ -929,7 +894,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                     $width={widthPercent}
                     $height={heightPercent}
                     $fill={colors.fill}
-                    $delay={i * 0.06}
                     title={`${scene.name} — ${scene.bars} bars`}
                   />
                 );

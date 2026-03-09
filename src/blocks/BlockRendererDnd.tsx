@@ -20,6 +20,7 @@ const NotesWrapper = styled.div`
   flex-direction: column;
   align-items: stretch;
   text-align: left;
+  flex: 1;
 `;
 
 // Special ToolCard for Notes that doesn't center its content
@@ -286,6 +287,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
         onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
+        alignTop={block.type === 'inspirationGenerator'}
       >
         {blockContent}
       </ToolCardDnd>

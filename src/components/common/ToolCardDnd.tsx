@@ -20,6 +20,7 @@ interface ToolCardDndProps {
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
   onShowHelp?: () => void;
+  alignTop?: boolean;
 }
 
 const StyledToolCard = styled(Card)`
@@ -34,12 +35,12 @@ const StyledToolCard = styled(Card)`
   }
 `;
 
-const ContentWrapper = styled.div`
+const ContentWrapper = styled.div<{ $alignTop?: boolean }>`
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: ${({ $alignTop }) => $alignTop ? 'flex-start' : 'center'};
   text-align: center;
   width: 100%;
 `;
@@ -121,7 +122,8 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   additionalControls,
   dragHandleProps,
   isRecentlyDragged = false,
-  onShowHelp
+  onShowHelp,
+  alignTop = false
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isActive, setIsActive] = useState(false);
@@ -183,7 +185,7 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
         </DraggableCardHeader>
       )}
 
-      {!showControlsOnly && <ContentWrapper>{children}</ContentWrapper>}
+      {!showControlsOnly && <ContentWrapper $alignTop={alignTop}>{children}</ContentWrapper>}
     </StyledToolCard>
   );
 };

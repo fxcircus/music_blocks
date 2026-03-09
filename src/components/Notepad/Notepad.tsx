@@ -93,7 +93,7 @@ const EditorWrapper = styled.div`
   position: relative;
   flex: 1;
   min-height: 200px;
-  max-height: 500px;
+  max-height: 600px;
   background-color: ${({ theme }) => theme.colors.inputBackground};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.small};
