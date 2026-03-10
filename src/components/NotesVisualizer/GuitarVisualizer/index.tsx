@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { GuitarVisualizerProps, GuitarString, GuitarFret, getNoteChromatic, getChromaticNote, STANDARD_TUNING } from '../types';
+import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
+import { getGuitarProfile } from '../../../utils/audioProfiles';
 
 const INLAY_FRETS = [3, 5, 7, 9];
 const DOUBLE_INLAY_FRETS = [12];
@@ -439,6 +441,7 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
+  const { themeName } = useAppTheme();
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
@@ -483,19 +486,29 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
 
       const oscillator = context.createOscillator();
       const gainNode = context.createGain();
-      oscillator.frequency.value = frequency;
-      oscillator.type = 'triangle';
-      gainNode.gain.setValueAtTime(0, context.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.15, context.currentTime + 0.1);
-      oscillator.connect(gainNode);
+
+      // Apply theme sound profile
+      const profile = getGuitarProfile(themeName);
+      const { extraNodes } = profile.setup(context, oscillator, gainNode, frequency);
+      profile.envelope(gainNode, context.currentTime);
+
+      // Connect nodes (osc → extraNodes → gain → destination)
+      if (extraNodes && extraNodes.length > 0) {
+        oscillator.connect(extraNodes[0]);
+        for (let i = 0; i < extraNodes.length - 1; i++) {
+          extraNodes[i].connect(extraNodes[i + 1]);
+        }
+        (extraNodes[extraNodes.length - 1] as AudioNode).connect(gainNode);
+      } else {
+        oscillator.connect(gainNode);
+      }
       gainNode.connect(context.destination);
       oscillator.start(context.currentTime);
       activeOscillatorsRef.current.set(keyId, oscillator);
     } catch (error) {
       console.error('Error playing note:', error);
     }
-  }, [getAudioContext, calculateFrequency]);
+  }, [getAudioContext, calculateFrequency, themeName]);
 
   const stopNote = useCallback((keyId: string) => {
     try {

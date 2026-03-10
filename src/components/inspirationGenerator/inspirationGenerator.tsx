@@ -15,6 +15,8 @@ import {
 } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
+import { useTheme as useAppTheme } from '../../theme/ThemeProvider';
+import { getSequenceProfile } from '../../utils/audioProfiles';
 
 
 // Chord quality mapping for different modes
@@ -910,6 +912,8 @@ export default function InspirationGenerator({
   showTips: showTipsExternal,
   setShowTips: setShowTipsExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
+  const { themeName } = useAppTheme();
+
   const [locked, setLocked] = useState<LockedState>({
     root: false,
     scale: false,
@@ -917,7 +921,7 @@ export default function InspirationGenerator({
     sound: false,
     timeSignature: false,
   });
-  
+
   // Add state for selected chord
   const [selectedChord, setSelectedChord] = useState<number | null>(null);
 
@@ -1795,29 +1799,32 @@ export default function InspirationGenerator({
 
     // Always use fresh current time to prevent note buildup
     const currentTime = ctx.currentTime;
+    const durationSec = duration / 1000;
 
     // Create oscillator and gain nodes
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
-    // Configure oscillator
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency;
+    // Apply theme sound profile
+    const profile = getSequenceProfile(themeName);
+    const { extraNodes } = profile.setup(ctx, oscillator, gainNode, frequency);
+    profile.envelope(gainNode, currentTime, durationSec);
 
-    // Configure envelope (ADSR)
-    gainNode.gain.setValueAtTime(0, currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.01); // Attack
-    gainNode.gain.linearRampToValueAtTime(0.2, currentTime + 0.05); // Decay
-    gainNode.gain.linearRampToValueAtTime(0.15, currentTime + duration / 1000 - 0.05); // Sustain
-    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + duration / 1000); // Release
-
-    // Connect nodes
-    oscillator.connect(gainNode);
+    // Connect nodes (osc → extraNodes → gain → destination)
+    if (extraNodes && extraNodes.length > 0) {
+      oscillator.connect(extraNodes[0]);
+      for (let i = 0; i < extraNodes.length - 1; i++) {
+        extraNodes[i].connect(extraNodes[i + 1]);
+      }
+      (extraNodes[extraNodes.length - 1] as AudioNode).connect(gainNode);
+    } else {
+      oscillator.connect(gainNode);
+    }
     gainNode.connect(ctx.destination);
 
     // Start and stop oscillator
     oscillator.start(currentTime);
-    oscillator.stop(currentTime + duration / 1000 + 0.05);
+    oscillator.stop(currentTime + durationSec + 0.05);
 
     // Track the oscillator for cleanup
     activeOscillatorsRef.current.push(oscillator);
@@ -1834,7 +1841,7 @@ export default function InspirationGenerator({
     return new Promise(resolve => {
       setTimeout(resolve, duration);
     });
-  }, []);
+  }, [themeName]);
 
   // Play scale or chord arpeggio
   const playSequence = useCallback(async () => {

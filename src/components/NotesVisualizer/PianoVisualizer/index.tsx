@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PianoVisualizerProps, PianoKey, getNoteChromatic } from '../types';
+import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
+import { getPianoProfile } from '../../../utils/audioProfiles';
 
 // Inline SVG piano keyboard cursor (16x16, 3 white keys + 2 black keys)
 const musicalNoteCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='14' height='14' rx='1.5' fill='%23f5f5f0' stroke='%23444' stroke-width='1'/%3E%3Cline x1='5.7' y1='1' x2='5.7' y2='15' stroke='%23bbb' stroke-width='0.5'/%3E%3Cline x1='10.3' y1='1' x2='10.3' y2='15' stroke='%23bbb' stroke-width='0.5'/%3E%3Crect x='4.2' y='1' width='3' height='8.5' rx='0.5' fill='%23333'/%3E%3Crect x='8.8' y='1' width='3' height='8.5' rx='0.5' fill='%23333'/%3E%3C/svg%3E") 8 15, pointer`;
@@ -145,6 +147,8 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
+  const { themeName } = useAppTheme();
+
   // Visual state for pressed keys (triggers re-render)
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
@@ -214,16 +218,21 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
       const oscillator = context.createOscillator();
       const gainNode = context.createGain();
 
-      oscillator.frequency.value = frequency;
-      oscillator.type = 'triangle'; // Softer sound than sine
+      // Apply theme sound profile
+      const profile = getPianoProfile(themeName);
+      const { extraNodes } = profile.setup(context, oscillator, gainNode, frequency);
+      profile.envelope(gainNode, context.currentTime);
 
-      // Set up gain envelope for smoother sound
-      gainNode.gain.setValueAtTime(0, context.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.01); // Quick attack
-      gainNode.gain.exponentialRampToValueAtTime(0.15, context.currentTime + 0.1); // Sustain
-
-      // Connect nodes
-      oscillator.connect(gainNode);
+      // Connect nodes (osc → extraNodes → gain → destination)
+      if (extraNodes && extraNodes.length > 0) {
+        oscillator.connect(extraNodes[0]);
+        for (let i = 0; i < extraNodes.length - 1; i++) {
+          extraNodes[i].connect(extraNodes[i + 1]);
+        }
+        (extraNodes[extraNodes.length - 1] as AudioNode).connect(gainNode);
+      } else {
+        oscillator.connect(gainNode);
+      }
       gainNode.connect(context.destination);
 
       // Start playing
@@ -234,7 +243,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     } catch (error) {
       console.error('Error playing note:', error);
     }
-  }, [getAudioContext, calculateFrequency]);
+  }, [getAudioContext, calculateFrequency, themeName]);
 
   // Stop a note with fade-out
   const stopNote = useCallback((note: string, octave: number) => {
@@ -246,12 +255,11 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
         const context = audioContextRef.current;
         const { oscillator, gain } = entry;
 
-        // Fade out using the original gain node to avoid clicks
-        gain.gain.cancelScheduledValues(context.currentTime);
-        gain.gain.setValueAtTime(gain.gain.value, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+        // Fade out using the theme profile's release envelope
+        const profile = getPianoProfile(themeName);
+        profile.release(gain, context.currentTime);
 
-        oscillator.stop(context.currentTime + 0.1);
+        oscillator.stop(context.currentTime + 0.3);
         activeOscillatorsRef.current.delete(keyId);
       }
     } catch (error) {
