@@ -589,7 +589,7 @@ const Metronome: FC<LoaderProps> = ({
     const theme = useTheme();
     const { themeName } = useAppTheme();
     const { effectiveMetronomeTheme, metronomeVolume } = useSoundSettings();
-    const useGradient = themeName === 'light' || themeName === 'dark';
+    const useGradient = false;
 
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
