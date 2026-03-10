@@ -141,6 +141,9 @@ const AboutPage = () => {
             Tools for creative flow
           </Paragraph>
           <Paragraph style={{ textAlign: 'center' }}>
+            Each block is a different tool designed to help musicians get inspired, jot down ideas, get unstuck, and share what they're working on with friends.
+          </Paragraph>
+          <Paragraph style={{ textAlign: 'center' }}>
              <StyledLink href="https://github.com/fxcircus/music_blocks" target="_blank" rel="noopener noreferrer">
               View the source code on GitHub <Icon icon={FaGithub} size={16} />
             </StyledLink>
@@ -213,7 +216,8 @@ const AboutPage = () => {
             <ListItem>
               <Strong><IconContainer><Icon icon={MdDarkMode} size={16} /></IconContainer> 6 Music-Inspired Themes:</Strong>
               <NestedList>
-                <ListItem>Choose from Dark, Indie (TASCAM 424), Hip Hop (TR-808), Disco (neon nightclub), Vintage (Fender Tweed), and Light — each with its own colors, fonts, and icon style.</ListItem>
+                <ListItem>Choose from Dark, Indie (TASCAM 424), Hip Hop (TR-808), Disco (neon nightclub), Vintage (Fender Tweed), and Light — each with its own colors, fonts, icon style, and instrument sounds.</ListItem>
+                <ListItem>Mix and match using the speaker icon in the navbar — pair any theme's look with another theme's sound.</ListItem>
               </NestedList>
             </ListItem>
           </List>
