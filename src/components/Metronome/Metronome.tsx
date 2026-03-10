@@ -592,7 +592,7 @@ const Metronome: FC<LoaderProps> = ({
 
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
-    const [muteSound, setMuteSound] = useState(false);
+    const [muteSound] = useState(false);
     const [bpm, setBpm] = useState(initialBpm);
     const [currentBeat, setCurrentBeat] = useState(0);
     const [showTips, setShowTips] = useState(false);
