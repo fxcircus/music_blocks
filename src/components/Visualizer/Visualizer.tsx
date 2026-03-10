@@ -78,8 +78,8 @@ const ControlButton = styled(motion.button)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.xl};
   padding: ${({ theme }) => theme.spacing.sm};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     color: ${({ theme }) => theme.colors.secondary};
   }

@@ -215,6 +215,7 @@ const StringLabel = styled.div<{ $isMuted?: boolean }>`
   text-align: center;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: bold;
+  font-family: ${({ theme }) => theme.fontFamily};
   color: ${({ theme }) => theme.colors.textSecondary};
   opacity: ${({ $isMuted }) => $isMuted ? 0.3 : 1};
 `;
@@ -268,13 +269,13 @@ const FretDot = styled.div<{
   height: ${({ $isHighlighted }) => $isHighlighted ? '18px' : '0'};
   border-radius: 50%;
   background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-    if ($isPressed || $isPlaying) return '#dc2626';
+    if ($isPressed || $isPlaying) return theme.colors.error;
     if (!$isHighlighted) return 'transparent';
     switch ($highlightType) {
-      case 'root': return '#0088cc';  // Bright blue for root notes
-      case 'chord': return '#8b5cf6';  // Purple for other chord tones
-      case 'seventh': return '#8b5cf6';
-      case 'scale': return '#8b5cf6';  // Solid purple for scale notes
+      case 'root': return theme.colors.secondary;
+      case 'chord': return theme.colors.primary;
+      case 'seventh': return theme.colors.primary;
+      case 'scale': return theme.colors.primary;
       default: return 'transparent';
     }
   }};
@@ -283,10 +284,10 @@ const FretDot = styled.div<{
   align-items: center;
   justify-content: center;
   cursor: ${({ $isHighlighted }) => $isHighlighted ? 'pointer' : 'default'};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1.3)' : 'scale(1)'};
   box-shadow: ${({ $isPlaying, $isPressed, $isHighlighted, theme }) =>
-    ($isPlaying || $isPressed) ? `0 0 10px #dc2626` :
+    ($isPlaying || $isPressed) ? `0 0 10px ${theme.colors.error}` :
     $isHighlighted ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'};
   font-size: 10px;
   color: ${({ $isHighlighted, theme }) =>
@@ -297,13 +298,13 @@ const FretDot = styled.div<{
 
   &:hover {
     background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-      if ($isPressed || $isPlaying) return '#dc2626';
+      if ($isPressed || $isPlaying) return theme.colors.error;
       if (!$isHighlighted) return 'transparent';
       switch ($highlightType) {
-        case 'root': return '#006699';  // Darker blue on hover for root
-        case 'chord': return '#9b6cf6';  // Slightly lighter on hover
-        case 'seventh': return '#9b6cf6';
-        case 'scale': return '#9b6cf6';  // Solid purple on hover
+        case 'root': return `${theme.colors.secondary}cc`;
+        case 'chord': return `${theme.colors.primary}cc`;
+        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'scale': return `${theme.colors.primary}cc`;
         default: return 'transparent';
       }
     }};
@@ -321,12 +322,12 @@ const OpenString = styled.div<{
   border-radius: 50%;
   border: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
     if (!$isHighlighted) return 'none';
-    if ($isPressed || $isPlaying) return '2px solid #dc2626';
+    if ($isPressed || $isPlaying) return `2px solid ${theme.colors.error}`;
     switch ($highlightType) {
-      case 'root': return `2px solid #0088cc`;  // Bright blue border for root
-      case 'chord': return `2px solid #8b5cf6`;  // Purple for other chord tones
-      case 'seventh': return `2px solid #8b5cf6`;
-      case 'scale': return `2px solid #8b5cf6`;  // Solid purple border for scale notes
+      case 'root': return `2px solid ${theme.colors.secondary}`;
+      case 'chord': return `2px solid ${theme.colors.primary}`;
+      case 'seventh': return `2px solid ${theme.colors.primary}`;
+      case 'scale': return `2px solid ${theme.colors.primary}`;
       default: return 'none';
     }
   }};
@@ -338,19 +339,19 @@ const OpenString = styled.div<{
   font-weight: bold;
   color: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
     if (!$isHighlighted) return 'transparent';
-    if ($isPressed || $isPlaying) return '#dc2626';
+    if ($isPressed || $isPlaying) return theme.colors.error;
     switch ($highlightType) {
-      case 'root': return '#0088cc';  // Bright blue text for root
-      case 'chord': return '#8b5cf6';  // Purple for other chord tones
-      case 'seventh': return '#8b5cf6';
-      case 'scale': return '#8b5cf6';  // Solid purple for scale notes
+      case 'root': return theme.colors.secondary;
+      case 'chord': return theme.colors.primary;
+      case 'seventh': return theme.colors.primary;
+      case 'scale': return theme.colors.primary;
       default: return theme.colors.textSecondary;
     }
   }};
   cursor: pointer;
   user-select: none;
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1.2)' : 'scale(1)'};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: color ${({ theme }) => theme.transitions.fast}, border-color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
 `;
 
 const FretNumbers = styled.div`
@@ -424,6 +425,7 @@ const PositionDot = styled.div<{ $isActive: boolean }>`
 
 const PositionLabel = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-family: ${({ theme }) => theme.fontFamily};
   color: ${({ theme }) => theme.colors.textSecondary};
   text-align: center;
   margin-top: 2px;

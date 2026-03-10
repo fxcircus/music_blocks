@@ -16,6 +16,7 @@ const MenuPanel = styled.div`
   min-width: 220px;
   max-height: 300px;
   overflow-y: auto;
+  font-family: ${({ theme }) => theme.fontFamily};
 `;
 
 const MenuItem = styled.button<{ $isActive: boolean }>`

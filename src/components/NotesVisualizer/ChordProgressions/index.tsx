@@ -343,6 +343,7 @@ const DropdownPanel = styled.div`
   max-height: 400px;
   overflow-y: auto;
   box-shadow: ${({ theme }) => theme.shadows.large};
+  font-family: ${({ theme }) => theme.fontFamily};
 `;
 
 const CategoryHeader = styled.div`

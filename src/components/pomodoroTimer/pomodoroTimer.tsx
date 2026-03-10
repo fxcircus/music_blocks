@@ -135,7 +135,7 @@ const SettingsLabel = styled.span`
 const SettingsValue = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text};
-  font-family: 'Courier New', monospace;
+  font-family: inherit;
   font-weight: 600;
   min-width: 52px;
   text-align: center;

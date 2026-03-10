@@ -18,7 +18,7 @@ const StyledHelpButton = styled.button`
   align-items: center;
   justify-content: center;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: opacity ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast}, background-color ${({ theme }) => theme.transitions.fast};
   opacity: 0;
 
   /* Always visible on mobile/tablet (no hover available) */

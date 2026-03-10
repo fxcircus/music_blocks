@@ -1,5 +1,5 @@
 import React, { FC, useState, useRef, useEffect, useCallback } from "react";
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, THEME_ORDER, THEME_LABELS } from '../../theme/ThemeProvider';
@@ -35,8 +35,7 @@ const NavContainer = styled.nav`
   left: 0;
   right: 0;
   z-index: 9999;
-  backdrop-filter: blur(10px);
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: background-color ${({ theme }) => theme.transitions.normal}, box-shadow ${({ theme }) => theme.transitions.normal};
 `;
 
 const NavInner = styled.div`
@@ -72,7 +71,7 @@ const NavItem = styled(motion.li)`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   font-weight: 600;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: color ${({ theme }) => theme.transitions.fast};
   color: ${({ theme }) => theme.colors.text};
 
   &.active {
@@ -120,7 +119,7 @@ const ActionButton = styled(motion.button)`
   font-weight: 600;
   cursor: pointer;
   box-shadow: ${({ theme }) => theme.shadows.small};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: transform ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     transform: translateY(-2px);
@@ -130,7 +129,7 @@ const ActionButton = styled(motion.button)`
   &:active {
     transform: translateY(0);
   }
-  
+
   @media (max-width: 576px) {
     padding: ${({ theme }) => theme.spacing.xs};
     
@@ -152,7 +151,7 @@ const SupportButton = styled(motion.a)`
   font-weight: 600;
   cursor: pointer;
   box-shadow: ${({ theme }) => theme.shadows.small};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: transform ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
   text-decoration: none;
   font-size: ${({ theme }) => theme.fontSizes.md};
 
@@ -172,6 +171,31 @@ const ThemePickerWrapper = styled.div`
   margin-left: ${({ theme }) => theme.spacing.md};
 `;
 
+const spinOnce = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const discoGlow = keyframes`
+  0%, 100% { filter: drop-shadow(0 0 4px #ff2d9b) drop-shadow(0 0 8px #ff2d9b44); color: #ff2d9b; }
+  33% { filter: drop-shadow(0 0 4px #00e8c6) drop-shadow(0 0 8px #00e8c644); color: #00e8c6; }
+  66% { filter: drop-shadow(0 0 4px #ffe030) drop-shadow(0 0 8px #ffe03044); color: #ffe030; }
+`;
+
+const SpinWrapper = styled.span<{ $spin: boolean }>`
+  display: inline-flex;
+  ${({ $spin }) => $spin && css`
+    animation: ${spinOnce} 4s linear infinite;
+  `}
+`;
+
+const DiscoWrapper = styled.span<{ $active: boolean }>`
+  display: inline-flex;
+  ${({ $active }) => $active && css`
+    animation: ${discoGlow} 6s ease-in-out infinite;
+  `}
+`;
+
 const ThemeToggleButton = styled(motion.button)`
   background: transparent;
   color: ${({ theme }) => theme.colors.text};
@@ -181,7 +205,7 @@ const ThemeToggleButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   padding: ${({ theme }) => theme.spacing.xs};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: color ${({ theme }) => theme.transitions.fast}, background-color ${({ theme }) => theme.transitions.fast};
   border-radius: ${({ theme }) => theme.borderRadius.round};
   font-size: ${({ theme }) => theme.fontSizes.lg};
 
@@ -204,6 +228,16 @@ const ThemeDropdown = styled(motion.div)`
   z-index: 10000;
 `;
 
+const ThemeDropdownHeader = styled.div`
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
 const ThemeOption = styled.button<{ $active: boolean }>`
   width: 100%;
   display: flex;
@@ -216,7 +250,7 @@ const ThemeOption = styled.button<{ $active: boolean }>`
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ $active }) => $active ? 700 : 500};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
   text-align: left;
 
   &:hover {
@@ -282,7 +316,7 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.error};
@@ -301,7 +335,7 @@ const DropArea = styled.div<{ isDragActive: boolean }>`
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.md};
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: border-color ${({ theme }) => theme.transitions.normal}, background-color ${({ theme }) => theme.transitions.normal};
   background-color: ${({ isDragActive, theme }) => 
     isDragActive ? `${theme.colors.primary}11` : 'transparent'};
 `;
@@ -339,6 +373,7 @@ const Nav: FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { themeName, setThemeName } = useTheme();
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const SPINNABLE_THEMES = ['hiphop', 'vintage', 'indie'];
   const themePickerRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -565,7 +600,11 @@ const Nav: FC = () => {
               aria-label="Choose theme"
               title="Choose theme"
             >
-              <ThemeIcon theme={themeName} size={22} />
+              <DiscoWrapper $active={themeName === 'disco'}>
+                <SpinWrapper $spin={SPINNABLE_THEMES.includes(themeName)}>
+                  <ThemeIcon theme={themeName} size={22} />
+                </SpinWrapper>
+              </DiscoWrapper>
             </ThemeToggleButton>
 
             <AnimatePresence>
@@ -576,6 +615,7 @@ const Nav: FC = () => {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
                 >
+                  <ThemeDropdownHeader>Theme</ThemeDropdownHeader>
                   {THEME_ORDER.map((t) => (
                     <ThemeOption
                       key={t}

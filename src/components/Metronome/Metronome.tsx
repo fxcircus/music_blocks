@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
@@ -159,7 +159,7 @@ const TsDropdownOption = styled.button<{ $isSelected: boolean }>`
   font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
   white-space: nowrap;
   text-align: center;
 
@@ -188,8 +188,8 @@ const ControlButton = styled(motion.button)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.xl};
   padding: ${({ theme }) => theme.spacing.sm};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     color: ${({ theme }) => theme.colors.secondary};
   }
@@ -440,6 +440,8 @@ const Metronome: FC<LoaderProps> = ({
     dragHandleProps,
     isRecentlyDragged
 }) => {
+    const theme = useTheme();
+
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
     const [muteSound, setMuteSound] = useState(false);
@@ -873,7 +875,7 @@ const Metronome: FC<LoaderProps> = ({
                         animate={{
                             scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
                             backgroundColor: currentBeat === beat && metronomePlaying ?
-                                ['#6c63ff', '#5ee7df', '#6c63ff'] : '#6c63ff'
+                                [theme.colors.primary, theme.colors.accent, theme.colors.primary] : theme.colors.primary
                         }}
                         transition={{ duration: 0.2 }}
                     />

@@ -15,7 +15,7 @@ export const Card = styled(motion.div)`
   box-shadow: none;
   padding: ${({ theme }) => theme.spacing.md};
   margin-bottom: 0;
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: background-color ${({ theme }) => theme.transitions.normal}, box-shadow ${({ theme }) => theme.transitions.normal};
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -80,9 +80,9 @@ export const Input = styled.input`
   color: ${({ theme }) => theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.md};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: border-color ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
   width: 100%;
-  
+
   &:focus {
     border-color: ${({ theme }) => theme.colors.primary};
     outline: none;
@@ -97,7 +97,7 @@ export const TextArea = styled.textarea`
   color: ${({ theme }) => theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.md};
   padding: ${({ theme }) => theme.spacing.md};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: border-color ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
   resize: vertical;
   min-height: 150px;
   width: 100%;
@@ -116,9 +116,9 @@ export const Select = styled.select`
   color: ${({ theme }) => theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.md};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: border-color ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
   width: 100%;
-  
+
   &:focus {
     border-color: ${({ theme }) => theme.colors.primary};
     outline: none;
@@ -139,9 +139,9 @@ export const Button = styled(motion.button)<ButtonProps>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
-  ${({ variant, theme }) => 
+  transition: transform ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
+
+  ${({ variant, theme }) =>
     variant === 'primary' && css`
       background: ${theme.colors.buttonPrimary};
       color: ${theme.colors.buttonText};
@@ -224,13 +224,13 @@ export const IconButton = styled(motion.button)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.xl};
   padding: ${({ theme }) => theme.spacing.xs};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
     transform: scale(1.1);
   }
-  
+
   &:active {
     transform: scale(0.95);
   }
@@ -251,7 +251,7 @@ export const TimerDisplay = styled.div`
   height: 180px;
   width: 180px;
   margin: 0 auto;
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: background-color ${({ theme }) => theme.transitions.normal}, border-color ${({ theme }) => theme.transitions.normal}, color ${({ theme }) => theme.transitions.normal};
 `;
 
 export const TimerControls = styled.div`
@@ -282,8 +282,8 @@ export const LockIcon = styled.i<LockIconProps>`
       : theme.colors.lockIconInactive
   };
   cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     transform: scale(1.2);
   }
@@ -295,8 +295,8 @@ export const DiceButton = styled(motion.i)`
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.xxxl};
   margin: ${({ theme }) => theme.spacing.md} 0;
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     color: ${({ theme }) => theme.colors.secondary};
     transform: scale(1.1);
@@ -344,8 +344,8 @@ export const ThemeToggle = styled(motion.button)`
   justify-content: center;
   font-size: ${({ theme }) => theme.fontSizes.xl};
   color: ${({ theme }) => theme.colors.text};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  
+  transition: color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
     transform: scale(1.1);
@@ -357,7 +357,7 @@ export const AppWrapper = styled.div`
   background-color: ${({ theme }) => theme.colors.background};
   min-height: 100vh;
   color: ${({ theme }) => theme.colors.text};
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: background-color ${({ theme }) => theme.transitions.normal}, color ${({ theme }) => theme.transitions.normal};
   font-family: ${({ theme }) => theme.fontFamily};
   padding-top: 70px; /* Space for fixed navbar */
 `;

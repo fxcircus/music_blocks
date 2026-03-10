@@ -63,7 +63,7 @@ const CloseButton = styled.button`
   align-items: center;
   justify-content: center;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     background: ${({ theme }) => `${theme.colors.primary}22`};

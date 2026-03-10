@@ -114,7 +114,7 @@ const DropIndicator = styled.div<{ $isActive: boolean }>`
   height: 3px;
   background: ${({ theme, $isActive }) => $isActive ? theme.colors.primary : 'transparent'};
   border-radius: 2px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   pointer-events: none;
   z-index: 10;
 
@@ -128,7 +128,7 @@ const DropIndicator = styled.div<{ $isActive: boolean }>`
     height: 12px;
     border-radius: 50%;
     background: ${({ theme, $isActive }) => $isActive ? theme.colors.primary : 'transparent'};
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 `;
 

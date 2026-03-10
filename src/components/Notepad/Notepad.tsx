@@ -69,7 +69,7 @@ const ActionBtn = styled.button<{ $success?: boolean; $danger?: boolean }>`
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background-color 0.15s;
   white-space: nowrap;
 
   &:hover {

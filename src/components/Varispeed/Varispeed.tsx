@@ -74,7 +74,7 @@ const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   gap: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   min-width: 85px; /* Prevent width change between "Link" and "Linked" */
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 
   &:hover {
     background: ${({ theme, $isLinked }) =>
@@ -122,7 +122,7 @@ const BpmInput = styled.input`
   color: ${({ theme }) => theme.colors.primary};
   font-size: ${({ theme }) => theme.fontSizes.lg};
   text-align: center;
-  font-family: 'Courier New', monospace;
+  font-family: inherit;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   outline: none;
 
@@ -170,7 +170,7 @@ const KeyPickerButton = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.primary}40;
   color: ${({ theme }) => theme.colors.primary};
   font-size: ${({ theme }) => theme.fontSizes.md};
-  font-family: 'Courier New', monospace;
+  font-family: inherit;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   display: flex;
@@ -208,11 +208,11 @@ const KeyOption = styled.button<{ $isSelected: boolean }>`
   color: ${({ theme, $isSelected }) =>
     $isSelected ? theme.colors.primary : theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-family: 'Courier New', monospace;
+  font-family: inherit;
   font-weight: ${({ $isSelected }) => ($isSelected ? 700 : 400)};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
 
   &:hover {
     background: ${({ theme }) => theme.colors.primary}20;
@@ -670,7 +670,7 @@ const Varispeed: FC<VarispeedProps> = ({
                   textAlign: "center",
                   fontSize,
                   transition: "font-size 0.25s ease",
-                  fontFamily: "'Courier New', monospace",
+                  fontFamily: "inherit",
                   color: displayColor,
                   textShadow: isLandmark
                     ? `0 0 24px ${color}88, 0 0 48px ${color}44`
@@ -684,7 +684,7 @@ const Varispeed: FC<VarispeedProps> = ({
                   <span style={{
                     fontSize: bpmFontSize,
                     transition: "font-size 0.25s ease",
-                    fontFamily: "'Courier New', monospace",
+                    fontFamily: "inherit",
                   }}>
                     {calc.targetBpm.toFixed(2)}
                   </span>

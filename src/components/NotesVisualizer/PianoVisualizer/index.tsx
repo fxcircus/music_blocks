@@ -31,13 +31,13 @@ const WhiteKey = styled.div<{
   width: 28px;
   height: 100px;
   background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-    if ($isPressed || $isPlaying) return '#dc2626';  // Solid red when pressed or playing
+    if ($isPressed || $isPlaying) return theme.colors.error;
     if (!$isHighlighted) return '#ffffff';
     switch ($highlightType) {
-      case 'root': return '#0088cc';  // Bright blue for root notes
-      case 'chord': return '#8b5cf6';
-      case 'seventh': return '#8b5cf6';
-      case 'scale': return '#8b5cf6';
+      case 'root': return theme.colors.secondary;
+      case 'chord': return theme.colors.primary;
+      case 'seventh': return theme.colors.primary;
+      case 'scale': return theme.colors.primary;
       default: return '#ffffff';
     }
   }};
@@ -46,20 +46,20 @@ const WhiteKey = styled.div<{
   margin: 0 1px;
   position: relative;
   cursor: ${musicalNoteCursor};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   user-select: none;
 
   &:hover {
     background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-      if ($isPressed || $isPlaying) return '#dc2626';  // Stay red when pressed or playing
+      if ($isPressed || $isPlaying) return theme.colors.error;
       if (!$isHighlighted) return '#f5f5f5';
       switch ($highlightType) {
-        case 'root': return '#006699';  // Darker blue on hover for root
-        case 'chord': return '#9b6cf6';
-        case 'seventh': return '#9b6cf6';
-        case 'scale': return '#9b6cf6';
+        case 'root': return `${theme.colors.secondary}cc`;
+        case 'chord': return `${theme.colors.primary}cc`;
+        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'scale': return `${theme.colors.primary}cc`;
         default: return '#f5f5f5';
       }
     }};
@@ -89,13 +89,13 @@ const BlackKey = styled.div<{
   width: 20px;
   height: 65px;
   background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-    if ($isPressed || $isPlaying) return '#dc2626';  // Solid red when pressed or playing
+    if ($isPressed || $isPlaying) return theme.colors.error;
     if (!$isHighlighted) return '#2a2a2a';
     switch ($highlightType) {
-      case 'root': return '#0088cc';  // Bright blue for root notes (black keys)
-      case 'chord': return '#8b5cf6';
-      case 'seventh': return '#8b5cf6';
-      case 'scale': return '#8b5cf6';
+      case 'root': return theme.colors.secondary;
+      case 'chord': return theme.colors.primary;
+      case 'seventh': return theme.colors.primary;
+      case 'scale': return theme.colors.primary;
       default: return '#2a2a2a';
     }
   }};
@@ -104,20 +104,20 @@ const BlackKey = styled.div<{
   z-index: 2;
   border-radius: 0 0 3px 3px;
   cursor: ${musicalNoteCursor};
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, transform ${({ theme }) => theme.transitions.fast};
   transform: ${({ $isPlaying, $isPressed }) => ($isPlaying || $isPressed) ? 'scale(1, 0.98)' : 'scale(1, 1)'};
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   user-select: none;
 
   &:hover {
     background: ${({ $isHighlighted, $highlightType, $isPlaying, $isPressed, theme }) => {
-      if ($isPressed || $isPlaying) return '#dc2626';  // Stay red when pressed or playing
+      if ($isPressed || $isPlaying) return theme.colors.error;
       if (!$isHighlighted) return '#3a3a3a';
       switch ($highlightType) {
-        case 'root': return '#006699';  // Darker blue on hover for root (black keys)
-        case 'chord': return '#9b6cf6';
-        case 'seventh': return '#9b6cf6';
-        case 'scale': return '#9b6cf6';
+        case 'root': return `${theme.colors.secondary}cc`;
+        case 'chord': return `${theme.colors.primary}cc`;
+        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'scale': return `${theme.colors.primary}cc`;
         default: return '#3a3a3a';
       }
     }};
