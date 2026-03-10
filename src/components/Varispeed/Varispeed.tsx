@@ -73,7 +73,7 @@ const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  min-width: 85px; /* Prevent width change between "Link" and "Linked" */
+  min-width: unset;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 
   &:hover {
@@ -85,12 +85,12 @@ const LinkToggle = styled(motion.button)<{ $isLinked: boolean }>`
 const ControlSection = styled.div`
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.md};
+  flex-wrap: nowrap;
+  gap: 3%;
   justify-content: center;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
   background: ${({ theme }) => `${theme.colors.background}44`}; /* Semi-transparent background */
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
@@ -509,10 +509,7 @@ const Varispeed: FC<VarispeedProps> = ({
           title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
         >
           <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
-          {isLinked ? "Linked" : "Link"}
         </LinkToggle>
-
-        <Divider $mobile={isMobile} />
 
         <ControlGroup>
           <ControlLabel>BPM</ControlLabel>
@@ -544,8 +541,6 @@ const Varispeed: FC<VarispeedProps> = ({
             <Icon icon={FaPlus} size={12} />
           </ControlButton>
         </ControlGroup>
-
-        <Divider $mobile={isMobile} />
 
         <ControlGroup>
           <ControlLabel>Key</ControlLabel>
