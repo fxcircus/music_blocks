@@ -3,8 +3,9 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, THEME_ORDER, THEME_LABELS } from '../../theme/ThemeProvider';
-import { FaPalette, FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
+import ThemeIcon from './ThemeIcons';
 import { loadBlockState } from '../../utils/blockStorage';
 import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
 import Toast from '../common/Toast';
@@ -207,7 +208,6 @@ const ThemeOption = styled.button<{ $active: boolean }>`
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
@@ -223,6 +223,16 @@ const ThemeOption = styled.button<{ $active: boolean }>`
     background: ${({ theme }) => `${theme.colors.primary}11`};
     color: ${({ theme }) => theme.colors.primary};
   }
+`;
+
+const ThemeOptionLabel = styled.span`
+  flex: 1;
+`;
+
+const ThemeCheckMark = styled.span`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 `;
 
 // Modal styled components
@@ -550,14 +560,12 @@ const Nav: FC = () => {
           <ThemePickerWrapper ref={themePickerRef}>
             <ThemeToggleButton
               onClick={() => setShowThemeDropdown(!showThemeDropdown)}
-              whileHover={{ rotate: 12, scale: 1.1 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               aria-label="Choose theme"
               title="Choose theme"
             >
-              <IconWrapper>
-                <Icon icon={FaPalette} size={20} />
-              </IconWrapper>
+              <ThemeIcon theme={themeName} size={22} />
             </ThemeToggleButton>
 
             <AnimatePresence>
@@ -577,11 +585,12 @@ const Nav: FC = () => {
                         setShowThemeDropdown(false);
                       }}
                     >
-                      {THEME_LABELS[t]}
+                      <ThemeIcon theme={t} size={16} />
+                      <ThemeOptionLabel>{THEME_LABELS[t]}</ThemeOptionLabel>
                       {t === themeName && (
-                        <IconWrapper>
-                          <Icon icon={FaCheck} size={12} />
-                        </IconWrapper>
+                        <ThemeCheckMark>
+                          <Icon icon={FaCheck} size={10} />
+                        </ThemeCheckMark>
                       )}
                     </ThemeOption>
                   ))}
