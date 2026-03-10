@@ -84,17 +84,18 @@ const DiscoBallIcon: React.FC<IconProps> = ({ size = 20 }) => (
 // Hip Hop — Vinyl record (grooves + center label)
 const VinylRecordIcon: React.FC<IconProps> = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    {/* Outer record edge */}
-    <circle cx="12" cy="12" r="10.5" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.2" />
-    {/* Grooves */}
-    <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
-    <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="0.3" opacity="0.25" />
-    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="0.3" opacity="0.2" />
-    {/* Center label */}
-    <circle cx="12" cy="12" r="5.5" fill="currentColor" opacity="0.5" />
-    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="0.3" opacity="0.3" fill="none" />
-    {/* Center hole */}
-    <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.8" />
+    {/* Vinyl body — dark filled disc */}
+    <circle cx="12" cy="12" r="10.5" fill="currentColor" opacity="0.35" stroke="currentColor" strokeWidth="1.2" />
+    {/* Grooves — subtle rings in the vinyl */}
+    <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="0.4" opacity="0.15" />
+    <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="0.4" opacity="0.12" />
+    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="0.4" opacity="0.1" />
+    {/* Center label — bright and prominent */}
+    <circle cx="12" cy="12" r="4.5" fill="currentColor" opacity="0.85" />
+    {/* Label ring detail */}
+    <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="0.4" opacity="0.4" fill="none" />
+    {/* Spindle hole — punch-through dark */}
+    <circle cx="12" cy="12" r="0.8" fill="black" opacity="0.6" />
   </svg>
 );
 

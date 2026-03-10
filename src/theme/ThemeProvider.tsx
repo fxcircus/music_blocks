@@ -221,6 +221,17 @@ export const indieTheme = {
     large: '0 8px 20px rgba(20, 35, 50, 0.45)',
   },
   ...sharedTokens,
+  // Silkscreen is a pixel font that renders large — scale down
+  fontSizes: {
+    xs: '0.6rem',
+    sm: '0.7rem',
+    md: '0.8rem',
+    lg: '0.9rem',
+    xl: '1rem',
+    xxl: '1.2rem',
+    xxxl: '1.6rem',
+    timer: '2rem',
+  },
 };
 
 // ──────────────────────────────────────────────────────────────
