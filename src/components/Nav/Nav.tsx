@@ -121,7 +121,7 @@ const ActionButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  background: ${({ theme }) => theme.colors.accentGradient};
+  background: ${({ theme }) => theme.colors.primary};
   color: ${({ theme }) => theme.colors.buttonText};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
