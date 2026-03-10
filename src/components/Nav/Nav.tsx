@@ -1,9 +1,9 @@
-import React, { FC, useState, useRef } from "react";
+import React, { FC, useState, useRef, useEffect, useCallback } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../theme/ThemeProvider';
-import { FaSun, FaMoon, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
+import { useTheme, THEME_ORDER, THEME_LABELS } from '../../theme/ThemeProvider';
+import { FaPalette, FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { loadBlockState } from '../../utils/blockStorage';
 import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
@@ -166,6 +166,11 @@ const SupportButton = styled(motion.a)`
 
 `;
 
+const ThemePickerWrapper = styled.div`
+  position: relative;
+  margin-left: ${({ theme }) => theme.spacing.md};
+`;
+
 const ThemeToggleButton = styled(motion.button)`
   background: transparent;
   color: ${({ theme }) => theme.colors.text};
@@ -174,15 +179,49 @@ const ThemeToggleButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: ${({ theme }) => theme.fontSizes.lg};
   padding: ${({ theme }) => theme.spacing.xs};
-  margin-left: ${({ theme }) => theme.spacing.md};
   transition: all ${({ theme }) => theme.transitions.fast};
   border-radius: ${({ theme }) => theme.borderRadius.round};
+  font-size: ${({ theme }) => theme.fontSizes.lg};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
     background-color: ${({ theme }) => `${theme.colors.primary}11`};
+  }
+`;
+
+const ThemeDropdown = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + ${({ theme }) => theme.spacing.xs});
+  right: 0;
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  min-width: 160px;
+  overflow: hidden;
+  z-index: 10000;
+`;
+
+const ThemeOption = styled.button<{ $active: boolean }>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+  border: none;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ $active }) => $active ? 700 : 500};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  text-align: left;
+
+  &:hover {
+    background: ${({ theme }) => `${theme.colors.primary}11`};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -288,7 +327,22 @@ const Nav: FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { themeName, setThemeName } = useTheme();
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const themePickerRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (themePickerRef.current && !themePickerRef.current.contains(e.target as Node)) {
+      setShowThemeDropdown(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showThemeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showThemeDropdown, handleClickOutside]);
 
   const handleCloseModal = () => {
     setShowImportModal(false);
@@ -449,7 +503,6 @@ const Nav: FC = () => {
               <IconWrapper>
                 <Icon icon={FaLink} size={16} />
               </IconWrapper>
-              <span>Share</span>
             </ActionButton>
             
             <SupportButton
@@ -494,17 +547,48 @@ const Nav: FC = () => {
             */}
           </ImportExportGroup>
           
-          <ThemeToggleButton 
-            onClick={toggleTheme}
-            whileHover={{ rotate: 12, scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            <IconWrapper>
-              {isDarkMode ? <Icon icon={FaMoon} size={20} /> : <Icon icon={FaSun} size={20} />}
-            </IconWrapper>
-          </ThemeToggleButton>
+          <ThemePickerWrapper ref={themePickerRef}>
+            <ThemeToggleButton
+              onClick={() => setShowThemeDropdown(!showThemeDropdown)}
+              whileHover={{ rotate: 12, scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Choose theme"
+              title="Choose theme"
+            >
+              <IconWrapper>
+                <Icon icon={FaPalette} size={20} />
+              </IconWrapper>
+            </ThemeToggleButton>
+
+            <AnimatePresence>
+              {showThemeDropdown && (
+                <ThemeDropdown
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {THEME_ORDER.map((t) => (
+                    <ThemeOption
+                      key={t}
+                      $active={t === themeName}
+                      onClick={() => {
+                        setThemeName(t);
+                        setShowThemeDropdown(false);
+                      }}
+                    >
+                      {THEME_LABELS[t]}
+                      {t === themeName && (
+                        <IconWrapper>
+                          <Icon icon={FaCheck} size={12} />
+                        </IconWrapper>
+                      )}
+                    </ThemeOption>
+                  ))}
+                </ThemeDropdown>
+              )}
+            </AnimatePresence>
+          </ThemePickerWrapper>
         </motion.div>
       </NavInner>
 

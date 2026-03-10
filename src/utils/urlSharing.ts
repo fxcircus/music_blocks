@@ -20,6 +20,7 @@ interface ShareableState {
     s: Record<string, any>; // state
   }>;
   p?: number; // chord progression index
+  th?: string; // theme name
 }
 
 /**
@@ -64,13 +65,18 @@ function toShareable(appState: AppState, progressionIndex?: number): ShareableSt
   if (progressionIndex !== undefined && progressionIndex > 0) {
     payload.p = progressionIndex;
   }
+  // Include theme if not the default
+  const theme = localStorage.getItem('tilesTheme');
+  if (theme && theme !== 'dark') {
+    payload.th = theme;
+  }
   return payload;
 }
 
 /**
  * Convert shareable payload back to AppState updates
  */
-function fromShareable(payload: ShareableState): { appState: Partial<AppState>; progression?: number } {
+function fromShareable(payload: ShareableState): { appState: Partial<AppState>; progression?: number; theme?: string } {
   const blocks = payload.blocks.map((b, index) => ({
     instanceId: b.t,
     type: b.t,
@@ -82,6 +88,7 @@ function fromShareable(payload: ShareableState): { appState: Partial<AppState>; 
   return {
     appState: { blocks },
     progression: payload.p,
+    theme: payload.th,
   };
 }
 
@@ -129,7 +136,7 @@ export const encodeAppStateToURL = (appState: AppState): string => {
 /**
  * Decode URL — handles both new compressed format (?s=...) and legacy format (?root=...&scale=...)
  */
-export const decodeURLToAppState = (url: string): { appState?: Partial<AppState>; legacyState?: Partial<TilesState>; progression?: number } => {
+export const decodeURLToAppState = (url: string): { appState?: Partial<AppState>; legacyState?: Partial<TilesState>; progression?: number; theme?: string } => {
   try {
     const urlObj = new URL(url);
     const params = urlObj.searchParams;
@@ -142,7 +149,7 @@ export const decodeURLToAppState = (url: string): { appState?: Partial<AppState>
         const payload = JSON.parse(json) as ShareableState;
         if (payload.v === 2) {
           const result = fromShareable(payload);
-          return { appState: result.appState, progression: result.progression };
+          return { appState: result.appState, progression: result.progression, theme: result.theme };
         }
       }
     }

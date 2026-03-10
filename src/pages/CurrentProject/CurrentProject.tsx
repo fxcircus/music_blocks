@@ -11,6 +11,7 @@ import BlockPicker from "../../components/BlockPicker/BlockPicker";
 import { Button } from '../../components/common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import { FaPlus } from 'react-icons/fa';
+import { useTheme } from '../../theme/ThemeProvider';
 
 // @dnd-kit imports
 import {
@@ -205,6 +206,7 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
 };
 
 const CurrentProject: FC<LoaderProps> = () => {
+    const { setThemeName } = useTheme();
     // Load block-based state (with automatic migration from old format)
     const [blockState, setBlockState] = useState<AppState>(() => {
         console.log('[CurrentProject] Component mounting, loading initial state');
@@ -245,6 +247,14 @@ const CurrentProject: FC<LoaderProps> = () => {
         if (!hasStateParams(window.location.href)) return;
 
         const decoded = decodeURLToAppState(window.location.href);
+
+        // Apply shared theme via context (also persists to localStorage via ThemeProvider)
+        if (decoded.theme) {
+            const validThemes = ['light', 'dark', 'vintage', 'indie', 'disco', 'hiphop'];
+            if (validThemes.includes(decoded.theme)) {
+                setThemeName(decoded.theme as any);
+            }
+        }
 
         if (decoded.appState?.blocks) {
             // New format: full block state from compressed URL

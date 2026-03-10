@@ -2,12 +2,31 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from '../utils/storageService';
 
+export type ThemeName = 'light' | 'dark' | 'vintage' | 'indie' | 'disco' | 'hiphop';
+
+export const THEME_ORDER: ThemeName[] = ['dark', 'hiphop', 'disco', 'vintage', 'indie', 'light'];
+
+export const THEME_LABELS: Record<ThemeName, string> = {
+  light: 'Light',
+  dark: 'Dark',
+  vintage: 'Vintage',
+  indie: 'Indie',
+  disco: 'Disco',
+  hiphop: 'Hip Hop',
+};
+
 interface ThemeContextType {
+  themeName: ThemeName;
+  setThemeName: (name: ThemeName) => void;
+  cycleTheme: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
+  themeName: 'dark',
+  setThemeName: () => {},
+  cycleTheme: () => {},
   isDarkMode: false,
   toggleTheme: () => {},
 });
@@ -18,34 +37,7 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const lightTheme = {
-  colors: {
-    background: '#eef0f4',
-    card: '#f7f8fa',
-    primary: '#6c63ff',
-    secondary: '#7c69ef',
-    text: '#212529',
-    textSecondary: '#495057',
-    border: '#d5d9e0',
-    accent: '#4dd4cc',
-    accentGradient: 'linear-gradient(135deg, #6c63ff 0%, #4dd4cc 100%)',
-    timerBackground: '#f7f8fa',
-    timerBorder: '#6c63ff',
-    buttonPrimary: '#6c63ff',
-    buttonSecondary: '#4dd4cc',
-    buttonText: '#ffffff',
-    lockIconActive: '#6c63ff',
-    lockIconInactive: '#9ca3ab',
-    inputBackground: '#f7f8fa',
-    success: '#4BB543',
-    warning: '#ffab00',
-    error: '#ff5252',
-  },
-  shadows: {
-    small: '0 2px 5px rgba(0, 0, 0, 0.1)',
-    medium: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    large: '0 8px 20px rgba(0, 0, 0, 0.12)',
-  },
+const sharedTokens = {
   borderRadius: {
     small: '4px',
     medium: '8px',
@@ -75,6 +67,37 @@ export const lightTheme = {
     xl: '1.8rem',
     xxl: '2.7rem',
   },
+};
+
+export const lightTheme = {
+  colors: {
+    background: '#eef0f4',
+    card: '#f7f8fa',
+    primary: '#6c63ff',
+    secondary: '#7c69ef',
+    text: '#212529',
+    textSecondary: '#495057',
+    border: '#d5d9e0',
+    accent: '#4dd4cc',
+    accentGradient: 'linear-gradient(135deg, #6c63ff 0%, #4dd4cc 100%)',
+    timerBackground: '#f7f8fa',
+    timerBorder: '#6c63ff',
+    buttonPrimary: '#6c63ff',
+    buttonSecondary: '#4dd4cc',
+    buttonText: '#ffffff',
+    lockIconActive: '#6c63ff',
+    lockIconInactive: '#9ca3ab',
+    inputBackground: '#f7f8fa',
+    success: '#4BB543',
+    warning: '#ffab00',
+    error: '#ff5252',
+  },
+  shadows: {
+    small: '0 2px 5px rgba(0, 0, 0, 0.1)',
+    medium: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    large: '0 8px 20px rgba(0, 0, 0, 0.12)',
+  },
+  ...sharedTokens,
 };
 
 export const darkTheme = {
@@ -105,58 +128,217 @@ export const darkTheme = {
     medium: '0 4px 12px rgba(0, 0, 0, 0.25)',
     large: '0 8px 20px rgba(0, 0, 0, 0.3)',
   },
-  borderRadius: {
-    small: '4px',
-    medium: '8px',
-    large: '16px',
-    round: '50%',
-  },
-  fontSizes: {
-    xs: '0.75rem',
-    sm: '0.875rem',
-    md: '1rem',
-    lg: '1.125rem',
-    xl: '1.25rem',
-    xxl: '1.5rem',
-    xxxl: '2rem',
-    timer: '2.5rem',
-  },
-  transitions: {
-    fast: '0.15s ease',
-    normal: '0.25s ease',
-    slow: '0.4s ease',
-  },
-  spacing: {
-    xs: '0.2rem',
-    sm: '0.45rem',
-    md: '0.9rem',
-    lg: '1.35rem',
-    xl: '1.8rem',
-    xxl: '2.7rem',
-  },
+  ...sharedTokens,
 };
 
+// ──────────────────────────────────────────────────────────────
+// VINTAGE — Aged parchment, espresso ink, burnt sienna & olive
+// ──────────────────────────────────────────────────────────────
+// Light-family theme. Cards are LIGHTER than background (cream
+// on tan) so they feel like paper sheets on a wooden desk.
+//
+// Key contrast pairs:
+//   text #2c1810 on card #ede3d0          — dark ink on cream ✓
+//   text #2c1810 on background #c4b393    — ink on tan ✓
+//   textSecondary #78644e on card #ede3d0 — muted but legible ✓
+//   buttonText #fff on primary #b45a1c    — white on sienna ✓
+//   primary #b45a1c on card #ede3d0       — rich accent pops ✓
+export const vintageTheme = {
+  colors: {
+    background: '#c4b393',       // warm tan canvas
+    card: '#ede3d0',             // light cream parchment — clear lift from bg
+    primary: '#b45a1c',          // deep burnt sienna
+    secondary: '#6b7c38',        // earthy olive green
+    text: '#2c1810',             // espresso ink — max readability on cream
+    textSecondary: '#78644e',    // medium warm brown — legible secondary
+    border: '#b8a480',           // tan border — visible against cream card
+    accent: '#b45a1c',           // burnt sienna
+    accentGradient: 'linear-gradient(135deg, #b45a1c 0%, #6b7c38 100%)',
+    timerBackground: '#ede3d0',  // match card
+    timerBorder: '#b45a1c',
+    buttonPrimary: '#b45a1c',
+    buttonSecondary: '#6b7c38',
+    buttonText: '#ffffff',       // white on sienna/olive buttons
+    lockIconActive: '#b45a1c',
+    lockIconInactive: '#a89878',
+    inputBackground: '#e0d4bc',  // sits between card and bg — distinct
+    success: '#4a8830',
+    warning: '#c89018',
+    error: '#c03820',
+  },
+  shadows: {
+    small: '0 2px 5px rgba(44, 24, 16, 0.12)',
+    medium: '0 4px 12px rgba(44, 24, 16, 0.18)',
+    large: '0 8px 20px rgba(44, 24, 16, 0.24)',
+  },
+  ...sharedTokens,
+};
+
+// ──────────────────────────────────────────────────────────────
+// INDIE — TASCAM 424 MkII steel-blue, gold knobs, teal meters
+// ──────────────────────────────────────────────────────────────
+// Dark-family theme. Background is deep navy-steel; cards are
+// a brighter steel-blue so they feel like raised equipment panels.
+//
+// Key contrast pairs:
+//   text #e8ecf0 on card #3d6380          — light on dark blue ✓
+//   text #e8ecf0 on background #2e4558    — light on deep navy ✓
+//   textSecondary #98b0c4 on card #3d6380 — soft steel, legible ✓
+//   buttonText #1a2830 on primary #e8a832 — dark navy on gold ✓
+//   primary #e8a832 on card #3d6380       — gold pops on blue ✓
+export const indieTheme = {
+  colors: {
+    background: '#2e4558',       // deep navy-steel
+    card: '#3d6380',             // brighter steel blue — clear lift from bg
+    primary: '#e8a832',          // warm gold (TASCAM knob accent)
+    secondary: '#4db8a0',        // teal (VU meter green)
+    text: '#e8ecf0',             // near-white cool grey
+    textSecondary: '#98b0c4',    // light steel grey — legible on both surfaces
+    border: '#4a6878',           // mid steel — visible divider
+    accent: '#4db8a0',           // teal
+    accentGradient: 'linear-gradient(135deg, #e8a832 0%, #4db8a0 100%)',
+    timerBackground: '#3d6380',  // match card
+    timerBorder: '#e8a832',
+    buttonPrimary: '#e8a832',
+    buttonSecondary: '#4db8a0',
+    buttonText: '#1a2830',       // dark navy — readable on gold & teal
+    lockIconActive: '#e8a832',
+    lockIconInactive: '#6a8498',
+    inputBackground: '#344f65',  // between bg and card — distinct
+    success: '#50c850',
+    warning: '#e8a832',
+    error: '#e85050',
+  },
+  shadows: {
+    small: '0 2px 5px rgba(20, 35, 50, 0.25)',
+    medium: '0 4px 12px rgba(20, 35, 50, 0.35)',
+    large: '0 8px 20px rgba(20, 35, 50, 0.45)',
+  },
+  ...sharedTokens,
+};
+
+// ──────────────────────────────────────────────────────────────
+// DISCO — Neon nightclub: dark purple void, hot pink & cyan glow
+// ──────────────────────────────────────────────────────────────
+// Dark-family theme. Near-black purple background with rich
+// purple card surfaces. Neon pink & cyan accents create the
+// classic disco/nightclub atmosphere with high-energy contrast.
+//
+// Key contrast pairs:
+//   text #ffffff on card #2a1238          — max contrast ✓
+//   text #ffffff on background #150818    — max contrast ✓
+//   textSecondary #c090d8 on card #2a1238 — lavender on purple ✓
+//   buttonText #fff on primary #ff2d9b   — white on neon pink ✓
+//   primary #ff2d9b on card #2a1238      — neon on dark ✓
+export const discoTheme = {
+  colors: {
+    background: '#150818',       // near-black purple void
+    card: '#2a1238',             // dark purple — clear lift from bg
+    primary: '#ff2d9b',          // hot neon pink
+    secondary: '#00e8c6',        // electric neon teal
+    text: '#ffffff',             // pure white
+    textSecondary: '#c090d8',    // light lavender — legible on dark purple
+    border: '#4a2060',           // medium purple — visible without harshness
+    accent: '#00e8c6',           // neon teal
+    accentGradient: 'linear-gradient(135deg, #ff2d9b 0%, #00e8c6 100%)',
+    timerBackground: '#2a1238',  // match card
+    timerBorder: '#ff2d9b',
+    buttonPrimary: '#ff2d9b',
+    buttonSecondary: '#00e8c6',
+    buttonText: '#ffffff',       // white on neon pink/teal
+    lockIconActive: '#ff2d9b',
+    lockIconInactive: '#6a3880',
+    inputBackground: '#1e0c28',  // between bg and card — distinct
+    success: '#30ff60',          // neon green
+    warning: '#ffe030',          // neon yellow
+    error: '#ff2040',            // hot red
+  },
+  shadows: {
+    small: '0 2px 8px rgba(255, 45, 155, 0.2)',
+    medium: '0 4px 16px rgba(255, 45, 155, 0.3)',
+    large: '0 8px 24px rgba(255, 45, 155, 0.4)',
+  },
+  ...sharedTokens,
+};
+
+// Hip Hop — TR-808 drum machine, dark charcoal, warm amber/orange
+export const hiphopTheme = {
+  colors: {
+    background: '#1f1f1f',       // hsl(0,0%,12%) dark charcoal
+    card: '#292929',             // hsl(0,0%,16%) panel base
+    primary: '#e68a33',          // hsl(20,100%,55%) TR-808 orange
+    secondary: '#8060b3',        // hsl(260,45%,55%) muted purple
+    text: '#f5dda6',             // hsl(45,100%,85%) creamy vintage label
+    textSecondary: '#b3a07a',    // muted amber
+    border: '#333333',           // hsl(0,0%,20%)
+    accent: '#e6b833',           // hsl(45,95%,55%) yellow pad
+    accentGradient: 'linear-gradient(135deg, #e68a33 0%, #e6b833 100%)',
+    timerBackground: '#292929',
+    timerBorder: '#e68a33',
+    buttonPrimary: '#e68a33',
+    buttonSecondary: '#e6b833',
+    buttonText: '#1a1a1a',
+    lockIconActive: '#e68a33',
+    lockIconInactive: '#666666',
+    inputBackground: '#242424',
+    success: '#e6b833',          // hsl(45,95%,55%)
+    warning: '#cc8a2e',          // hsl(35,90%,50%)
+    error: '#d94040',            // hsl(10,85%,60%)
+  },
+  shadows: {
+    small: '0 2px 5px rgba(0, 0, 0, 0.3)',
+    medium: '0 4px 12px rgba(0, 0, 0, 0.4)',
+    large: '0 8px 20px rgba(0, 0, 0, 0.5)',
+  },
+  ...sharedTokens,
+};
+
+const themes: Record<ThemeName, typeof lightTheme> = {
+  light: lightTheme,
+  dark: darkTheme,
+  vintage: vintageTheme,
+  indie: indieTheme,
+  disco: discoTheme,
+  hiphop: hiphopTheme,
+};
+
+function isValidThemeName(value: string): value is ThemeName {
+  return THEME_ORDER.includes(value as ThemeName);
+}
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return getFromStorage(STORAGE_KEYS.THEME, 'dark') === 'dark' || 
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const [themeName, setThemeNameState] = useState<ThemeName>(() => {
+    const stored = getFromStorage(STORAGE_KEYS.THEME, 'dark');
+    // Backward compat: 'light' and 'dark' still work
+    if (isValidThemeName(stored)) return stored;
+    return 'dark';
   });
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.THEME, isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+    saveToStorage(STORAGE_KEYS.THEME, themeName);
+  }, [themeName]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+  const setThemeName = (name: ThemeName) => {
+    setThemeNameState(name);
   };
 
+  const cycleTheme = () => {
+    const currentIndex = THEME_ORDER.indexOf(themeName);
+    const nextIndex = (currentIndex + 1) % THEME_ORDER.length;
+    setThemeNameState(THEME_ORDER[nextIndex]);
+  };
+
+  // Backward compat for components that use isDarkMode
+  const isDarkMode = themeName === 'dark';
+  const toggleTheme = cycleTheme;
+
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-      <StyledThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+    <ThemeContext.Provider value={{ themeName, setThemeName, cycleTheme, isDarkMode, toggleTheme }}>
+      <StyledThemeProvider theme={themes[themeName]}>
         {children}
       </StyledThemeProvider>
     </ThemeContext.Provider>
   );
 };
 
-export default ThemeProvider; 
+export default ThemeProvider;
