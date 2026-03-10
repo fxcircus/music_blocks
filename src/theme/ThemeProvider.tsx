@@ -4,7 +4,7 @@ import { saveToStorage, getFromStorage, STORAGE_KEYS } from '../utils/storageSer
 
 export type ThemeName = 'light' | 'dark' | 'vintage' | 'indie' | 'disco' | 'hiphop';
 
-export const THEME_ORDER: ThemeName[] = ['dark', 'indie', 'hiphop', 'disco', 'vintage', 'light'];
+export const THEME_ORDER: ThemeName[] = ['dark', 'hiphop', 'indie', 'disco', 'vintage', 'light'];
 
 export const THEME_LABELS: Record<ThemeName, string> = {
   light: 'Light',
