@@ -54,7 +54,7 @@ const pianoProfiles: Record<ThemeName, InstrumentProfile> = {
     },
   },
 
-  // Light — same as dark
+  // Light — kalimba (triangle, warm bell)
   light: {
     setup(_ctx, osc, _gain, freq) {
       osc.type = 'triangle';
@@ -63,13 +63,13 @@ const pianoProfiles: Record<ThemeName, InstrumentProfile> = {
     },
     envelope(gain, time) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.2, time + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.15, time + 0.1);
+      gain.gain.linearRampToValueAtTime(0.2, time + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.15, time + 0.12);
     },
     release(gain, time) {
       gain.gain.cancelScheduledValues(time);
       gain.gain.setValueAtTime(gain.gain.value, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
     },
   },
 
@@ -180,7 +180,7 @@ const guitarProfiles: Record<ThemeName, InstrumentProfile> = {
     },
   },
 
-  // Light — same as dark
+  // Light — kalimba (triangle, warm bell)
   light: {
     setup(_ctx, osc, _gain, freq) {
       osc.type = 'triangle';
@@ -189,13 +189,13 @@ const guitarProfiles: Record<ThemeName, InstrumentProfile> = {
     },
     envelope(gain, time) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.2, time + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.15, time + 0.1);
+      gain.gain.linearRampToValueAtTime(0.2, time + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.15, time + 0.12);
     },
     release(gain, time) {
       gain.gain.cancelScheduledValues(time);
       gain.gain.setValueAtTime(gain.gain.value, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
     },
   },
 
@@ -306,18 +306,17 @@ const sequenceProfiles: Record<ThemeName, SequenceProfile> = {
     },
   },
 
-  // Light — same as dark
+  // Light — kalimba (triangle, warm bell)
   light: {
     setup(_ctx, osc, _gain, freq) {
-      osc.type = 'sine';
+      osc.type = 'triangle';
       osc.frequency.value = freq;
       return {};
     },
     envelope(gain, time, dur) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.3, time + 0.01);
-      gain.gain.linearRampToValueAtTime(0.2, time + 0.05);
-      gain.gain.linearRampToValueAtTime(0.15, time + dur - 0.05);
+      gain.gain.linearRampToValueAtTime(0.25, time + 0.015);
+      gain.gain.linearRampToValueAtTime(0.18, time + dur * 0.4);
       gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
     },
   },

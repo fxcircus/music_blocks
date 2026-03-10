@@ -300,22 +300,27 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       osc.stop(time + 0.15);
     },
   },
-  // Light — same clean sine click as Dark
+  // Light — soft wooden tap (triangle through lowpass)
   light: {
     play(ctx, time, isAccent, volume) {
       const master = createMasterGain(ctx, volume);
       const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
       const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = isAccent ? 880 : 440;
-      gain.gain.value = isAccent ? 0.5 : 0.3;
-      osc.connect(gain);
+      osc.type = 'triangle';
+      osc.frequency.value = isAccent ? 1000 : 600;
+      filter.type = 'lowpass';
+      filter.frequency.value = 1500;
+      filter.Q.value = 0.7;
+      const vol = isAccent ? 0.4 : 0.25;
+      osc.connect(filter);
+      filter.connect(gain);
       gain.connect(master);
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.10);
       osc.start(time);
-      osc.stop(time + 0.15);
+      osc.stop(time + 0.10);
     },
   },
   // Vintage — bright woodblock knock
