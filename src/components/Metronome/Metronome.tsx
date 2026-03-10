@@ -106,10 +106,9 @@ const DialDisplay = styled.div`
   .dial-label {
     font-size: ${({ theme }) => theme.fontSizes.xs};
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
+    color: ${({ theme }) => theme.colors.text};
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     margin: 0;
     padding: 0 2px;
   }

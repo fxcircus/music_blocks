@@ -150,7 +150,7 @@ export const darkTheme = {
 //   buttonText #1e1008 on primary #c47840 — dark on copper ✓
 //   primary #c47840 on card #382e22       — copper pops on dark ✓
 export const vintageTheme = {
-  fontFamily: "'Special Elite', 'Courier New', monospace",
+  fontFamily: "'Righteous', 'Trebuchet MS', sans-serif",
   colors: {
     background: '#2a2218',       // dark speaker grille
     card: '#382e22',             // slightly lifted grille panel
@@ -237,7 +237,7 @@ export const indieTheme = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// DISCO — Neon nightclub: dark purple void, hot pink & cyan glow
+// DISCO — Neon nightclub: dark purple void, hot pink & cyan glow, Fredoka bubbly font
 // ──────────────────────────────────────────────────────────────
 // Dark-family theme. Near-black purple background with rich
 // purple card surfaces. Neon pink & cyan accents create the
@@ -250,7 +250,7 @@ export const indieTheme = {
 //   buttonText #fff on primary #ff2d9b   — white on neon pink ✓
 //   primary #ff2d9b on card #2a1238      — neon on dark ✓
 export const discoTheme = {
-  fontFamily: "'Syne', 'Futura', 'Trebuchet MS', sans-serif",
+  fontFamily: "'Fredoka', 'Baloo 2', 'Trebuchet MS', sans-serif",
   colors: {
     background: '#150818',       // near-black purple void
     card: '#2a1238',             // dark purple — clear lift from bg
@@ -330,9 +330,9 @@ function isValidThemeName(value: string): value is ThemeName {
 // Lazy-load Google Fonts only when a theme that needs them is active.
 // Light/Dark use Inter/Roboto which are loaded in index.html.
 const THEME_FONT_URLS: Partial<Record<ThemeName, string>> = {
-  vintage: 'https://fonts.googleapis.com/css2?family=Special+Elite&display=swap',
+  vintage: 'https://fonts.googleapis.com/css2?family=Righteous&display=swap',
   indie: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap',
-  disco: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap',
+  disco: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap',
   hiphop: 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap',
 };
 
