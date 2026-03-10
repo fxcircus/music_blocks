@@ -87,12 +87,12 @@ const VinylRecordIcon: React.FC<IconProps> = ({ size = 20 }) => (
     {/* Outer record edge */}
     <circle cx="12" cy="12" r="10.5" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.2" />
     {/* Grooves */}
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
-    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="0.3" opacity="0.25" />
-    <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="0.3" opacity="0.2" />
+    <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
+    <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="0.3" opacity="0.25" />
+    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="0.3" opacity="0.2" />
     {/* Center label */}
-    <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.5" />
-    <circle cx="12" cy="12" r="2.8" stroke="currentColor" strokeWidth="0.3" opacity="0.3" fill="none" />
+    <circle cx="12" cy="12" r="5.5" fill="currentColor" opacity="0.5" />
+    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="0.3" opacity="0.3" fill="none" />
     {/* Center hole */}
     <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.8" />
   </svg>
