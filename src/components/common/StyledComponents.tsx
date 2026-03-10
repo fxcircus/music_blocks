@@ -19,7 +19,7 @@ export const Card = styled(motion.div)`
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 
   &:hover {
     box-shadow: none;

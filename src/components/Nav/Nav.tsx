@@ -3,8 +3,7 @@ import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, THEME_ORDER, THEME_LABELS, ThemeName, lightTheme, darkTheme, vintageTheme, indieTheme, discoTheme, hiphopTheme, loadThemeFont } from '../../theme/ThemeProvider';
-import { useSoundSettings } from '../../context/SoundSettingsContext';
-import { FaCheck, FaTimes, FaLink, FaCoffee, FaVolumeUp } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import ThemeIcon from './ThemeIcons';
 import { loadBlockState } from '../../utils/blockStorage';
@@ -279,118 +278,6 @@ const ThemeCheckMark = styled.span`
   margin-left: auto;
 `;
 
-const SoundPickerWrapper = styled.div`
-  position: relative;
-`;
-
-const SoundDropdown = styled(motion.div)`
-  position: absolute;
-  top: calc(100% + ${({ theme }) => theme.spacing.xs});
-  right: 0;
-  background: ${({ theme }) => theme.colors.card};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.large};
-  min-width: 320px;
-  overflow: hidden;
-  z-index: 10000;
-  padding: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: 576px) {
-    min-width: 240px;
-  }
-`;
-
-const SoundDropdownGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: 576px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const SoundColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const SoundColumnHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`;
-
-const SoundOption = styled.button<{ $active: boolean }>`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: 4px ${({ theme }) => theme.spacing.sm};
-  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
-  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
-  border: none;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ $active }) => $active ? 700 : 500};
-  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
-  text-align: left;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-
-  &:hover {
-    background: ${({ theme }) => `${theme.colors.primary}11`};
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-const VolumeSliderContainer = styled.div`
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.xs};
-`;
-
-const VolumeSlider = styled.input`
-  width: 100%;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: ${({ theme }) => theme.colors.border};
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.colors.primary};
-    cursor: pointer;
-  }
-
-  &::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.colors.primary};
-    cursor: pointer;
-    border: none;
-  }
-`;
-
-const VolumeLabel = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  margin-bottom: 4px;
-  display: flex;
-  justify-content: space-between;
-`;
 
 // Modal styled components
 const ModalOverlay = styled(motion.div)`
@@ -495,33 +382,22 @@ const Nav: FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { themeName, setThemeName } = useTheme();
-  const {
-    metronomeThemeOverride, setMetronomeThemeOverride,
-    instrumentThemeOverride, setInstrumentThemeOverride,
-    metronomeVolume, setMetronomeVolume,
-    instrumentVolume, setInstrumentVolume,
-  } = useSoundSettings();
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
-  const [showSoundDropdown, setShowSoundDropdown] = useState(false);
   const SPINNABLE_THEMES = ['vintage', 'indie'];
   const themePickerRef = useRef<HTMLDivElement>(null);
-  const soundPickerRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (themePickerRef.current && !themePickerRef.current.contains(e.target as Node)) {
       setShowThemeDropdown(false);
     }
-    if (soundPickerRef.current && !soundPickerRef.current.contains(e.target as Node)) {
-      setShowSoundDropdown(false);
-    }
   }, []);
 
   useEffect(() => {
-    if (showThemeDropdown || showSoundDropdown) {
+    if (showThemeDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showThemeDropdown, showSoundDropdown, handleClickOutside]);
+  }, [showThemeDropdown, handleClickOutside]);
 
   const handleCloseModal = () => {
     setShowImportModal(false);
@@ -725,118 +601,6 @@ const Nav: FC = () => {
             </ActionButton>
             */}
 
-          <SoundPickerWrapper ref={soundPickerRef}>
-            <ThemeToggleButton
-              onClick={() => {
-                setShowSoundDropdown(!showSoundDropdown);
-                setShowThemeDropdown(false);
-              }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label="Sound settings"
-              title="Sound settings"
-            >
-              <Icon icon={FaVolumeUp} size={20} />
-            </ThemeToggleButton>
-
-            <AnimatePresence>
-              {showSoundDropdown && (
-                <SoundDropdown
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <SoundDropdownGrid>
-                    <SoundColumn>
-                      <SoundColumnHeader>Metronome</SoundColumnHeader>
-                      <SoundOption
-                        $active={metronomeThemeOverride === 'byTheme'}
-                        onClick={() => setMetronomeThemeOverride('byTheme')}
-                      >
-                        <ThemeOptionLabel>By Theme</ThemeOptionLabel>
-                        {metronomeThemeOverride === 'byTheme' && (
-                          <ThemeCheckMark><Icon icon={FaCheck} size={10} /></ThemeCheckMark>
-                        )}
-                      </SoundOption>
-                      {THEME_ORDER.map((t) => (
-                        <SoundOption
-                          key={t}
-                          $active={metronomeThemeOverride === t}
-                          onClick={() => setMetronomeThemeOverride(t)}
-                        >
-                          <span style={{ color: THEME_DATA[t].primary, display: 'inline-flex' }}>
-                            <ThemeIcon theme={t} size={14} />
-                          </span>
-                          <ThemeOptionLabel>{THEME_LABELS[t]}</ThemeOptionLabel>
-                          {metronomeThemeOverride === t && (
-                            <ThemeCheckMark><Icon icon={FaCheck} size={10} /></ThemeCheckMark>
-                          )}
-                        </SoundOption>
-                      ))}
-                      <VolumeSliderContainer>
-                        <VolumeLabel>
-                          <span>Volume</span>
-                          <span>{Math.round(metronomeVolume * 100)}%</span>
-                        </VolumeLabel>
-                        <VolumeSlider
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={metronomeVolume}
-                          onChange={(e) => setMetronomeVolume(parseFloat(e.target.value))}
-                        />
-                      </VolumeSliderContainer>
-                    </SoundColumn>
-
-                    <SoundColumn>
-                      <SoundColumnHeader>Everything Else</SoundColumnHeader>
-                      <SoundOption
-                        $active={instrumentThemeOverride === 'byTheme'}
-                        onClick={() => setInstrumentThemeOverride('byTheme')}
-                      >
-                        <ThemeOptionLabel>By Theme</ThemeOptionLabel>
-                        {instrumentThemeOverride === 'byTheme' && (
-                          <ThemeCheckMark><Icon icon={FaCheck} size={10} /></ThemeCheckMark>
-                        )}
-                      </SoundOption>
-                      {THEME_ORDER.map((t) => (
-                        <SoundOption
-                          key={t}
-                          $active={instrumentThemeOverride === t}
-                          onClick={() => setInstrumentThemeOverride(t)}
-                        >
-                          <span style={{ color: THEME_DATA[t].primary, display: 'inline-flex' }}>
-                            <ThemeIcon theme={t} size={14} />
-                          </span>
-                          <ThemeOptionLabel>{THEME_LABELS[t]}</ThemeOptionLabel>
-                          {instrumentThemeOverride === t && (
-                            <ThemeCheckMark><Icon icon={FaCheck} size={10} /></ThemeCheckMark>
-                          )}
-                        </SoundOption>
-                      ))}
-                      <VolumeSliderContainer>
-                        <VolumeLabel>
-                          <span>Volume</span>
-                          <span>{Math.round(instrumentVolume * 100)}%</span>
-                        </VolumeLabel>
-                        <VolumeSlider
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={instrumentVolume}
-                          onChange={(e) => setInstrumentVolume(parseFloat(e.target.value))}
-                        />
-                      </VolumeSliderContainer>
-                    </SoundColumn>
-                  </SoundDropdownGrid>
-                </SoundDropdown>
-              )}
-            </AnimatePresence>
-          </SoundPickerWrapper>
-
           <ThemePickerWrapper ref={themePickerRef}>
             <ThemeToggleButton
               onClick={() => {
@@ -844,7 +608,6 @@ const Nav: FC = () => {
                   THEME_ORDER.forEach(loadThemeFont);
                 }
                 setShowThemeDropdown(!showThemeDropdown);
-                setShowSoundDropdown(false);
               }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

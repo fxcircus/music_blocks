@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaVolumeDown, FaVolumeOff, FaVolumeMute, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
 import { Card } from '../common/StyledComponents';
@@ -17,6 +17,7 @@ import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../utils/audioProfiles';
+import SoundDropdownPanel from '../common/SoundDropdownPanel';
 
 
 // Chord quality mapping for different modes
@@ -917,7 +918,7 @@ export default function InspirationGenerator({
   showTips: showTipsExternal,
   setShowTips: setShowTipsExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
-  const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
+  const { effectiveInstrumentTheme, instrumentVolume, setInstrumentVolume, instrumentThemeOverride, setInstrumentThemeOverride } = useSoundSettings();
 
   const [locked, setLocked] = useState<LockedState>({
     root: false,
@@ -957,6 +958,8 @@ export default function InspirationGenerator({
   const [showPiano, setShowPiano] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
   const [showProgressions, setShowProgressions] = useState(false);
+  const [showSoundDropdown, setShowSoundDropdown] = useState(false);
+  const soundDropdownRef = useRef<HTMLDivElement>(null);
 
   // Chord progression persistence
   const savedProgressionIndex = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
@@ -1197,6 +1200,29 @@ export default function InspirationGenerator({
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [openDropdown]);
+
+  // Close sound dropdown on outside click
+  useEffect(() => {
+    const handleSoundClickOutside = (event: MouseEvent) => {
+      if (soundDropdownRef.current && !soundDropdownRef.current.contains(event.target as Node)) {
+        setShowSoundDropdown(false);
+      }
+    };
+    if (showSoundDropdown) {
+      document.addEventListener('mousedown', handleSoundClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleSoundClickOutside);
+    };
+  }, [showSoundDropdown]);
+
+  // Helper: get volume icon based on current instrument volume
+  const getInstrumentVolumeIcon = () => {
+    if (instrumentVolume === 0) return FaVolumeMute;
+    if (instrumentVolume < 0.33) return FaVolumeOff;
+    if (instrumentVolume < 0.66) return FaVolumeDown;
+    return FaVolumeUp;
+  };
 
   const maxBpm = 140;
   const minBpm = 75;
@@ -2416,6 +2442,23 @@ export default function InspirationGenerator({
                   >
                     <Icon icon={FaGuitar} size={14} />
                   </VisualizerIconButton>
+                  <div ref={soundDropdownRef} style={{ position: 'relative' }}>
+                    <VisualizerIconButton
+                      $isActive={showSoundDropdown}
+                      onClick={() => setShowSoundDropdown(!showSoundDropdown)}
+                      title="Sound settings"
+                    >
+                      <Icon icon={getInstrumentVolumeIcon()} size={14} />
+                    </VisualizerIconButton>
+                    <SoundDropdownPanel
+                      isOpen={showSoundDropdown}
+                      themeOverride={instrumentThemeOverride}
+                      setThemeOverride={setInstrumentThemeOverride}
+                      volume={instrumentVolume}
+                      setVolume={setInstrumentVolume}
+                      style={{ top: 'calc(100% + 8px)', right: 0 }}
+                    />
+                  </div>
                 </VisualizerIcons>
               </ExtendedInfoCell>
             </TableRow>

@@ -3,12 +3,13 @@ import styled, { useTheme } from 'styled-components';
 import { ThemeName } from '../../theme/ThemeProvider';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion } from 'framer-motion';
-import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
+import { FaVolumeMute, FaVolumeUp, FaVolumeDown, FaVolumeOff, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
 import { Icon } from '../../utils/IconHelper';
 import ToolCardDnd from '../common/ToolCardDnd';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
+import SoundDropdownPanel from '../common/SoundDropdownPanel';
 import config from '../../config';
 
 // Supported time signatures and their accent patterns
@@ -586,7 +587,7 @@ const Metronome: FC<LoaderProps> = ({
     isRecentlyDragged
 }) => {
     const theme = useTheme();
-    const { effectiveMetronomeTheme, metronomeVolume } = useSoundSettings();
+    const { effectiveMetronomeTheme, metronomeVolume, setMetronomeVolume, metronomeThemeOverride, setMetronomeThemeOverride } = useSoundSettings();
     const useGradient = false;
 
     // State
@@ -598,7 +599,9 @@ const Metronome: FC<LoaderProps> = ({
     const [bpmInput, setBpmInput] = useState(String(initialBpm));
     const [timeSignature, setTimeSignature] = useState(initialTimeSignature);
     const [showTsDropdown, setShowTsDropdown] = useState(false);
+    const [showSoundDropdown, setShowSoundDropdown] = useState(false);
     const tsDropdownRef = useRef<HTMLDivElement>(null);
+    const soundDropdownRef = useRef<HTMLDivElement>(null);
 
     // Derive beats array and accent pattern from current time signature
     const tsConfig = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
@@ -905,6 +908,29 @@ const Metronome: FC<LoaderProps> = ({
         };
     }, [showTsDropdown]);
 
+    // Close sound dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (soundDropdownRef.current && !soundDropdownRef.current.contains(event.target as Node)) {
+                setShowSoundDropdown(false);
+            }
+        };
+        if (showSoundDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showSoundDropdown]);
+
+    // Helper: get volume icon based on current volume level
+    const getVolumeIcon = () => {
+        if (metronomeVolume === 0 || muteSound) return FaVolumeMute;
+        if (metronomeVolume < 0.33) return FaVolumeOff;
+        if (metronomeVolume < 0.66) return FaVolumeDown;
+        return FaVolumeUp;
+    };
+
     return (
         <ToolCardDnd
             title="Metronome"
@@ -1048,16 +1074,27 @@ const Metronome: FC<LoaderProps> = ({
             </BeatsRow>
 
             <ControlsContainer>
-                <ControlButton
-                    onClick={toggleMute}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label={muteSound ? "Unmute sound" : "Mute sound"}
-                >
-                    <IconWrapper>
-                        {muteSound ? <Icon icon={FaVolumeMute} size={24} /> : <Icon icon={FaVolumeUp} size={24} />}
-                    </IconWrapper>
-                </ControlButton>
+                <div ref={soundDropdownRef} style={{ position: 'relative' }}>
+                    <ControlButton
+                        onClick={() => setShowSoundDropdown(!showSoundDropdown)}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        aria-label="Sound settings"
+                        title="Sound settings"
+                    >
+                        <IconWrapper style={{ width: 28, justifyContent: 'flex-start' }}>
+                            <Icon icon={getVolumeIcon()} size={24} />
+                        </IconWrapper>
+                    </ControlButton>
+                    <SoundDropdownPanel
+                        isOpen={showSoundDropdown}
+                        themeOverride={metronomeThemeOverride}
+                        setThemeOverride={setMetronomeThemeOverride}
+                        volume={metronomeVolume}
+                        setVolume={setMetronomeVolume}
+                        style={{ top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
+                    />
+                </div>
             </ControlsContainer>
             <TipsModal
                 isOpen={showTips}
