@@ -4,6 +4,7 @@ import styled, { useTheme, ThemeProvider, keyframes } from 'styled-components';
 import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
 import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
+import { useSoundSettings } from '../../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../../utils/audioProfiles';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -532,6 +533,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
   const theme = useTheme();
   const { themeName } = useAppTheme();
+  const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
   const selectorRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const selectedOptionRef = useRef<HTMLButtonElement>(null);
@@ -656,8 +658,13 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     if (ctx.state === 'suspended') ctx.resume();
 
     const t = ctx.currentTime;
-    const profile = getSequenceProfile(themeName);
+    const profile = getSequenceProfile(effectiveInstrumentTheme);
     const volScale = 1 / notes.length; // scale down for simultaneous notes
+
+    // Master volume gain
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = instrumentVolume;
+    masterGain.connect(ctx.destination);
 
     for (const { note, octave } of notes) {
       const osc = ctx.createOscillator();
@@ -681,7 +688,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         osc.connect(gain);
       }
       gain.connect(chordGain);
-      chordGain.connect(ctx.destination);
+      chordGain.connect(masterGain);
       osc.start(t);
       osc.stop(t + duration);
 
@@ -691,7 +698,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         if (i > -1) activeOscillatorsRef.current.splice(i, 1);
       };
     }
-  }, [themeName]);
+  }, [effectiveInstrumentTheme, instrumentVolume]);
 
   const stopPlayback = useCallback(() => {
     isPlayingRef.current = false;

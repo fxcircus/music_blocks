@@ -16,6 +16,10 @@ export const STORAGE_KEYS = {
   THEME: `${PREFIX}Theme`,
   TEMPLATE: `${PREFIX}Template`,
   PROGRESSION: `${PREFIX}Progression`,
+  SOUND_METRONOME_THEME: `${PREFIX}SoundMetronomeTheme`,
+  SOUND_INSTRUMENT_THEME: `${PREFIX}SoundInstrumentTheme`,
+  VOLUME_METRONOME: `${PREFIX}VolumeMetronome`,
+  VOLUME_INSTRUMENT: `${PREFIX}VolumeInstrument`,
 };
 
 /**

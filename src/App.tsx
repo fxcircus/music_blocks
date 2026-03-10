@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ThemeProvider from './theme/ThemeProvider';
+import { SoundSettingsProvider } from './context/SoundSettingsContext';
 import { AppWrapper } from './components/common/StyledComponents';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
@@ -19,6 +20,7 @@ const getBasename = (): string => {
 export default function App(): JSX.Element {
   return (
     <ThemeProvider>
+      <SoundSettingsProvider>
       <AppWrapper>
         <BrowserRouter basename={getBasename()}>
           <div className='navigation-menu'>
@@ -32,6 +34,7 @@ export default function App(): JSX.Element {
           <Footer />
         </BrowserRouter>
       </AppWrapper>
+      </SoundSettingsProvider>
     </ThemeProvider>
   );
 }

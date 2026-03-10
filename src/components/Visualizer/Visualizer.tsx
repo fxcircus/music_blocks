@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlay, FaPause, FaRandom } from 'react-icons/fa';
 import * as Tone from 'tone';
 import { Icon } from '../../utils/IconHelper';
+import { useSoundSettings } from '../../context/SoundSettingsContext';
 
 interface VisualizerProps {
   scale: string[];
@@ -138,6 +139,7 @@ const Visualizer: FC<VisualizerProps> = ({ scale, bpm }) => {
   const [barHeights, setBarHeights] = useState<number[]>([]);
   const sequenceRef = useRef<any>(null);
   const synthRef = useRef<Tone.Synth | null>(null);
+  const { instrumentVolume } = useSoundSettings();
   
   // Generate random bar heights for visualization
   useEffect(() => {
@@ -163,10 +165,12 @@ const Visualizer: FC<VisualizerProps> = ({ scale, bpm }) => {
       },
     }).toDestination();
     
-    // Set volume
+    // Set volume (base level, instrument volume applied via separate effect)
     if (synthRef.current) {
       synthRef.current.volume.value = -10;
     }
+
+    // Note: instrumentVolume applied via separate useEffect
     
     return () => {
       if (synthRef.current) {
@@ -177,7 +181,16 @@ const Visualizer: FC<VisualizerProps> = ({ scale, bpm }) => {
       }
     };
   }, []);
-  
+
+  // Sync instrument volume to Tone.js synth
+  useEffect(() => {
+    if (synthRef.current) {
+      // Convert 0-1 linear to dB; base is -10dB, scale by volume
+      const volDb = instrumentVolume > 0 ? -10 + 20 * Math.log10(instrumentVolume) : -Infinity;
+      synthRef.current.volume.value = volDb;
+    }
+  }, [instrumentVolume]);
+
   // Setup sequence when scale or bpm changes
   useEffect(() => {
     if (sequenceRef.current) {

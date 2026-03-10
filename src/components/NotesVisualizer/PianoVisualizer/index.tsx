@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import styled from 'styled-components';
 import { PianoVisualizerProps, PianoKey, getNoteChromatic } from '../types';
 import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
+import { useSoundSettings } from '../../../context/SoundSettingsContext';
 import { getPianoProfile } from '../../../utils/audioProfiles';
 
 // Inline SVG piano keyboard cursor (16x16, 3 white keys + 2 black keys)
@@ -148,6 +149,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   selectedChord
 }) => {
   const { themeName } = useAppTheme();
+  const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
   // Visual state for pressed keys (triggers re-render)
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
@@ -219,11 +221,15 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
       const gainNode = context.createGain();
 
       // Apply theme sound profile
-      const profile = getPianoProfile(themeName);
+      const profile = getPianoProfile(effectiveInstrumentTheme);
       const { extraNodes } = profile.setup(context, oscillator, gainNode, frequency);
       profile.envelope(gainNode, context.currentTime);
 
-      // Connect nodes (osc → extraNodes → gain → destination)
+      // Master volume gain
+      const masterGain = context.createGain();
+      masterGain.gain.value = instrumentVolume;
+
+      // Connect nodes (osc → extraNodes → gain → master → destination)
       if (extraNodes && extraNodes.length > 0) {
         oscillator.connect(extraNodes[0]);
         for (let i = 0; i < extraNodes.length - 1; i++) {
@@ -233,7 +239,8 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
       } else {
         oscillator.connect(gainNode);
       }
-      gainNode.connect(context.destination);
+      gainNode.connect(masterGain);
+      masterGain.connect(context.destination);
 
       // Start playing
       oscillator.start(context.currentTime);
@@ -243,7 +250,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     } catch (error) {
       console.error('Error playing note:', error);
     }
-  }, [getAudioContext, calculateFrequency, themeName]);
+  }, [getAudioContext, calculateFrequency, effectiveInstrumentTheme, instrumentVolume]);
 
   // Stop a note with fade-out
   const stopNote = useCallback((note: string, octave: number) => {
@@ -256,7 +263,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
         const { oscillator, gain } = entry;
 
         // Fade out using the theme profile's release envelope
-        const profile = getPianoProfile(themeName);
+        const profile = getPianoProfile(effectiveInstrumentTheme);
         profile.release(gain, context.currentTime);
 
         oscillator.stop(context.currentTime + 0.3);
@@ -265,7 +272,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     } catch (error) {
       console.error('Error stopping note:', error);
     }
-  }, [themeName]);
+  }, [effectiveInstrumentTheme]);
 
   // Handle key press (by note name and raw octave)
   const handleKeyPress = useCallback((note: string, octave: number) => {

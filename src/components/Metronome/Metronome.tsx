@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
 import styled, { useTheme } from 'styled-components';
 import { useTheme as useAppTheme, ThemeName } from '../../theme/ThemeProvider';
+import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
@@ -270,20 +271,28 @@ const DebugButton = styled(motion.button)`
 
 // Per-theme metronome sound profiles
 interface SoundProfile {
-  play: (ctx: AudioContext, time: number, isAccent: boolean) => void;
+  play: (ctx: AudioContext, time: number, isAccent: boolean, volume: number) => void;
+}
+
+function createMasterGain(ctx: AudioContext, volume: number): GainNode {
+  const master = ctx.createGain();
+  master.gain.value = volume;
+  master.connect(ctx.destination);
+  return master;
 }
 
 const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   // Dark — clean sine click (original)
   dark: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = isAccent ? 880 : 440;
       gain.gain.value = isAccent ? 0.5 : 0.3;
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
@@ -293,14 +302,15 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   },
   // Light — same clean sine click as Dark
   light: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = isAccent ? 880 : 440;
       gain.gain.value = isAccent ? 0.5 : 0.3;
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
@@ -310,14 +320,15 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   },
   // Vintage — bright woodblock knock
   vintage: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = isAccent ? 1200 : 600;
       const vol = isAccent ? 0.45 : 0.28;
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(vol, time + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
@@ -327,14 +338,15 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   },
   // Indie — lo-fi square-wave tape click
   indie: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'square';
       osc.frequency.value = isAccent ? 1000 : 500;
       const vol = isAccent ? 0.25 : 0.15;
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(vol, time + 0.003);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
@@ -344,7 +356,8 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   },
   // Disco — finger snap
   disco: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       // Noise layer — the snap body
       const sampleRate = ctx.sampleRate;
       const dur = 0.06;
@@ -362,7 +375,7 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       const noiseVol = isAccent ? 0.5 : 0.35;
       source.connect(filter);
       filter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
+      noiseGain.connect(master);
       noiseGain.gain.setValueAtTime(noiseVol, time);
       noiseGain.gain.exponentialRampToValueAtTime(0.001, time + dur);
       source.start(time);
@@ -375,7 +388,7 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       osc.frequency.exponentialRampToValueAtTime(600, time + 0.03);
       const oscVol = isAccent ? 0.15 : 0.1;
       osc.connect(oscGain);
-      oscGain.connect(ctx.destination);
+      oscGain.connect(master);
       oscGain.gain.setValueAtTime(oscVol, time);
       oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
       osc.start(time);
@@ -384,7 +397,8 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
   },
   // Hip Hop — crisp hi-hat shimmer (filtered noise burst)
   hiphop: {
-    play(ctx, time, isAccent) {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
       const sampleRate = ctx.sampleRate;
       const duration = isAccent ? 0.08 : 0.05;
       const samples = Math.floor(sampleRate * duration);
@@ -400,7 +414,7 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       const vol = isAccent ? 0.45 : 0.3;
       source.connect(filter);
       filter.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       gain.gain.setValueAtTime(vol, time);
       gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
       source.start(time);
@@ -421,6 +435,7 @@ class MetronomeEngine {
   tempo: number = 120;
   running: boolean = false;
   muted: boolean = false;
+  volume: number = 1;
   soundProfile: SoundProfile = SOUND_PROFILES.dark;
   onBeatChange: ((beat: number) => void) | null = null;
 
@@ -433,6 +448,10 @@ class MetronomeEngine {
 
   setSoundProfile(theme: ThemeName) {
     this.soundProfile = SOUND_PROFILES[theme];
+  }
+
+  setVolume(volume: number) {
+    this.volume = volume;
   }
   
   init() {
@@ -498,7 +517,7 @@ class MetronomeEngine {
   
   private playNote(time: number, isAccent: boolean) {
     if (this.muted || !this.context) return;
-    this.soundProfile.play(this.context, time, isAccent);
+    this.soundProfile.play(this.context, time, isAccent, this.volume);
   }
   
   private scheduler() {
@@ -569,6 +588,7 @@ const Metronome: FC<LoaderProps> = ({
 }) => {
     const theme = useTheme();
     const { themeName } = useAppTheme();
+    const { effectiveMetronomeTheme, metronomeVolume } = useSoundSettings();
     const useGradient = themeName === 'light' || themeName === 'dark';
 
     // State
@@ -626,7 +646,8 @@ const Metronome: FC<LoaderProps> = ({
         
         // Initialize audio context and sound profile
         metronomeRef.current.init();
-        metronomeRef.current.setSoundProfile(themeName);
+        metronomeRef.current.setSoundProfile(effectiveMetronomeTheme);
+        metronomeRef.current.setVolume(metronomeVolume);
         
         // Clean up on unmount
         return () => {
@@ -724,9 +745,16 @@ const Metronome: FC<LoaderProps> = ({
     // Update sound profile when theme changes
     useEffect(() => {
         if (metronomeRef.current) {
-            metronomeRef.current.setSoundProfile(themeName);
+            metronomeRef.current.setSoundProfile(effectiveMetronomeTheme);
         }
-    }, [themeName]);
+    }, [effectiveMetronomeTheme]);
+
+    // Update volume when it changes
+    useEffect(() => {
+        if (metronomeRef.current) {
+            metronomeRef.current.setVolume(metronomeVolume);
+        }
+    }, [metronomeVolume]);
 
     // Handle external time signature changes (from props)
     useEffect(() => {

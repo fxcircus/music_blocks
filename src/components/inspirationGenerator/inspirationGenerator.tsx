@@ -16,6 +16,7 @@ import {
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 import { useTheme as useAppTheme } from '../../theme/ThemeProvider';
+import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../utils/audioProfiles';
 
 
@@ -913,6 +914,7 @@ export default function InspirationGenerator({
   setShowTips: setShowTipsExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const { themeName } = useAppTheme();
+  const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
   const [locked, setLocked] = useState<LockedState>({
     root: false,
@@ -1806,11 +1808,15 @@ export default function InspirationGenerator({
     const gainNode = ctx.createGain();
 
     // Apply theme sound profile
-    const profile = getSequenceProfile(themeName);
+    const profile = getSequenceProfile(effectiveInstrumentTheme);
     const { extraNodes } = profile.setup(ctx, oscillator, gainNode, frequency);
     profile.envelope(gainNode, currentTime, durationSec);
 
-    // Connect nodes (osc → extraNodes → gain → destination)
+    // Master volume gain
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = instrumentVolume;
+
+    // Connect nodes (osc → extraNodes → gain → master → destination)
     if (extraNodes && extraNodes.length > 0) {
       oscillator.connect(extraNodes[0]);
       for (let i = 0; i < extraNodes.length - 1; i++) {
@@ -1820,7 +1826,8 @@ export default function InspirationGenerator({
     } else {
       oscillator.connect(gainNode);
     }
-    gainNode.connect(ctx.destination);
+    gainNode.connect(masterGain);
+    masterGain.connect(ctx.destination);
 
     // Start and stop oscillator
     oscillator.start(currentTime);
@@ -1841,7 +1848,7 @@ export default function InspirationGenerator({
     return new Promise(resolve => {
       setTimeout(resolve, duration);
     });
-  }, [themeName]);
+  }, [effectiveInstrumentTheme, instrumentVolume]);
 
   // Play scale or chord arpeggio
   const playSequence = useCallback(async () => {
