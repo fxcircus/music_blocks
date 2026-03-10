@@ -219,15 +219,6 @@ const KeyOption = styled.button<{ $isSelected: boolean }>`
   }
 `;
 
-const Divider = styled.div<{ $mobile?: boolean }>`
-  width: ${({ $mobile }) => ($mobile ? '80%' : '1px')};
-  height: ${({ $mobile }) => ($mobile ? '1px' : '32px')};
-  background: ${({ theme }) => theme.colors.border};
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
 
 
 

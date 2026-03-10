@@ -877,11 +877,6 @@ const Metronome: FC<LoaderProps> = ({
         setMetronomePlaying(!metronomePlaying);
     };
     
-    const toggleMute = () => {
-        debugLog(`Toggle mute: ${muteSound ? 'unmute' : 'mute'}`);
-        setMuteSound(!muteSound);
-    };
-    
     const toggleDebug = () => {
         setShowDebug(!showDebug);
     };
