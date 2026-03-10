@@ -189,7 +189,7 @@ const SoundDropdownPanel: React.FC<SoundDropdownPanelProps> = ({
           {/* Volume at top */}
           <VolumeContainer>
             <VolumeLabel>
-              <span>Volume</span>
+              <span>VOLUME</span>
               <span>{Math.round(volume * 100)}%</span>
             </VolumeLabel>
             <VolumeSlider
