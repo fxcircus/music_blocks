@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
 import styled, { useTheme } from 'styled-components';
-import { useTheme as useAppTheme } from '../../theme/ThemeProvider';
+import { useTheme as useAppTheme, ThemeName } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
@@ -268,6 +268,147 @@ const DebugButton = styled(motion.button)`
   }
 `;
 
+// Per-theme metronome sound profiles
+interface SoundProfile {
+  play: (ctx: AudioContext, time: number, isAccent: boolean) => void;
+}
+
+const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
+  // Dark — clean sine click (original)
+  dark: {
+    play(ctx, time, isAccent) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = isAccent ? 880 : 440;
+      gain.gain.value = isAccent ? 0.5 : 0.3;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+      osc.start(time);
+      osc.stop(time + 0.15);
+    },
+  },
+  // Light — same clean sine click as Dark
+  light: {
+    play(ctx, time, isAccent) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = isAccent ? 880 : 440;
+      gain.gain.value = isAccent ? 0.5 : 0.3;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+      osc.start(time);
+      osc.stop(time + 0.15);
+    },
+  },
+  // Vintage — bright woodblock knock
+  vintage: {
+    play(ctx, time, isAccent) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = isAccent ? 1200 : 600;
+      const vol = isAccent ? 0.45 : 0.28;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+      osc.start(time);
+      osc.stop(time + 0.08);
+    },
+  },
+  // Indie — lo-fi square-wave tape click
+  indie: {
+    play(ctx, time, isAccent) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = isAccent ? 1000 : 500;
+      const vol = isAccent ? 0.25 : 0.15;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+      osc.start(time);
+      osc.stop(time + 0.06);
+    },
+  },
+  // Disco — finger snap
+  disco: {
+    play(ctx, time, isAccent) {
+      // Noise layer — the snap body
+      const sampleRate = ctx.sampleRate;
+      const dur = 0.06;
+      const samples = Math.floor(sampleRate * dur);
+      const buffer = ctx.createBuffer(1, samples, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < samples; i++) data[i] = Math.random() * 2 - 1;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = isAccent ? 1800 : 1500;
+      filter.Q.value = 1.5;
+      const noiseGain = ctx.createGain();
+      const noiseVol = isAccent ? 0.5 : 0.35;
+      source.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noiseGain.gain.setValueAtTime(noiseVol, time);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      source.start(time);
+      source.stop(time + dur);
+      // Tone layer — subtle pitch bend for the "click"
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isAccent ? 1600 : 1200, time);
+      osc.frequency.exponentialRampToValueAtTime(600, time + 0.03);
+      const oscVol = isAccent ? 0.15 : 0.1;
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      oscGain.gain.setValueAtTime(oscVol, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+      osc.start(time);
+      osc.stop(time + 0.04);
+    },
+  },
+  // Hip Hop — crisp hi-hat shimmer (filtered noise burst)
+  hiphop: {
+    play(ctx, time, isAccent) {
+      const sampleRate = ctx.sampleRate;
+      const duration = isAccent ? 0.08 : 0.05;
+      const samples = Math.floor(sampleRate * duration);
+      const buffer = ctx.createBuffer(1, samples, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < samples; i++) data[i] = Math.random() * 2 - 1;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = isAccent ? 8000 : 9000;
+      const gain = ctx.createGain();
+      const vol = isAccent ? 0.45 : 0.3;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+      source.start(time);
+      source.stop(time + duration);
+    },
+  },
+};
+
 // Metronome class
 class MetronomeEngine {
   context: AudioContext | null = null;
@@ -280,6 +421,7 @@ class MetronomeEngine {
   tempo: number = 120;
   running: boolean = false;
   muted: boolean = false;
+  soundProfile: SoundProfile = SOUND_PROFILES.dark;
   onBeatChange: ((beat: number) => void) | null = null;
 
   constructor(tempo: number, onBeatChange?: (beat: number) => void) {
@@ -287,6 +429,10 @@ class MetronomeEngine {
     if (onBeatChange) {
       this.onBeatChange = onBeatChange;
     }
+  }
+
+  setSoundProfile(theme: ThemeName) {
+    this.soundProfile = SOUND_PROFILES[theme];
   }
   
   init() {
@@ -352,27 +498,7 @@ class MetronomeEngine {
   
   private playNote(time: number, isAccent: boolean) {
     if (this.muted || !this.context) return;
-    
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    
-    if (isAccent) {
-      osc.frequency.value = 880;
-      gain.gain.value = 0.5;
-    } else {
-      osc.frequency.value = 440;
-      gain.gain.value = 0.3;
-    }
-    
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(gain.gain.value, time + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
-    
-    osc.start(time);
-    osc.stop(time + 0.15);
+    this.soundProfile.play(this.context, time, isAccent);
   }
   
   private scheduler() {
@@ -498,8 +624,9 @@ const Metronome: FC<LoaderProps> = ({
             }
         );
         
-        // Initialize audio context
+        // Initialize audio context and sound profile
         metronomeRef.current.init();
+        metronomeRef.current.setSoundProfile(themeName);
         
         // Clean up on unmount
         return () => {
@@ -593,6 +720,13 @@ const Metronome: FC<LoaderProps> = ({
             metronomeRef.current.setMuted(muteSound);
         }
     }, [muteSound, debugLog]);
+
+    // Update sound profile when theme changes
+    useEffect(() => {
+        if (metronomeRef.current) {
+            metronomeRef.current.setSoundProfile(themeName);
+        }
+    }, [themeName]);
 
     // Handle external time signature changes (from props)
     useEffect(() => {
