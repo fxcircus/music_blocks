@@ -768,6 +768,11 @@ const ScaleToneNoteUpdated = styled.div<{
   justify-content: center;
   transform: ${({ $isPlaying }) => $isPlaying ? 'scale(1.1)' : 'scale(1)'};
   box-shadow: none;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.85;
+  }
 
   @media (max-width: 768px) {
     min-width: 100%;
@@ -1973,6 +1978,27 @@ export default function InspirationGenerator({
     setPlayingNoteIndex(-1);
   }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, inversionIndex, bpmEl]);
 
+  // Play a single scale tone when its pill is clicked
+  const handlePillClick = useCallback((index: number) => {
+    const note = tonesArrEl[index];
+    if (!note) return;
+
+    // Determine octave: use ascending logic same as scale playback
+    let currentOctave = 4;
+    for (let i = 1; i <= index; i++) {
+      const prev = getNoteChromatic(tonesArrEl[i - 1]);
+      const curr = getNoteChromatic(tonesArrEl[i]);
+      if (curr <= prev) currentOctave++;
+    }
+
+    const frequency = noteToFrequency(note, currentOctave);
+    const beatDuration = Math.round(60000 / (parseInt(bpmEl, 10) || 120));
+    setPlayingNoteIndex(index);
+    playNote(frequency, beatDuration).then(() => {
+      setPlayingNoteIndex(prev => prev === index ? -1 : prev);
+    });
+  }, [tonesArrEl, getNoteChromatic, playNote, bpmEl]);
+
   return (
     <div style={{ overflow: 'visible' }}>
       <InspirationCard
@@ -2349,6 +2375,7 @@ export default function InspirationGenerator({
                         <ScaleToneNoteUpdated
                           $highlight={getHighlightType(index)}
                           $isPlaying={playingNoteIndex === index}
+                          onClick={() => handlePillClick(index)}
                         >
                           {note}
                           {shouldShowInterval && interval !== null && (
