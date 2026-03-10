@@ -4,7 +4,7 @@ import { saveToStorage, getFromStorage, STORAGE_KEYS } from '../utils/storageSer
 
 export type ThemeName = 'light' | 'dark' | 'vintage' | 'indie' | 'disco' | 'hiphop';
 
-export const THEME_ORDER: ThemeName[] = ['dark', 'hiphop', 'disco', 'vintage', 'indie', 'light'];
+export const THEME_ORDER: ThemeName[] = ['dark', 'indie', 'hiphop', 'disco', 'vintage', 'light'];
 
 export const THEME_LABELS: Record<ThemeName, string> = {
   light: 'Light',
@@ -136,45 +136,47 @@ export const darkTheme = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// VINTAGE — Aged parchment, espresso ink, burnt sienna & olive
+// VINTAGE — Fender Tweed amp: dark grille base, warm copper &
+//           sandy tweed accents
 // ──────────────────────────────────────────────────────────────
-// Light-family theme. Cards are LIGHTER than background (cream
-// on tan) so they feel like paper sheets on a wooden desk.
+// Dark-family theme. Background is the dark speaker grille;
+// cards are slightly lifted. Warm tweed/copper tones for text
+// and accents — like looking at the amp face-on.
 //
 // Key contrast pairs:
-//   text #2c1810 on card #ede3d0          — dark ink on cream ✓
-//   text #2c1810 on background #c4b393    — ink on tan ✓
-//   textSecondary #78644e on card #ede3d0 — muted but legible ✓
-//   buttonText #fff on primary #b45a1c    — white on sienna ✓
-//   primary #b45a1c on card #ede3d0       — rich accent pops ✓
+//   text #d4b888 on card #382e22          — warm sand on grille ✓
+//   text #d4b888 on background #2a2218    — warm sand on dark ✓
+//   textSecondary #a08860 on card #382e22 — muted tan, legible ✓
+//   buttonText #1e1008 on primary #c47840 — dark on copper ✓
+//   primary #c47840 on card #382e22       — copper pops on dark ✓
 export const vintageTheme = {
-  fontFamily: "'Bitter', Georgia, 'Times New Roman', serif",
+  fontFamily: "'Special Elite', 'Courier New', monospace",
   colors: {
-    background: '#c4b393',       // warm tan canvas
-    card: '#ede3d0',             // light cream parchment — clear lift from bg
-    primary: '#b45a1c',          // deep burnt sienna
-    secondary: '#6b7c38',        // earthy olive green
-    text: '#2c1810',             // espresso ink — max readability on cream
-    textSecondary: '#78644e',    // medium warm brown — legible secondary
-    border: '#b8a480',           // tan border — visible against cream card
-    accent: '#b45a1c',           // burnt sienna
-    accentGradient: 'linear-gradient(135deg, #b45a1c 0%, #6b7c38 100%)',
-    timerBackground: '#ede3d0',  // match card
-    timerBorder: '#b45a1c',
-    buttonPrimary: '#b45a1c',
-    buttonSecondary: '#6b7c38',
-    buttonText: '#ffffff',       // white on sienna/olive buttons
-    lockIconActive: '#b45a1c',
-    lockIconInactive: '#a89878',
-    inputBackground: '#e0d4bc',  // sits between card and bg — distinct
-    success: '#4a8830',
+    background: '#2a2218',       // dark speaker grille
+    card: '#382e22',             // slightly lifted grille panel
+    primary: '#c47840',          // warm copper-orange — tweed accent
+    secondary: '#b89850',        // golden tweed
+    text: '#d4b888',             // sandy tweed — warm readable text
+    textSecondary: '#a08860',    // muted warm tan
+    border: '#504030',           // dark brown edge
+    accent: '#b89850',           // golden tweed
+    accentGradient: 'linear-gradient(135deg, #c47840 0%, #b89850 100%)',
+    timerBackground: '#382e22',  // match card
+    timerBorder: '#c47840',
+    buttonPrimary: '#c47840',
+    buttonSecondary: '#b89850',
+    buttonText: '#1e1008',       // dark brown on copper/gold buttons
+    lockIconActive: '#c47840',
+    lockIconInactive: '#6b5838',
+    inputBackground: '#302820',  // between bg and card
+    success: '#7ab840',
     warning: '#c89018',
-    error: '#c03820',
+    error: '#c04830',
   },
   shadows: {
-    small: '0 2px 5px rgba(44, 24, 16, 0.12)',
-    medium: '0 4px 12px rgba(44, 24, 16, 0.18)',
-    large: '0 8px 20px rgba(44, 24, 16, 0.24)',
+    small: '0 2px 5px rgba(0, 0, 0, 0.25)',
+    medium: '0 4px 12px rgba(0, 0, 0, 0.35)',
+    large: '0 8px 20px rgba(0, 0, 0, 0.45)',
   },
   ...sharedTokens,
 };
@@ -328,13 +330,13 @@ function isValidThemeName(value: string): value is ThemeName {
 // Lazy-load Google Fonts only when a theme that needs them is active.
 // Light/Dark use Inter/Roboto which are loaded in index.html.
 const THEME_FONT_URLS: Partial<Record<ThemeName, string>> = {
-  vintage: 'https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&display=swap',
+  vintage: 'https://fonts.googleapis.com/css2?family=Special+Elite&display=swap',
   indie: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap',
   disco: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap',
   hiphop: 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap',
 };
 
-function loadThemeFont(theme: ThemeName) {
+export function loadThemeFont(theme: ThemeName) {
   const url = THEME_FONT_URLS[theme];
   if (!url) return;
   const id = `theme-font-${theme}`;

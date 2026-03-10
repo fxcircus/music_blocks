@@ -159,7 +159,7 @@ Song structure templates to help plan arrangements and energy flow.
 - **Drag & Drop** — Rearrange blocks by dragging them into any order
 - **➕ Add / Remove Blocks** — Use the floating + button to add blocks; remove any block with the × button
 - **🔗 Share Your Work** — Copy a compressed URL with your full project state — settings, notes, block layout, everything
-- **🌙 Dark / Light Mode** — Toggle from the navigation bar
+- **🎨 6 Music-Inspired Themes** — Dark, Indie (TASCAM 424), Hip Hop (TR-808), Disco (neon nightclub), Vintage (Fender Tweed), and Light — each with unique colors, fonts, and icons
 - **❓ Contextual Help** — Hover over any block to reveal a help button with tips and instructions
 - **💾 Auto-Save** — All block states persist in the browser automatically
 

@@ -2,13 +2,22 @@ import React, { FC, useState, useRef, useEffect, useCallback } from "react";
 import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useTheme, THEME_ORDER, THEME_LABELS } from '../../theme/ThemeProvider';
+import { useTheme, THEME_ORDER, THEME_LABELS, ThemeName, lightTheme, darkTheme, vintageTheme, indieTheme, discoTheme, hiphopTheme, loadThemeFont } from '../../theme/ThemeProvider';
 import { FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import ThemeIcon from './ThemeIcons';
 import { loadBlockState } from '../../utils/blockStorage';
 import { copyAppStateURLToClipboard } from '../../utils/urlSharing';
 import Toast from '../common/Toast';
+
+const THEME_DATA: Record<ThemeName, { primary: string; fontFamily: string }> = {
+  light: { primary: lightTheme.colors.primary, fontFamily: lightTheme.fontFamily },
+  dark: { primary: darkTheme.colors.primary, fontFamily: darkTheme.fontFamily },
+  vintage: { primary: vintageTheme.colors.primary, fontFamily: vintageTheme.fontFamily },
+  indie: { primary: indieTheme.colors.primary, fontFamily: indieTheme.fontFamily },
+  disco: { primary: discoTheme.colors.primary, fontFamily: discoTheme.fontFamily },
+  hiphop: { primary: hiphopTheme.colors.primary, fontFamily: hiphopTheme.fontFamily },
+};
 
 interface Project {
   id: string;
@@ -373,7 +382,7 @@ const Nav: FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { themeName, setThemeName } = useTheme();
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
-  const SPINNABLE_THEMES = ['hiphop', 'vintage', 'indie'];
+  const SPINNABLE_THEMES = ['vintage', 'indie'];
   const themePickerRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -594,7 +603,12 @@ const Nav: FC = () => {
           
           <ThemePickerWrapper ref={themePickerRef}>
             <ThemeToggleButton
-              onClick={() => setShowThemeDropdown(!showThemeDropdown)}
+              onClick={() => {
+                if (!showThemeDropdown) {
+                  THEME_ORDER.forEach(loadThemeFont);
+                }
+                setShowThemeDropdown(!showThemeDropdown);
+              }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               aria-label="Choose theme"
@@ -625,8 +639,10 @@ const Nav: FC = () => {
                         setShowThemeDropdown(false);
                       }}
                     >
-                      <ThemeIcon theme={t} size={16} />
-                      <ThemeOptionLabel>{THEME_LABELS[t]}</ThemeOptionLabel>
+                      <span style={{ color: THEME_DATA[t].primary, display: 'inline-flex' }}>
+                        <ThemeIcon theme={t} size={16} />
+                      </span>
+                      <ThemeOptionLabel style={{ fontFamily: THEME_DATA[t].fontFamily }}>{THEME_LABELS[t]}</ThemeOptionLabel>
                       {t === themeName && (
                         <ThemeCheckMark>
                           <Icon icon={FaCheck} size={10} />

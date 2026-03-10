@@ -81,21 +81,19 @@ const DiscoBallIcon: React.FC<IconProps> = ({ size = 20 }) => (
   </svg>
 );
 
-// Hip Hop — Vinyl record (grooves + center label)
-const VinylRecordIcon: React.FC<IconProps> = ({ size = 20 }) => (
+// Hip Hop — TR-808 drum pad button
+const DrumPadIcon: React.FC<IconProps> = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    {/* Vinyl body — dark filled disc */}
-    <circle cx="12" cy="12" r="10.5" fill="currentColor" opacity="0.35" stroke="currentColor" strokeWidth="1.2" />
-    {/* Grooves — subtle rings in the vinyl */}
-    <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="0.4" opacity="0.15" />
-    <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="0.4" opacity="0.12" />
-    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="0.4" opacity="0.1" />
-    {/* Center label — bright and prominent */}
-    <circle cx="12" cy="12" r="4.5" fill="currentColor" opacity="0.85" />
-    {/* Label ring detail */}
-    <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="0.4" opacity="0.4" fill="none" />
-    {/* Spindle hole — punch-through dark */}
-    <circle cx="12" cy="12" r="0.8" fill="black" opacity="0.6" />
+    {/* Pad body — rounded rectangle */}
+    <rect x="4" y="2" width="16" height="20" rx="2.5" fill="#de7e3c" stroke="#de7e3c" strokeWidth="1" />
+    {/* Divider line between top section and pad */}
+    <line x1="4" y1="11" x2="20" y2="11" stroke="black" strokeWidth="0.6" opacity="0.15" />
+    {/* Circular button in top section — 808 red */}
+    <circle cx="12" cy="7" r="3" fill="#8b2020" />
+    {/* Button highlight — inner shine */}
+    <circle cx="11" cy="6" r="1.2" fill="white" opacity="0.2" />
+    {/* Button shadow ring */}
+    <circle cx="12" cy="7" r="3" fill="none" stroke="#7a1a1a" strokeWidth="0.5" opacity="0.4" />
   </svg>
 );
 
@@ -105,7 +103,7 @@ const THEME_ICONS: Record<ThemeName, React.FC<IconProps>> = {
   vintage: ReelToReelIcon,
   indie: CassetteReelIcon,
   disco: DiscoBallIcon,
-  hiphop: VinylRecordIcon,
+  hiphop: DrumPadIcon,
 };
 
 export const ThemeIcon: React.FC<{ theme: ThemeName; size?: number }> = ({ theme, size }) => {

@@ -211,9 +211,9 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong><IconContainer><Icon icon={MdDarkMode} size={16} /></IconContainer> Dark / Light Modes:</Strong>
+              <Strong><IconContainer><Icon icon={MdDarkMode} size={16} /></IconContainer> 6 Music-Inspired Themes:</Strong>
               <NestedList>
-                <ListItem>Full theme support with carefully crafted dark and light modes.</ListItem>
+                <ListItem>Choose from Dark, Indie (TASCAM 424), Hip Hop (TR-808), Disco (neon nightclub), Vintage (Fender Tweed), and Light — each with its own colors, fonts, and icon style.</ListItem>
               </NestedList>
             </ListItem>
           </List>

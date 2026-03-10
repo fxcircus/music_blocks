@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
 import styled, { useTheme } from 'styled-components';
+import { useTheme as useAppTheme } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
@@ -40,10 +41,10 @@ const MetronomeDisplay = styled.div`
   justify-content: center;
 `;
 
-const MetronomePendulum = styled(motion.div)`
+const MetronomePendulum = styled(motion.div)<{ $useGradient?: boolean }>`
   width: 4px;
   height: 90px;
-  background: ${({ theme }) => theme.colors.accentGradient};
+  background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
   position: relative;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   transform-origin: bottom center;
@@ -64,10 +65,10 @@ const MetronomePendulum = styled(motion.div)`
   }
 `;
 
-const MetronomeBase = styled(motion.div)`
+const MetronomeBase = styled(motion.div)<{ $useGradient?: boolean }>`
   width: 200px;
   height: 25px;
-  background: ${({ theme }) => theme.colors.accentGradient};
+  background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.large};
   position: absolute;
   bottom: 0;
@@ -441,6 +442,8 @@ const Metronome: FC<LoaderProps> = ({
     isRecentlyDragged
 }) => {
     const theme = useTheme();
+    const { themeName } = useAppTheme();
+    const useGradient = themeName === 'light' || themeName === 'dark';
 
     // State
     const [metronomePlaying, setMetronomePlaying] = useState(false);
@@ -822,11 +825,13 @@ const Metronome: FC<LoaderProps> = ({
                     </div>
                 </DialDisplay>
                 <MetronomeBase
+                    $useGradient={useGradient}
                     onClick={toggleMetronome}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 />
                 <MetronomePendulum
+                    $useGradient={useGradient}
                     key={`pendulum-${bpm}-${metronomePlaying}`}
                     animate={{
                         rotate: metronomePlaying ? [20, -20, 20] : 0
