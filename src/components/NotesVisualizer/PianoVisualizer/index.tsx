@@ -38,7 +38,7 @@ const WhiteKey = styled.div<{
     switch ($highlightType) {
       case 'root': return theme.colors.secondary;
       case 'chord': return theme.colors.primary;
-      case 'seventh': return theme.colors.primary;
+      case 'seventh': return '#8b5cf6';
       case 'scale': return theme.colors.primary;
       default: return '#ffffff';
     }
@@ -60,7 +60,7 @@ const WhiteKey = styled.div<{
       switch ($highlightType) {
         case 'root': return `${theme.colors.secondary}cc`;
         case 'chord': return `${theme.colors.primary}cc`;
-        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'seventh': return '#7c4fdccc';
         case 'scale': return `${theme.colors.primary}cc`;
         default: return '#f5f5f5';
       }
@@ -96,7 +96,7 @@ const BlackKey = styled.div<{
     switch ($highlightType) {
       case 'root': return theme.colors.secondary;
       case 'chord': return theme.colors.primary;
-      case 'seventh': return theme.colors.primary;
+      case 'seventh': return '#8b5cf6';
       case 'scale': return theme.colors.primary;
       default: return '#2a2a2a';
     }
@@ -118,7 +118,7 @@ const BlackKey = styled.div<{
       switch ($highlightType) {
         case 'root': return `${theme.colors.secondary}cc`;
         case 'chord': return `${theme.colors.primary}cc`;
-        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'seventh': return '#7c4fdccc';
         case 'scale': return `${theme.colors.primary}cc`;
         default: return '#3a3a3a';
       }

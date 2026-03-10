@@ -276,7 +276,7 @@ const FretDot = styled.div<{
     switch ($highlightType) {
       case 'root': return theme.colors.secondary;
       case 'chord': return theme.colors.primary;
-      case 'seventh': return theme.colors.primary;
+      case 'seventh': return '#8b5cf6';
       case 'scale': return theme.colors.primary;
       default: return 'transparent';
     }
@@ -305,7 +305,7 @@ const FretDot = styled.div<{
       switch ($highlightType) {
         case 'root': return `${theme.colors.secondary}cc`;
         case 'chord': return `${theme.colors.primary}cc`;
-        case 'seventh': return `${theme.colors.primary}cc`;
+        case 'seventh': return '#7c4fdccc';
         case 'scale': return `${theme.colors.primary}cc`;
         default: return 'transparent';
       }
@@ -328,7 +328,7 @@ const OpenString = styled.div<{
     switch ($highlightType) {
       case 'root': return `2px solid ${theme.colors.secondary}`;
       case 'chord': return `2px solid ${theme.colors.primary}`;
-      case 'seventh': return `2px solid ${theme.colors.primary}`;
+      case 'seventh': return `2px solid #8b5cf6`;
       case 'scale': return `2px solid ${theme.colors.primary}`;
       default: return 'none';
     }
@@ -345,7 +345,7 @@ const OpenString = styled.div<{
     switch ($highlightType) {
       case 'root': return theme.colors.secondary;
       case 'chord': return theme.colors.primary;
-      case 'seventh': return theme.colors.primary;
+      case 'seventh': return '#8b5cf6';
       case 'scale': return theme.colors.primary;
       default: return theme.colors.textSecondary;
     }
@@ -636,7 +636,14 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
           if (voicingFret === fretNum) {
             isActive = true;
             const chordRootChromatic = getNoteChromatic(activeNotes[selectedChord]);
-            highlightType = chromaticPosition === chordRootChromatic ? 'root' : 'chord';
+            if (chromaticPosition === chordRootChromatic) {
+              highlightType = 'root';
+            } else if (isSeventhMode && highlightedNotes.size === 4) {
+              const seventhIdx = Array.from(highlightedNotes)[3];
+              highlightType = noteIndex === seventhIdx ? 'seventh' : 'chord';
+            } else {
+              highlightType = 'chord';
+            }
           } else {
             isActive = false;
             highlightType = undefined;
