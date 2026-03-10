@@ -198,23 +198,26 @@ const Visualizer: FC<VisualizerProps> = ({ scale, bpm }) => {
     }
     
     const noteLength = '8n';
-    const noteIndexes = scale.map((_, index) => index);
-    
+    // Include scale notes plus root on next octave
+    const noteIndexes = [...scale.map((_, index) => index), scale.length];
+
     sequenceRef.current = new Tone.Sequence(
       (time, noteIndex) => {
         if (synthRef.current && typeof noteIndex === 'number') {
-          const octave = noteIndex > 7 ? 5 : 4;
-          const note = `${scale[noteIndex % scale.length]}${octave}`;
+          const isOctaveRoot = noteIndex === scale.length;
+          const scaleIndex = isOctaveRoot ? 0 : noteIndex;
+          const octave = isOctaveRoot ? 5 : (noteIndex > 7 ? 5 : 4);
+          const note = `${scale[scaleIndex]}${octave}`;
           synthRef.current.triggerAttackRelease(note, noteLength, time);
-          
+
           // Update active note for visualization
           Tone.Draw.schedule(() => {
-            setActiveNoteIndex(noteIndex % scale.length);
-            
+            setActiveNoteIndex(scaleIndex);
+
             // Generate new random heights for visual interest
             setBarHeights(prev => {
               const newHeights = [...prev];
-              newHeights[Math.floor(Math.random() * newHeights.length)] = 
+              newHeights[Math.floor(Math.random() * newHeights.length)] =
                 Math.random() * 100 + 20;
               return newHeights;
             });

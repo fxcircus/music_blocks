@@ -1955,6 +1955,17 @@ export default function InspirationGenerator({
         const frequency = noteToFrequency(note, currentOctave);
         await playNote(frequency, beatDuration);
       }
+
+      // Play root note one octave up to complete the scale
+      if (isPlayingRef.current && tonesArrEl[0]) {
+        const rootChromatic = getNoteChromatic(tonesArrEl[0]);
+        if (rootChromatic <= prevChromatic) {
+          currentOctave++;
+        }
+        setPlayingNoteIndex(0);
+        const frequency = noteToFrequency(tonesArrEl[0], currentOctave);
+        await playNote(frequency, beatDuration);
+      }
     }
 
     isPlayingRef.current = false;
