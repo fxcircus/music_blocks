@@ -265,7 +265,7 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
     } catch (error) {
       console.error('Error stopping note:', error);
     }
-  }, []);
+  }, [themeName]);
 
   // Handle key press (by note name and raw octave)
   const handleKeyPress = useCallback((note: string, octave: number) => {
