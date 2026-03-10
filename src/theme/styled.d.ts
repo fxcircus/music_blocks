@@ -2,6 +2,7 @@ import 'styled-components';
 
 declare module 'styled-components' {
   export interface DefaultTheme {
+    fontFamily: string;
     colors: {
       background: string;
       card: string;

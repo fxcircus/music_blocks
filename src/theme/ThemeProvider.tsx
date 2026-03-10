@@ -69,7 +69,10 @@ const sharedTokens = {
   },
 };
 
+const defaultFontFamily = "'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif";
+
 export const lightTheme = {
+  fontFamily: defaultFontFamily,
   colors: {
     background: '#eef0f4',
     card: '#f7f8fa',
@@ -101,6 +104,7 @@ export const lightTheme = {
 };
 
 export const darkTheme = {
+  fontFamily: defaultFontFamily,
   colors: {
     background: '#121212',
     card: '#1e1e1e',
@@ -144,6 +148,7 @@ export const darkTheme = {
 //   buttonText #fff on primary #b45a1c    — white on sienna ✓
 //   primary #b45a1c on card #ede3d0       — rich accent pops ✓
 export const vintageTheme = {
+  fontFamily: "'Bitter', Georgia, 'Times New Roman', serif",
   colors: {
     background: '#c4b393',       // warm tan canvas
     card: '#ede3d0',             // light cream parchment — clear lift from bg
@@ -187,6 +192,7 @@ export const vintageTheme = {
 //   buttonText #1a2830 on primary #e8a832 — dark navy on gold ✓
 //   primary #e8a832 on card #3d6380       — gold pops on blue ✓
 export const indieTheme = {
+  fontFamily: "'Space Grotesk', 'SF Mono', 'Consolas', sans-serif",
   colors: {
     background: '#2e4558',       // deep navy-steel
     card: '#3d6380',             // brighter steel blue — clear lift from bg
@@ -231,6 +237,7 @@ export const indieTheme = {
 //   buttonText #fff on primary #ff2d9b   — white on neon pink ✓
 //   primary #ff2d9b on card #2a1238      — neon on dark ✓
 export const discoTheme = {
+  fontFamily: "'Syne', 'Futura', 'Trebuchet MS', sans-serif",
   colors: {
     background: '#150818',       // near-black purple void
     card: '#2a1238',             // dark purple — clear lift from bg
@@ -263,6 +270,7 @@ export const discoTheme = {
 
 // Hip Hop — TR-808 drum machine, dark charcoal, warm amber/orange
 export const hiphopTheme = {
+  fontFamily: "'Chakra Petch', 'Rajdhani', 'Arial Narrow', sans-serif",
   colors: {
     background: '#1f1f1f',       // hsl(0,0%,12%) dark charcoal
     card: '#292929',             // hsl(0,0%,16%) panel base

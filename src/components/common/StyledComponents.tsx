@@ -358,7 +358,7 @@ export const AppWrapper = styled.div`
   min-height: 100vh;
   color: ${({ theme }) => theme.colors.text};
   transition: all ${({ theme }) => theme.transitions.normal};
-  font-family: 'Inter', 'Roboto', sans-serif;
+  font-family: ${({ theme }) => theme.fontFamily};
   padding-top: 70px; /* Space for fixed navbar */
 `;
 
