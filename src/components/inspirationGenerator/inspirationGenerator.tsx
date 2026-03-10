@@ -15,7 +15,6 @@ import {
 } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
-import { useTheme as useAppTheme } from '../../theme/ThemeProvider';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../utils/audioProfiles';
 
@@ -913,7 +912,6 @@ export default function InspirationGenerator({
   showTips: showTipsExternal,
   setShowTips: setShowTipsExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
-  const { themeName } = useAppTheme();
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
   const [locked, setLocked] = useState<LockedState>({

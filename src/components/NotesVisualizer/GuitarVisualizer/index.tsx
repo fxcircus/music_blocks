@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { GuitarVisualizerProps, GuitarString, GuitarFret, getNoteChromatic, getChromaticNote, STANDARD_TUNING } from '../types';
-import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
 import { useSoundSettings } from '../../../context/SoundSettingsContext';
 import { getGuitarProfile } from '../../../utils/audioProfiles';
 
@@ -442,7 +441,6 @@ const GuitarVisualizer: React.FC<GuitarVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
-  const { themeName } = useAppTheme();
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());

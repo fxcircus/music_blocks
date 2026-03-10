@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PianoVisualizerProps, PianoKey, getNoteChromatic } from '../types';
-import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
 import { useSoundSettings } from '../../../context/SoundSettingsContext';
 import { getPianoProfile } from '../../../utils/audioProfiles';
 
@@ -148,7 +147,6 @@ const PianoVisualizer: React.FC<PianoVisualizerProps> = ({
   isSeventhMode,
   selectedChord
 }) => {
-  const { themeName } = useAppTheme();
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
   // Visual state for pressed keys (triggers re-render)

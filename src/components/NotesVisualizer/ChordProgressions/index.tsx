@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import styled, { useTheme, ThemeProvider, keyframes } from 'styled-components';
 import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
-import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
 import { useSoundSettings } from '../../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../../utils/audioProfiles';
 
@@ -532,7 +531,6 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
   const theme = useTheme();
-  const { themeName } = useAppTheme();
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
   const selectorRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
