@@ -325,16 +325,37 @@ function isValidThemeName(value: string): value is ThemeName {
   return THEME_ORDER.includes(value as ThemeName);
 }
 
+// Lazy-load Google Fonts only when a theme that needs them is active.
+// Light/Dark use Inter/Roboto which are loaded in index.html.
+const THEME_FONT_URLS: Partial<Record<ThemeName, string>> = {
+  vintage: 'https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&display=swap',
+  indie: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap',
+  disco: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap',
+  hiphop: 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap',
+};
+
+function loadThemeFont(theme: ThemeName) {
+  const url = THEME_FONT_URLS[theme];
+  if (!url) return;
+  const id = `theme-font-${theme}`;
+  if (document.getElementById(id)) return; // already loaded
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = url;
+  document.head.appendChild(link);
+}
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [themeName, setThemeNameState] = useState<ThemeName>(() => {
     const stored = getFromStorage(STORAGE_KEYS.THEME, 'dark');
-    // Backward compat: 'light' and 'dark' still work
     if (isValidThemeName(stored)) return stored;
     return 'dark';
   });
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.THEME, themeName);
+    loadThemeFont(themeName);
   }, [themeName]);
 
   const setThemeName = (name: ThemeName) => {
