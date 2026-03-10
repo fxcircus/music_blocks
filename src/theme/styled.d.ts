@@ -59,5 +59,6 @@ declare module 'styled-components' {
       xl: string;
       xxl: string;
     };
+    backgroundPattern?: string;
   }
 } 

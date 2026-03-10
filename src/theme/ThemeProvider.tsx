@@ -178,6 +178,7 @@ export const vintageTheme = {
     medium: '0 4px 12px rgba(0, 0, 0, 0.35)',
     large: '0 8px 20px rgba(0, 0, 0, 0.45)',
   },
+  backgroundPattern: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><circle cx='50' cy='50' r='28' fill='none' stroke='%23b89850' stroke-width='1.2' opacity='0.045'/><circle cx='50' cy='50' r='14' fill='none' stroke='%23b89850' stroke-width='0.8' opacity='0.045'/><circle cx='50' cy='50' r='3' fill='%23b89850' opacity='0.04'/><circle cx='150' cy='150' r='28' fill='none' stroke='%23b89850' stroke-width='1.2' opacity='0.045'/><circle cx='150' cy='150' r='14' fill='none' stroke='%23b89850' stroke-width='0.8' opacity='0.045'/><circle cx='150' cy='150' r='3' fill='%23b89850' opacity='0.04'/><circle cx='150' cy='50' r='16' fill='none' stroke='%23b89850' stroke-width='1' opacity='0.04'/><line x1='144' y1='50' x2='156' y2='50' stroke='%23b89850' stroke-width='0.8' opacity='0.04'/><circle cx='50' cy='150' r='16' fill='none' stroke='%23b89850' stroke-width='1' opacity='0.04'/><line x1='44' y1='150' x2='56' y2='150' stroke='%23b89850' stroke-width='0.8' opacity='0.04'/></svg>`)}")`,
   ...sharedTokens,
 };
 
@@ -222,6 +223,7 @@ export const indieTheme = {
     medium: '0 4px 12px rgba(20, 35, 50, 0.35)',
     large: '0 8px 20px rgba(20, 35, 50, 0.45)',
   },
+  backgroundPattern: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='180' height='120'><g opacity='0.04'><rect x='20' y='15' width='60' height='38' rx='4' fill='none' stroke='%23e8a832' stroke-width='1.2'/><rect x='25' y='20' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/><rect x='52' y='20' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/><circle cx='36' cy='44' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/><circle cx='63' cy='44' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/></g><g opacity='0.04' transform='translate(100,65) rotate(-8)'><rect x='0' y='0' width='60' height='38' rx='4' fill='none' stroke='%23e8a832' stroke-width='1.2'/><rect x='5' y='5' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/><rect x='32' y='5' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/><circle cx='16' cy='29' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/><circle cx='43' cy='29' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/></g></svg>`)}")`,
   ...sharedTokens,
   // Silkscreen is a pixel font that renders large — scale down
   fontSizes: {
@@ -278,6 +280,7 @@ export const discoTheme = {
     medium: '0 4px 16px rgba(255, 45, 155, 0.3)',
     large: '0 8px 24px rgba(255, 45, 155, 0.4)',
   },
+  backgroundPattern: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><line x1='0' y1='0' x2='60' y2='60' stroke='%23ff2d9b' stroke-width='0.6' opacity='0.045'/><line x1='60' y1='0' x2='0' y2='60' stroke='%2300e8c6' stroke-width='0.6' opacity='0.045'/><line x1='30' y1='0' x2='90' y2='60' stroke='%23ff2d9b' stroke-width='0.6' opacity='0.045'/><line x1='-30' y1='0' x2='30' y2='60' stroke='%23ff2d9b' stroke-width='0.6' opacity='0.045'/><line x1='90' y1='0' x2='30' y2='60' stroke='%2300e8c6' stroke-width='0.6' opacity='0.045'/><line x1='-30' y1='60' x2='30' y2='0' stroke='%2300e8c6' stroke-width='0.6' opacity='0.045'/></svg>`)}")`,
   ...sharedTokens,
 };
 
@@ -311,6 +314,7 @@ export const hiphopTheme = {
     medium: '0 4px 12px rgba(0, 0, 0, 0.4)',
     large: '0 8px 20px rgba(0, 0, 0, 0.5)',
   },
+  backgroundPattern: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g opacity='0.045'><rect x='10' y='10' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='50' y='10' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='90' y='10' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='130' y='10' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='10' y='50' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='50' y='50' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='90' y='50' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='130' y='50' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='10' y='90' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='50' y='90' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='90' y='90' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='130' y='90' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='10' y='130' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='50' y='130' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/><rect x='90' y='130' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e6b833' stroke-width='1.2'/><rect x='130' y='130' rx='3' ry='3' width='30' height='30' fill='none' stroke='%23e68a33' stroke-width='1.2'/></g></svg>`)}")`,
   ...sharedTokens,
 };
 

@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef, useCallback } from "react";
 import styled, { useTheme } from 'styled-components';
-import { useTheme as useAppTheme, ThemeName } from '../../theme/ThemeProvider';
+import { ThemeName } from '../../theme/ThemeProvider';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion } from 'framer-motion';
 import { FaVolumeMute, FaVolumeUp, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
@@ -586,7 +586,6 @@ const Metronome: FC<LoaderProps> = ({
     isRecentlyDragged
 }) => {
     const theme = useTheme();
-    const { themeName } = useAppTheme();
     const { effectiveMetronomeTheme, metronomeVolume } = useSoundSettings();
     const useGradient = false;
 
