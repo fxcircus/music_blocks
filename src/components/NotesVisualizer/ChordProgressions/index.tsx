@@ -529,9 +529,13 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const progressionDrivenRef = useRef(false); // true when progression is driving chord changes
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
+  const activeNotesRef = useRef<{ masterGain: GainNode; oscillators: OscillatorNode[] }[]>([]);
   const theme = useTheme();
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
+  const instrumentThemeRef = useRef(effectiveInstrumentTheme);
+  const instrumentVolumeRef = useRef(instrumentVolume);
+  instrumentThemeRef.current = effectiveInstrumentTheme;
+  instrumentVolumeRef.current = instrumentVolume;
   const selectorRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const selectedOptionRef = useRef<HTMLButtonElement>(null);
@@ -656,13 +660,15 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     if (ctx.state === 'suspended') ctx.resume();
 
     const t = ctx.currentTime;
-    const profile = getSequenceProfile(effectiveInstrumentTheme);
+    const profile = getSequenceProfile(instrumentThemeRef.current);
     const volScale = 1 / notes.length; // scale down for simultaneous notes
 
-    // Master volume gain
+    // Master volume gain (read from ref for live updates mid-playback)
     const masterGain = ctx.createGain();
-    masterGain.gain.value = instrumentVolume;
+    masterGain.gain.value = instrumentVolumeRef.current;
     masterGain.connect(ctx.destination);
+
+    const chordOscillators: OscillatorNode[] = [];
 
     for (const { note, octave } of notes) {
       const osc = ctx.createOscillator();
@@ -689,14 +695,27 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
       chordGain.connect(masterGain);
       osc.start(t);
       osc.stop(t + duration);
-
-      activeOscillatorsRef.current.push(osc);
-      osc.onended = () => {
-        const i = activeOscillatorsRef.current.indexOf(osc);
-        if (i > -1) activeOscillatorsRef.current.splice(i, 1);
-      };
+      chordOscillators.push(osc);
     }
-  }, [effectiveInstrumentTheme, instrumentVolume]);
+
+    // Track the whole chord as one entry — disconnecting masterGain
+    // silences all upstream nodes including untracked secondary oscillators
+    const noteEntry = { masterGain, oscillators: chordOscillators };
+    activeNotesRef.current.push(noteEntry);
+
+    // Auto-remove when the last oscillator ends
+    let endedCount = 0;
+    chordOscillators.forEach(osc => {
+      osc.onended = () => {
+        endedCount++;
+        if (endedCount >= chordOscillators.length) {
+          const idx = activeNotesRef.current.indexOf(noteEntry);
+          if (idx > -1) activeNotesRef.current.splice(idx, 1);
+        }
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stopPlayback = useCallback(() => {
     isPlayingRef.current = false;
@@ -708,10 +727,11 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
       timeoutRef.current = null;
     }
 
-    activeOscillatorsRef.current.forEach(osc => {
-      try { osc.stop(); } catch {}
+    activeNotesRef.current.forEach(({ masterGain, oscillators }) => {
+      try { masterGain.disconnect(); } catch {}
+      oscillators.forEach(osc => { try { osc.stop(); } catch {} });
     });
-    activeOscillatorsRef.current = [];
+    activeNotesRef.current = [];
   }, []);
 
   const startPlayback = useCallback(() => {

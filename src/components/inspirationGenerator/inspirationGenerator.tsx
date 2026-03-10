@@ -942,7 +942,11 @@ export default function InspirationGenerator({
   const [playingNoteIndex, setPlayingNoteIndex] = useState<number>(-1);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef<boolean>(false);
-  const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
+  const activeNotesRef = useRef<{ oscillator: OscillatorNode; masterGain: GainNode }[]>([]);
+  const instrumentThemeRef = useRef(effectiveInstrumentTheme);
+  const instrumentVolumeRef = useRef(instrumentVolume);
+  instrumentThemeRef.current = effectiveInstrumentTheme;
+  instrumentVolumeRef.current = instrumentVolume;
 
   // Add state for dropdown menus
   const [openDropdown, setOpenDropdown] = useState<'root' | 'scale' | 'timeSignature' | null>(null);
@@ -1836,14 +1840,14 @@ export default function InspirationGenerator({
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
-    // Apply theme sound profile
-    const profile = getSequenceProfile(effectiveInstrumentTheme);
+    // Apply theme sound profile (read from refs for live updates mid-playback)
+    const profile = getSequenceProfile(instrumentThemeRef.current);
     const { extraNodes } = profile.setup(ctx, oscillator, gainNode, frequency);
     profile.envelope(gainNode, currentTime, durationSec);
 
-    // Master volume gain
+    // Master volume gain (read from ref for live updates mid-playback)
     const masterGain = ctx.createGain();
-    masterGain.gain.value = instrumentVolume;
+    masterGain.gain.value = instrumentVolumeRef.current;
 
     // Connect nodes (osc → extraNodes → gain → master → destination)
     if (extraNodes && extraNodes.length > 0) {
@@ -1862,14 +1866,15 @@ export default function InspirationGenerator({
     oscillator.start(currentTime);
     oscillator.stop(currentTime + durationSec + 0.05);
 
-    // Track the oscillator for cleanup
-    activeOscillatorsRef.current.push(oscillator);
+    // Track oscillator + masterGain for cleanup (disconnecting masterGain
+    // silences everything upstream, including untracked secondary oscillators)
+    const noteEntry = { oscillator, masterGain };
+    activeNotesRef.current.push(noteEntry);
 
-    // Remove from active oscillators when stopped
     oscillator.onended = () => {
-      const index = activeOscillatorsRef.current.indexOf(oscillator);
+      const index = activeNotesRef.current.indexOf(noteEntry);
       if (index > -1) {
-        activeOscillatorsRef.current.splice(index, 1);
+        activeNotesRef.current.splice(index, 1);
       }
     };
 
@@ -1877,19 +1882,22 @@ export default function InspirationGenerator({
     return new Promise(resolve => {
       setTimeout(resolve, duration);
     });
-  }, [effectiveInstrumentTheme, instrumentVolume]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Play scale or chord arpeggio
   const playSequence = useCallback(async () => {
-    // Stop any active oscillators first to prevent overlap
-    activeOscillatorsRef.current.forEach(osc => {
+    // Stop any active notes — disconnect masterGain to silence all upstream
+    // nodes instantly (including untracked secondary oscillators from profiles)
+    activeNotesRef.current.forEach(({ oscillator, masterGain }) => {
       try {
-        osc.stop();
+        masterGain.disconnect();
+        oscillator.stop();
       } catch (e) {
-        // Oscillator might already be stopped
+        // Nodes might already be stopped/disconnected
       }
     });
-    activeOscillatorsRef.current = [];
+    activeNotesRef.current = [];
 
     if (isPlayingRef.current) {
       isPlayingRef.current = false;

@@ -130,43 +130,30 @@ const pianoProfiles: Record<ThemeName, InstrumentProfile> = {
     },
   },
 
-  // Hip Hop — Minimoog-style fat sawtooth with ladder filter
+  // Hip Hop — Moog lead: creamy sawtooth through resonant LP filter
   hiphop: {
     setup(ctx, osc, _gain, freq) {
       osc.type = 'sawtooth';
       osc.frequency.value = freq;
-      // Mixer node — both oscillators sum here
-      const mixer = ctx.createGain();
-      mixer.gain.value = 1.0;
-      // Second detuned oscillator for Moog thickness
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sawtooth';
-      osc2.frequency.value = freq * 1.005; // slight detune for width
-      const osc2Gain = ctx.createGain();
-      osc2Gain.gain.value = 0.7;
-      osc2.connect(osc2Gain);
-      osc2Gain.connect(mixer); // osc2 merges into mixer
-      osc2.start();
-      osc2.stop(ctx.currentTime + 15); // safety cleanup
-      // Moog-style low-pass ladder filter
+      // Moog-style resonant low-pass — creamy, not harsh
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 1400;
-      filter.Q.value = 4; // resonance for that Moog bite
-      // Filter sweep: open on attack, close over time
-      filter.frequency.setValueAtTime(2800, ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.12);
-      return { extraNodes: [mixer, filter] };
+      filter.frequency.value = 2000;
+      filter.Q.value = 3;
+      // Smooth filter sweep: bright attack, settles warm
+      filter.frequency.setValueAtTime(4000, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.15);
+      return { extraNodes: [filter] };
     },
     envelope(gain, time) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.22, time + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.16, time + 0.1);
+      gain.gain.linearRampToValueAtTime(0.22, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.16, time + 0.12);
     },
     release(gain, time) {
       gain.gain.cancelScheduledValues(time);
       gain.gain.setValueAtTime(gain.gain.value, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
     },
   },
 };
@@ -273,43 +260,29 @@ const guitarProfiles: Record<ThemeName, InstrumentProfile> = {
     },
   },
 
-  // Hip Hop — Minimoog bass: fat sawtooth with dark filter
+  // Hip Hop — Moog lead guitar: sawtooth with dark LP filter
   hiphop: {
     setup(ctx, osc, _gain, freq) {
       osc.type = 'sawtooth';
       osc.frequency.value = freq;
-      // Mixer node for both oscillators
-      const mixer = ctx.createGain();
-      mixer.gain.value = 1.0;
-      // Second detuned osc for Moog fatness
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sawtooth';
-      osc2.frequency.value = freq * 0.998; // detune down for width
-      const osc2Gain = ctx.createGain();
-      osc2Gain.gain.value = 0.6;
-      osc2.connect(osc2Gain);
-      osc2Gain.connect(mixer); // osc2 merges into mixer
-      osc2.start();
-      osc2.stop(ctx.currentTime + 15); // safety cleanup
-      // Dark low-pass filter — Moog bass sits low
+      // Dark resonant filter — warm Moog bass/lead tone
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 900;
-      filter.Q.value = 3;
-      // Short filter sweep on attack
-      filter.frequency.setValueAtTime(1800, ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.08);
-      return { extraNodes: [mixer, filter] };
+      filter.frequency.value = 1200;
+      filter.Q.value = 2.5;
+      filter.frequency.setValueAtTime(2400, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+      return { extraNodes: [filter] };
     },
     envelope(gain, time) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.2, time + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.1, time + 0.06);
+      gain.gain.linearRampToValueAtTime(0.2, time + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.1, time + 0.08);
     },
     release(gain, time) {
       gain.gain.cancelScheduledValues(time);
       gain.gain.setValueAtTime(gain.gain.value, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
     },
   },
 };
@@ -394,36 +367,23 @@ const sequenceProfiles: Record<ThemeName, SequenceProfile> = {
     },
   },
 
-  // Hip Hop — Minimoog sequence: dual sawtooth with filter sweep
+  // Hip Hop — Moog lead sequence: creamy sawtooth with resonant filter sweep
   hiphop: {
     setup(ctx, osc, _gain, freq) {
       osc.type = 'sawtooth';
       osc.frequency.value = freq;
-      // Mixer node for both oscillators
-      const mixer = ctx.createGain();
-      mixer.gain.value = 1.0;
-      // Detuned second osc for classic Moog width
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sawtooth';
-      osc2.frequency.value = freq * 1.004;
-      const osc2Gain = ctx.createGain();
-      osc2Gain.gain.value = 0.65;
-      osc2.connect(osc2Gain);
-      osc2Gain.connect(mixer); // osc2 merges into mixer
-      osc2.start();
-      osc2.stop(ctx.currentTime + 15); // safety cleanup
-      // Moog ladder filter with envelope sweep
+      // Resonant LP filter — opens on attack for that Moog "blip", settles creamy
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 1200;
-      filter.Q.value = 5; // resonant sweep
-      filter.frequency.setValueAtTime(3000, ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-      return { extraNodes: [mixer, filter] };
+      filter.frequency.value = 1800;
+      filter.Q.value = 4;
+      filter.frequency.setValueAtTime(3500, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.08);
+      return { extraNodes: [filter] };
     },
     envelope(gain, time, dur) {
       gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.25, time + 0.008);
+      gain.gain.linearRampToValueAtTime(0.25, time + 0.01);
       gain.gain.linearRampToValueAtTime(0.18, time + 0.06);
       gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
     },
