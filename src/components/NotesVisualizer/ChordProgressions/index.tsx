@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import styled, { useTheme, ThemeProvider, keyframes } from 'styled-components';
 import { FaDice, FaPlay, FaStop, FaDownload } from 'react-icons/fa';
 import { Icon } from '../../../utils/IconHelper';
+import { useTheme as useAppTheme } from '../../../theme/ThemeProvider';
+import { getSequenceProfile } from '../../../utils/audioProfiles';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -529,6 +531,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
   const theme = useTheme();
+  const { themeName } = useAppTheme();
   const selectorRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const selectedOptionRef = useRef<HTMLButtonElement>(null);
@@ -653,22 +656,32 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     if (ctx.state === 'suspended') ctx.resume();
 
     const t = ctx.currentTime;
-    const noteGain = 0.12 / notes.length;
+    const profile = getSequenceProfile(themeName);
+    const volScale = 1 / notes.length; // scale down for simultaneous notes
 
     for (const { note, octave } of notes) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
+      const freq = noteToFrequency(note, octave);
 
-      osc.frequency.value = noteToFrequency(note, octave);
-      osc.type = 'triangle';
+      const { extraNodes } = profile.setup(ctx, osc, gain, freq);
+      profile.envelope(gain, t, duration);
 
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(noteGain, t + 0.02);
-      gain.gain.setValueAtTime(noteGain, t + duration - 0.05);
-      gain.gain.linearRampToValueAtTime(0, t + duration);
+      // Apply volume scaling for chord voicing
+      const chordGain = ctx.createGain();
+      chordGain.gain.value = volScale;
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      if (extraNodes && extraNodes.length > 0) {
+        osc.connect(extraNodes[0]);
+        for (let i = 0; i < extraNodes.length - 1; i++) {
+          extraNodes[i].connect(extraNodes[i + 1]);
+        }
+        (extraNodes[extraNodes.length - 1] as AudioNode).connect(gain);
+      } else {
+        osc.connect(gain);
+      }
+      gain.connect(chordGain);
+      chordGain.connect(ctx.destination);
       osc.start(t);
       osc.stop(t + duration);
 
@@ -678,7 +691,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         if (i > -1) activeOscillatorsRef.current.splice(i, 1);
       };
     }
-  }, []);
+  }, [themeName]);
 
   const stopPlayback = useCallback(() => {
     isPlayingRef.current = false;

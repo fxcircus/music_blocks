@@ -1865,6 +1865,7 @@ export default function InspirationGenerator({
     isPlayingRef.current = true;
     setIsPlaying(true);
     const noteCount = scaleNoteCounts[scaleEl] || 7;
+    const beatDuration = Math.round(60000 / (parseInt(bpmEl, 10) || 120)); // ms per beat
 
     if (selectedChord !== null) {
       // Build chord notes based on inversion
@@ -1924,7 +1925,7 @@ export default function InspirationGenerator({
 
         setPlayingNoteIndex(index);
         const frequency = noteToFrequency(note, 4 + octaveAdjust);
-        await playNote(frequency, 250);
+        await playNote(frequency, beatDuration);
       }
     } else {
       // Play full scale - ensure ascending order
@@ -1947,14 +1948,14 @@ export default function InspirationGenerator({
         prevChromatic = noteChromatic;
         setPlayingNoteIndex(i);
         const frequency = noteToFrequency(note, currentOctave);
-        await playNote(frequency, 250);
+        await playNote(frequency, beatDuration);
       }
     }
 
     isPlayingRef.current = false;
     setIsPlaying(false);
     setPlayingNoteIndex(-1);
-  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, inversionIndex]);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, inversionIndex, bpmEl]);
 
   return (
     <div style={{ overflow: 'visible' }}>
