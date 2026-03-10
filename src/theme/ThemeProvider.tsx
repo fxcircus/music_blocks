@@ -192,7 +192,7 @@ export const vintageTheme = {
 //   buttonText #1a2830 on primary #e8a832 — dark navy on gold ✓
 //   primary #e8a832 on card #3d6380       — gold pops on blue ✓
 export const indieTheme = {
-  fontFamily: "'Space Grotesk', 'SF Mono', 'Consolas', sans-serif",
+  fontFamily: "'Silkscreen', 'Press Start 2P', monospace",
   colors: {
     background: '#2e4558',       // deep navy-steel
     card: '#3d6380',             // brighter steel blue — clear lift from bg
