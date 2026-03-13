@@ -32,9 +32,10 @@ const Wrapper = styled(motion.div)`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm} 0;
+  height: 100%;
 `;
 
 const StreakRow = styled.div`

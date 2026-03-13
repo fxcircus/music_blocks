@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase, FaTrophy } from 'react-icons/fa';
+import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase, FaTrophy, FaClock } from 'react-icons/fa';
 import { GiTomato } from 'react-icons/gi';
 import ToolCardDnd from '../common/ToolCardDnd';
 import { Icon } from '../../utils/IconHelper';
@@ -59,6 +59,14 @@ const InnerModeLabel = styled.span`
   letter-spacing: 1.5px;
   position: absolute;
   bottom: 50px;
+`;
+
+const ViewArea = styled.div`
+  height: 248px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
 const InnerSessionDots = styled.div`
@@ -470,73 +478,92 @@ export default function PomodoroTimer({
       canRemove={canRemove}
       additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
     >
-      {(() => {
-        const fraction = totalTime > 0 ? time / totalTime : 1;
-        const radius = 100;
-        const circumference = 2 * Math.PI * radius;
-        const offset = circumference * fraction;
-        const color = getProgressColor(fraction);
-        return (
-          <TimerWrapper
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            onClick={toggleCountdown}
-            aria-label={isCounting ? "Pause timer" : "Start timer"}
-          >
-            <ProgressRingSvg viewBox="0 0 210 210">
-              <circle
-                cx="105"
-                cy="105"
-                r={radius}
-                fill="none"
-                stroke="var(--ring-primary)"
-                strokeWidth="10"
-              />
-              <circle
-                cx="105"
-                cy="105"
-                r={radius}
-                fill="none"
-                stroke={color}
-                strokeWidth="10"
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.4s ease' }}
-              />
-            </ProgressRingSvg>
-            <TimerDisplay>
-              <TimerTime>{secondsToMinutes(time)}</TimerTime>
-              <InnerModeLabel>{modeLabel}</InnerModeLabel>
-            </TimerDisplay>
-          </TimerWrapper>
-        );
-      })()}
+      <ViewArea>
+        {showHeatmap ? (
+          <PracticeHeatmap data={practiceLog} />
+        ) : (
+          <>
+            {(() => {
+              const fraction = totalTime > 0 ? time / totalTime : 1;
+              const radius = 100;
+              const circumference = 2 * Math.PI * radius;
+              const offset = circumference * fraction;
+              const color = getProgressColor(fraction);
+              return (
+                <TimerWrapper
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  onClick={toggleCountdown}
+                  aria-label={isCounting ? "Pause timer" : "Start timer"}
+                >
+                  <ProgressRingSvg viewBox="0 0 210 210">
+                    <circle
+                      cx="105"
+                      cy="105"
+                      r={radius}
+                      fill="none"
+                      stroke="var(--ring-primary)"
+                      strokeWidth="10"
+                    />
+                    <circle
+                      cx="105"
+                      cy="105"
+                      r={radius}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth="10"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.4s ease' }}
+                    />
+                  </ProgressRingSvg>
+                  <TimerDisplay>
+                    <TimerTime>{secondsToMinutes(time)}</TimerTime>
+                    <InnerModeLabel>{modeLabel}</InnerModeLabel>
+                  </TimerDisplay>
+                </TimerWrapper>
+              );
+            })()}
 
-      <InnerSessionDots>
-        {[0, 1, 2, 3].map(i => (
-          <InnerDot key={i} $completed={i < dotsToShow} />
-        ))}
-      </InnerSessionDots>
+            <InnerSessionDots>
+              {[0, 1, 2, 3].map(i => (
+                <InnerDot key={i} $completed={i < dotsToShow} />
+              ))}
+            </InnerSessionDots>
+          </>
+        )}
+      </ViewArea>
 
       <TimerControls>
         <TimerButton
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={resetTimer}
-          title="Reset timer"
+          title="Reset timer to initial focus duration"
         >
           <IconWrapper><Icon icon={FaUndo} size={20} /></IconWrapper>
+        </TimerButton>
+
+        <TimerButton
+          whileHover={{ scale: 1.2 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={mode === 'work' ? takeBreak : skipToWork}
+          title={mode === 'work' ? "Skip to break" : "Skip to focus"}
+        >
+          <IconWrapper>
+            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={24} />
+          </IconWrapper>
         </TimerButton>
 
         <PlayPauseButton
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={toggleCountdown}
-          title={isCounting ? "Pause" : "Play"}
+          title={isCounting ? "Pause timer" : "Start timer"}
         >
           <IconWrapper>
             {isCounting ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
@@ -546,12 +573,10 @@ export default function PomodoroTimer({
         <TimerButton
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
-          onClick={mode === 'work' ? takeBreak : skipToWork}
-          title={mode === 'work' ? "Take a break" : "Back to focus"}
+          onClick={() => setShowHeatmap(!showHeatmap)}
+          title={showHeatmap ? "Back to timer" : "View practice history"}
         >
-          <IconWrapper>
-            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={24} />
-          </IconWrapper>
+          <IconWrapper><Icon icon={showHeatmap ? FaClock : FaTrophy} size={20} /></IconWrapper>
         </TimerButton>
 
         <div ref={settingsRef} style={{ position: 'relative' }}>
@@ -559,7 +584,7 @@ export default function PomodoroTimer({
             whileHover={{ scale: 1.2 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowSettings(!showSettings)}
-            title="Settings"
+            title="Timer settings"
           >
             <IconWrapper><Icon icon={FaCog} size={20} /></IconWrapper>
           </TimerButton>
@@ -605,7 +630,7 @@ export default function PomodoroTimer({
                   </SmallButton>
                 </SettingsRow>
 
-                <MuteRow onClick={() => setMuteAlert(!muteAlert)} title={muteAlert ? "Unmute alert" : "Mute alert"}>
+                <MuteRow onClick={() => setMuteAlert(!muteAlert)} title={muteAlert ? "Unmute alert sound" : "Mute alert sound"}>
                   <IconWrapper>
                     <Icon icon={muteAlert ? FaVolumeMute : FaVolumeUp} size={16} />
                   </IconWrapper>
@@ -615,23 +640,7 @@ export default function PomodoroTimer({
             )}
           </AnimatePresence>
         </div>
-
-        <TimerButton
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowHeatmap(!showHeatmap)}
-          title="Practice heatmap"
-          style={showHeatmap ? { color: 'inherit' } : undefined}
-        >
-          <IconWrapper><Icon icon={FaTrophy} size={20} /></IconWrapper>
-        </TimerButton>
       </TimerControls>
-
-      <AnimatePresence>
-        {showHeatmap && (
-          <PracticeHeatmap data={practiceLog} />
-        )}
-      </AnimatePresence>
 
       <TipsModal
         isOpen={showTips}
