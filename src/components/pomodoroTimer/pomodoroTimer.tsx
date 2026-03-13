@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase } from 'react-icons/fa';
+import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase, FaTrophy } from 'react-icons/fa';
 import { GiTomato } from 'react-icons/gi';
 import ToolCardDnd from '../common/ToolCardDnd';
 import { Icon } from '../../utils/IconHelper';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
+import PracticeHeatmap from './PracticeHeatmap';
 
 // Styled components
 const TimerWrapper = styled(motion.div)`
@@ -219,6 +220,35 @@ const saveSettings = (settings: { workMinutes: number; breakMinutes: number; lon
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 };
 
+const PRACTICE_LOG_KEY = 'blocks-practice-log';
+
+interface PracticeEntry {
+  date: string;
+  count: number;
+}
+
+const loadPracticeLog = (): PracticeEntry[] => {
+  try {
+    const stored = localStorage.getItem(PRACTICE_LOG_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return [];
+};
+
+const logPracticeSession = () => {
+  const log = loadPracticeLog();
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const existing = log.find(e => e.date === dateStr);
+  if (existing) {
+    existing.count++;
+  } else {
+    log.push({ date: dateStr, count: 1 });
+  }
+  localStorage.setItem(PRACTICE_LOG_KEY, JSON.stringify(log));
+  return log;
+};
+
 interface PomodoroTimerProps {
   onRemove?: () => void;
   canRemove?: boolean;
@@ -246,6 +276,8 @@ export default function PomodoroTimer({
   const [workMinutes, setWorkMinutes] = useState(saved.current?.workMinutes ?? 25);
   const [breakMinutes, setBreakMinutes] = useState(saved.current?.breakMinutes ?? 5);
   const [longBreakMinutes, setLongBreakMinutes] = useState(saved.current?.longBreakMinutes ?? 15);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [practiceLog, setPracticeLog] = useState<PracticeEntry[]>(loadPracticeLog);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -312,6 +344,9 @@ export default function PomodoroTimer({
       setMode('break');
       setTime(dur);
       setTotalTime(dur);
+      // Log completed focus session
+      const updatedLog = logPracticeSession();
+      setPracticeLog(updatedLog);
     } else {
       // Break ending → back to work
       if (!muteAlert) {
@@ -580,8 +615,23 @@ export default function PomodoroTimer({
             )}
           </AnimatePresence>
         </div>
+
+        <TimerButton
+          whileHover={{ scale: 1.2 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowHeatmap(!showHeatmap)}
+          title="Practice heatmap"
+          style={showHeatmap ? { color: 'inherit' } : undefined}
+        >
+          <IconWrapper><Icon icon={FaTrophy} size={20} /></IconWrapper>
+        </TimerButton>
       </TimerControls>
 
+      <AnimatePresence>
+        {showHeatmap && (
+          <PracticeHeatmap data={practiceLog} />
+        )}
+      </AnimatePresence>
 
       <TipsModal
         isOpen={showTips}
