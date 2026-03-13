@@ -87,8 +87,9 @@ const InnerDot = styled.div<{ $completed: boolean }>`
 
 const TimerControls = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  justify-content: center;
+  justify-content: space-between;
+  width: 210px;
+  margin: 0 auto;
 `;
 
 const TimerButton = styled(motion.button)`
@@ -148,20 +149,37 @@ const SettingsLabel = styled.span`
   flex-shrink: 0;
 `;
 
-const SettingsValue = styled.span`
+const SettingsInput = styled.input`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text};
   font-family: inherit;
   font-weight: 600;
-  min-width: 52px;
+  width: 52px;
   text-align: center;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  padding: 4px 2px;
+  outline: none;
+  transition: border-color ${({ theme }) => theme.transitions.fast};
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
 `;
 
 const SmallButton = styled(motion.button)`
   width: 28px;
   height: 28px;
-  background: ${({ theme }) => `${theme.colors.primary}20`};
-  border: 1px solid ${({ theme }) => `${theme.colors.primary}60`};
+  background: transparent;
+  border: none;
   color: ${({ theme }) => theme.colors.primary};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   cursor: pointer;
@@ -171,26 +189,62 @@ const SmallButton = styled(motion.button)`
   justify-content: center;
 
   &:hover {
-    background: ${({ theme }) => `${theme.colors.primary}30`};
+    color: ${({ theme }) => theme.colors.secondary};
   }
 `;
 
-const MuteRow = styled.div`
+const VolumeRow = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  cursor: pointer;
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-  color: ${({ theme }) => theme.colors.primary};
+`;
 
-  &:hover {
-    opacity: 0.8;
+const VolumeSlider = styled.input`
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: ${({ theme }) => theme.colors.border};
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+    border: none;
   }
 `;
 
-const MuteLabel = styled.span`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
+const VolumeIcon = styled.button`
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${({ theme }) => theme.fontSizes.md};
+  flex-shrink: 0;
+  padding: 0;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.secondary};
+  }
 `;
 
 const getProgressColor = (fraction: number): string => {
@@ -224,7 +278,7 @@ const loadSettings = () => {
   return null;
 };
 
-const saveSettings = (settings: { workMinutes: number; breakMinutes: number; longBreakMinutes: number; muteAlert: boolean }) => {
+const saveSettings = (settings: { workMinutes: number; breakMinutes: number; longBreakMinutes: number; alertVolume: number }) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 };
 
@@ -278,7 +332,11 @@ export default function PomodoroTimer({
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
   const saved = useRef(loadSettings());
-  const [muteAlert, setMuteAlert] = useState(saved.current?.muteAlert ?? false);
+  const [alertVolume, setAlertVolume] = useState(() => {
+    if (saved.current?.alertVolume !== undefined) return saved.current.alertVolume;
+    if (saved.current?.muteAlert === true) return 0;
+    return 0.3;
+  });
   const [isLongBreak, setIsLongBreak] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [workMinutes, setWorkMinutes] = useState(saved.current?.workMinutes ?? 25);
@@ -289,6 +347,7 @@ export default function PomodoroTimer({
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const preMuteVolumeRef = useRef(alertVolume > 0 ? alertVolume : 0.3);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
@@ -310,33 +369,36 @@ export default function PomodoroTimer({
   };
 
   // Work done → time to relax: single long descending tone
-  const playBreakSound = () => {
+  const playBreakSound = (vol?: number) => {
     const ctx = audioContextRef.current;
-    if (!ctx) return;
+    const v = vol ?? alertVolume;
+    if (!ctx || v === 0) return;
     if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
-    playTone(ctx, 659.25, now, 1.0);
+    playTone(ctx, 659.25, now, 1.0, v);
   };
 
   // Break done → back to work: quick double tap
-  const playWorkSound = () => {
+  const playWorkSound = (vol?: number) => {
     const ctx = audioContextRef.current;
-    if (!ctx) return;
+    const v = vol ?? alertVolume;
+    if (!ctx || v === 0) return;
     if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
-    playTone(ctx, 523.25, now, 0.15, 0.25);
-    playTone(ctx, 523.25, now + 0.2, 0.15, 0.25);
+    playTone(ctx, 523.25, now, 0.15, v);
+    playTone(ctx, 523.25, now + 0.2, 0.15, v);
   };
 
   // Full cycle complete (after long break): three ascending tones
-  const playCycleCompleteSound = () => {
+  const playCycleCompleteSound = (vol?: number) => {
     const ctx = audioContextRef.current;
-    if (!ctx) return;
+    const v = vol ?? alertVolume;
+    if (!ctx || v === 0) return;
     if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
-    playTone(ctx, 523.25, now, 0.4, 0.25);
-    playTone(ctx, 659.25, now + 0.2, 0.4, 0.25);
-    playTone(ctx, 783.99, now + 0.4, 0.6, 0.3);
+    playTone(ctx, 523.25, now, 0.4, v);
+    playTone(ctx, 659.25, now + 0.2, 0.4, v);
+    playTone(ctx, 783.99, now + 0.4, 0.6, v);
   };
 
   // Ref to always have the latest completion handler (avoids stale closures in interval)
@@ -347,7 +409,7 @@ export default function PomodoroTimer({
       setSessionsCompleted(newSessions);
       const goingToLongBreak = newSessions % 4 === 0;
       const dur = goingToLongBreak ? longBreakMinutes * 60 : breakMinutes * 60;
-      if (!muteAlert) playBreakSound();
+      playBreakSound();
       setIsLongBreak(goingToLongBreak);
       setMode('break');
       setTime(dur);
@@ -357,12 +419,10 @@ export default function PomodoroTimer({
       setPracticeLog(updatedLog);
     } else {
       // Break ending → back to work
-      if (!muteAlert) {
-        if (isLongBreak) {
-          playCycleCompleteSound();
-        } else {
-          playWorkSound();
-        }
+      if (isLongBreak) {
+        playCycleCompleteSound();
+      } else {
+        playWorkSound();
       }
       setIsLongBreak(false);
       const dur = workMinutes * 60;
@@ -457,8 +517,32 @@ export default function PomodoroTimer({
 
   // Persist settings to localStorage
   useEffect(() => {
-    saveSettings({ workMinutes, breakMinutes, longBreakMinutes, muteAlert });
-  }, [workMinutes, breakMinutes, longBreakMinutes, muteAlert]);
+    saveSettings({ workMinutes, breakMinutes, longBreakMinutes, alertVolume });
+  }, [workMinutes, breakMinutes, longBreakMinutes, alertVolume]);
+
+  // Play alert sound once when the user releases the volume slider
+  const alertVolumeRef = useRef(alertVolume);
+  alertVolumeRef.current = alertVolume;
+
+  const previewAlertSound = () => {
+    if (alertVolumeRef.current === 0) return;
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+    playBreakSound(alertVolumeRef.current);
+  };
+
+  const toggleMute = () => {
+    if (alertVolume > 0) {
+      preMuteVolumeRef.current = alertVolume;
+      setAlertVolume(0);
+    } else {
+      setAlertVolume(preMuteVolumeRef.current);
+    }
+  };
 
   // Show all 4 dots filled during a long break after completing 4 sessions
   const sessionsInCycle = sessionsCompleted % 4;
@@ -602,7 +686,15 @@ export default function PomodoroTimer({
                   <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
                     <Icon icon={FaMinus} size={10} />
                   </SmallButton>
-                  <SettingsValue>{workMinutes} min</SettingsValue>
+                  <SettingsInput
+                    type="number"
+                    value={workMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setWorkMinutes(v); }}
+                    onBlur={() => setWorkMinutes(Math.max(1, Math.min(60, workMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Focus duration in minutes (1–60)"
+                  />
                   <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
                     <Icon icon={FaPlus} size={10} />
                   </SmallButton>
@@ -613,7 +705,15 @@ export default function PomodoroTimer({
                   <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
                     <Icon icon={FaMinus} size={10} />
                   </SmallButton>
-                  <SettingsValue>{breakMinutes} min</SettingsValue>
+                  <SettingsInput
+                    type="number"
+                    value={breakMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setBreakMinutes(v); }}
+                    onBlur={() => setBreakMinutes(Math.max(1, Math.min(30, breakMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Break duration in minutes (1–30)"
+                  />
                   <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
                     <Icon icon={FaPlus} size={10} />
                   </SmallButton>
@@ -624,18 +724,43 @@ export default function PomodoroTimer({
                   <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
                     <Icon icon={FaMinus} size={10} />
                   </SmallButton>
-                  <SettingsValue>{longBreakMinutes} min</SettingsValue>
+                  <SettingsInput
+                    type="number"
+                    value={longBreakMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setLongBreakMinutes(v); }}
+                    onBlur={() => setLongBreakMinutes(Math.max(2, Math.min(60, longBreakMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Long break duration in minutes (2–60)"
+                  />
                   <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
                     <Icon icon={FaPlus} size={10} />
                   </SmallButton>
                 </SettingsRow>
 
-                <MuteRow onClick={() => setMuteAlert(!muteAlert)} title={muteAlert ? "Unmute alert sound" : "Mute alert sound"}>
-                  <IconWrapper>
-                    <Icon icon={muteAlert ? FaVolumeMute : FaVolumeUp} size={16} />
-                  </IconWrapper>
-                  <MuteLabel>{muteAlert ? 'Alert muted' : 'Alert sound on'}</MuteLabel>
-                </MuteRow>
+                <VolumeRow>
+                  <VolumeIcon
+                    onClick={toggleMute}
+                    title={alertVolume === 0 ? "Unmute alert" : "Mute alert"}
+                  >
+                    <Icon icon={alertVolume === 0 ? FaVolumeMute : FaVolumeUp} size={16} />
+                  </VolumeIcon>
+                  <VolumeSlider
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={alertVolume}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (v > 0) preMuteVolumeRef.current = v;
+                      setAlertVolume(v);
+                    }}
+                    onMouseUp={previewAlertSound}
+                    onTouchEnd={previewAlertSound}
+                    title={`Alert volume: ${Math.round(alertVolume * 100)}%`}
+                  />
+                </VolumeRow>
               </SettingsDropdown>
             )}
           </AnimatePresence>
