@@ -658,7 +658,7 @@ export default function PomodoroTimer({
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowHeatmap(!showHeatmap)}
-          title={showHeatmap ? "Back to timer" : "View practice history"}
+          title={showHeatmap ? "Back to timer" : "Session history"}
         >
           <IconWrapper><Icon icon={showHeatmap ? FaClock : FaTrophy} size={20} /></IconWrapper>
         </TimerButton>
@@ -774,13 +774,16 @@ export default function PomodoroTimer({
         content={
           <>
             <p>
-              This timer follows the Pomodoro technique.
+              This timer follows the Pomodoro technique. Work in focused intervals, then take a short break. After 4 sessions, a longer break is triggered automatically.
             </p>
             <p>
-              Work in focused intervals, then take a short break. After 4 sessions, a longer break is triggered automatically.
+              The timer auto-transitions between focus and break periods. Click the timer face or the play button to start and pause.
             </p>
             <p>
-              The timer auto-transitions between focus and break periods. Use the gear icon to customize durations and mute the alert sound.
+              Use the gear icon to set focus, break, and long break durations. You can type a value directly into each field or use the +/- buttons. The volume slider controls the alert sound — click the speaker icon to mute or unmute.
+            </p>
+            <p>
+              The trophy icon opens your session history — a heatmap showing your activity over the last 16 weeks. Each completed focus session is tracked automatically. Build a streak to unlock milestone badges.
             </p>
           </>
         }
