@@ -183,7 +183,7 @@ export const vintageTheme = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// INDIE — TASCAM 424 MkII steel-blue, gold knobs, teal meters
+// INDIE — TASCAM 424 MkII steel-blue, gold knobs, teal meters, VT323 dot-matrix font
 // ──────────────────────────────────────────────────────────────
 // Dark-family theme. Background is deep navy-steel; cards are
 // a brighter steel-blue so they feel like raised equipment panels.
@@ -195,7 +195,7 @@ export const vintageTheme = {
 //   buttonText #1a2830 on primary #e8a832 — dark navy on gold ✓
 //   primary #e8a832 on card #3d6380       — gold pops on blue ✓
 export const indieTheme = {
-  fontFamily: "'Silkscreen', 'Press Start 2P', monospace",
+  fontFamily: "'VT323', 'Courier New', monospace",
   colors: {
     background: '#2e4558',       // deep navy-steel
     card: '#3d6380',             // brighter steel blue — clear lift from bg
@@ -225,16 +225,16 @@ export const indieTheme = {
   },
   backgroundPattern: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120'%3E%3Cg opacity='0.15'%3E%3Crect x='20' y='15' width='60' height='38' rx='4' fill='none' stroke='%23e8a832' stroke-width='1.2'/%3E%3Crect x='25' y='20' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Crect x='52' y='20' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Ccircle cx='36' cy='44' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Ccircle cx='63' cy='44' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3C/g%3E%3Cg opacity='0.15' transform='translate(100,65) rotate(-8)'%3E%3Crect x='0' y='0' width='60' height='38' rx='4' fill='none' stroke='%23e8a832' stroke-width='1.2'/%3E%3Crect x='5' y='5' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Crect x='32' y='5' width='22' height='14' rx='2' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Ccircle cx='16' cy='29' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3Ccircle cx='43' cy='29' r='4' fill='none' stroke='%23e8a832' stroke-width='0.8'/%3E%3C/g%3E%3C/svg%3E")`,
   ...sharedTokens,
-  // Silkscreen is a pixel font that renders large — scale down
+  // VT323 dot-matrix font — bump up for that chunky retro feel
   fontSizes: {
-    xs: '0.6rem',
-    sm: '0.7rem',
-    md: '0.8rem',
-    lg: '0.9rem',
-    xl: '1rem',
-    xxl: '1.2rem',
-    xxxl: '1.6rem',
-    timer: '2rem',
+    xs: '1rem',
+    sm: '1.15rem',
+    md: '1.3rem',
+    lg: '1.45rem',
+    xl: '1.6rem',
+    xxl: '1.9rem',
+    xxxl: '2.5rem',
+    timer: '3.2rem',
   },
 };
 
@@ -254,7 +254,7 @@ export const indieTheme = {
 export const discoTheme = {
   fontFamily: "'Fredoka', 'Baloo 2', 'Trebuchet MS', sans-serif",
   colors: {
-    background: '#150818',       // near-black purple void
+    background: '#110614',       // deeper black-purple void
     card: '#2a1238',             // dark purple — clear lift from bg
     primary: '#ff2d9b',          // hot neon pink
     secondary: '#00e8c6',        // electric neon teal
@@ -280,6 +280,9 @@ export const discoTheme = {
     medium: '0 4px 16px rgba(255, 45, 155, 0.3)',
     large: '0 8px 24px rgba(255, 45, 155, 0.4)',
   },
+  // 70s bullseye-arc lounge backdrop — 130px tile, large elegant quarter-circle strokes
+  // r=100/64/28, stroke 14/14/12, dark purple→purple→magenta at 0.05→0.06→0.07 opacity
+  backgroundPattern: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cpath d='M100 0 A100 100 0 0 1 0 100' fill='none' stroke='%231a0a2e' stroke-width='14' opacity='0.05'/%3E%3Cpath d='M64 0 A64 64 0 0 1 0 64' fill='none' stroke='%239040d0' stroke-width='14' opacity='0.06'/%3E%3Cpath d='M28 0 A28 28 0 0 1 0 28' fill='none' stroke='%23d050f0' stroke-width='12' opacity='0.07'/%3E%3Cpath d='M30 0 A100 100 0 0 0 130 100' fill='none' stroke='%231a0a2e' stroke-width='14' opacity='0.05'/%3E%3Cpath d='M66 0 A64 64 0 0 0 130 64' fill='none' stroke='%239040d0' stroke-width='14' opacity='0.06'/%3E%3Cpath d='M102 0 A28 28 0 0 0 130 28' fill='none' stroke='%23d050f0' stroke-width='12' opacity='0.07'/%3E%3Cpath d='M0 30 A100 100 0 0 1 100 130' fill='none' stroke='%231a0a2e' stroke-width='14' opacity='0.05'/%3E%3Cpath d='M0 66 A64 64 0 0 1 64 130' fill='none' stroke='%239040d0' stroke-width='14' opacity='0.06'/%3E%3Cpath d='M0 102 A28 28 0 0 1 28 130' fill='none' stroke='%23d050f0' stroke-width='12' opacity='0.07'/%3E%3Cpath d='M130 30 A100 100 0 0 0 30 130' fill='none' stroke='%231a0a2e' stroke-width='14' opacity='0.05'/%3E%3Cpath d='M130 66 A64 64 0 0 0 66 130' fill='none' stroke='%239040d0' stroke-width='14' opacity='0.06'/%3E%3Cpath d='M130 102 A28 28 0 0 0 102 130' fill='none' stroke='%23d050f0' stroke-width='12' opacity='0.07'/%3E%3C/svg%3E")`,
   ...sharedTokens,
 };
 
@@ -333,7 +336,7 @@ function isValidThemeName(value: string): value is ThemeName {
 // Light/Dark use Inter/Roboto which are loaded in index.html.
 const THEME_FONT_URLS: Partial<Record<ThemeName, string>> = {
   vintage: 'https://fonts.googleapis.com/css2?family=Righteous&display=swap',
-  indie: 'https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap',
+  indie: 'https://fonts.googleapis.com/css2?family=VT323&display=swap',
   disco: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap',
   hiphop: 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap',
 };
