@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/metronome-time-signatures-0IFOX
+      - feature/arrangement-redesign
 
 permissions:
   contents: read
