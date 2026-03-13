@@ -3,6 +3,8 @@ import styled, { keyframes } from 'styled-components';
 import { FaDice } from 'react-icons/fa';
 import { Card } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
+import TipsModal from '../common/TipsModal';
+import HelpButton from '../common/HelpButton';
 
 interface Scene {
   name: string;
@@ -450,26 +452,50 @@ const ENERGY_LABEL_COLOR_KEYS: Record<number, string> = {
   4: 'error',
 };
 
-/** Extract a one-word label per scene, deduplicating repeated first words. */
-function getLabels(scenes: Scene[]): string[] {
-  const firstWords = scenes.map(s => {
-    const cleaned = s.name
-      .replace(/^(Part\s+)?(I{1,3}V?|V?I{0,3}|[0-9]+)\s*[—–\-:]\s*/i, '')
-      .replace(/\s*[—–\-\/]\s*.*$/, '');
-    const words = cleaned.split(/[\s+,()]+/);
-    return words[0] || s.name.split(/[\s—–\-+\/,()]+/)[0];
-  });
+interface LabelSet {
+  full: string;   // For wide blocks: first meaningful word
+  short: string;  // For narrow blocks: type initial + optional number (always ≥1 letter)
+}
 
-  const counts: Record<string, number> = {};
-  firstWords.forEach(w => { counts[w] = (counts[w] || 0) + 1; });
+/**
+ * Compute display labels for each scene.
+ *   full  — first meaningful word from the name (for wide blocks)
+ *   short — section-type initial + any explicit number, e.g. V1, C2, Br (for narrow blocks)
+ * The short label always starts with a letter, never a bare number.
+ */
+function computeLabels(scenes: Scene[]): LabelSet[] {
+  return scenes.map(s => {
+    const name = s.name;
+    const n = name.toLowerCase();
 
-  return scenes.map((s, i) => {
-    if (counts[firstWords[i]] > 1) {
-      const cleaned = s.name.replace(/^(Part\s+)?(I{1,3}V?|V?I{0,3}|[0-9]+)\s*[—–\-:]\s*/i, '');
-      const words = cleaned.split(/[\s—–\-+/,()]+/).filter(Boolean);
-      if (words.length > 1) return words[words.length - 1];
-    }
-    return firstWords[i];
+    // Extract any explicit number from the name
+    const numMatch = name.match(/(\d+)/);
+    const num = numMatch ? numMatch[1] : '';
+
+    // Full label: first meaningful (non-numeric) word
+    const cleaned = name
+      .replace(/^(Part\s+)?(I{1,3}V?|V?I{0,3})\s*[—–\-:]\s*/i, '')
+      .replace(/\s*[—–\-/]\s*.*$/, '')
+      .trim();
+    const words = cleaned.split(/[\s+,()]+/).filter(Boolean);
+    const fullWord = words.find(w => !/^\d+$/.test(w)) || words[0] || 'X';
+
+    // Short label: detect section type → letter code, append number if present
+    let initial: string;
+    if (/chorus|refrain/.test(n)) initial = 'C';
+    else if (/verse/.test(n)) initial = 'V';
+    else if (/intro/.test(n)) initial = 'I';
+    else if (/outro/.test(n)) initial = 'O';
+    else if (/bridge/.test(n)) initial = 'Br';
+    else if (/solo/.test(n)) initial = 'S';
+    else if (/hook/.test(n)) initial = 'H';
+    else if (/drop/.test(n)) initial = 'D';
+    else if (/build/.test(n)) initial = 'Bl';
+    else if (/break/.test(n)) initial = 'Bk';
+    else if (/peak|climax/.test(n)) initial = 'P';
+    else initial = fullWord.charAt(0).toUpperCase();
+
+    return { full: fullWord, short: num ? `${initial}${num}` : initial };
   });
 }
 
@@ -502,7 +528,6 @@ const ArrangementCard = styled(Card)`
 
 const TemplateSelector = styled.div`
   background: ${({ theme }) => theme.colors.card};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.md};
   position: relative;
   z-index: 10;
@@ -722,13 +747,12 @@ const BlockLabel = styled.span`
   font-size: 10px;
   font-weight: 600;
   color: var(--button-text);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: calc(100% - 8px);
-  padding: 0 4px 5px;
+  max-width: calc(100% - 4px);
   line-height: 1;
+  padding: 0 2px 4px;
 `;
 
 const BarCountRow = styled.div`
@@ -768,6 +792,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     return saved && ALL_TEMPLATES[saved] ? saved : 'Two Peaks';
   });
   const [isOpen, setIsOpen] = useState(false);
+  const [showTips, setShowTips] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const barRowRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -797,7 +822,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   const template = ALL_TEMPLATES[selected];
   const totalBars = template.scenes.reduce((a, s) => a + s.bars, 0);
 
-  const labels = useMemo(() => getLabels(template.scenes), [template.scenes]);
+  const labelSets = useMemo(() => computeLabels(template.scenes), [template.scenes]);
 
   const barsUpTo = useMemo(() => {
     const result: number[] = [];
@@ -961,6 +986,9 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
               )}
             </div>
             <div style={{ display: 'flex', gap: '16px', flexShrink: 0, alignItems: 'center' }}>
+              <HelpButton onClick={() => setShowTips(true)} />
+            </div>
+            <div style={{ display: 'flex', gap: '16px', flexShrink: 0, alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>
                   SECTIONS
@@ -980,8 +1008,16 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
             </div>
           </div>
 
-          <div style={{ textAlign: 'left', marginTop: '4px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div style={{ textAlign: 'left', marginTop: '4px', minHeight: '48px' }}>
+            <div style={{
+              fontSize: '10px',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.5,
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical' as const,
+            }}>
               {template.desc}
             </div>
             <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '3px' }}>
@@ -1003,7 +1039,10 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
               const blockPixelWidth = availableWidth > 0
                 ? (scene.bars / totalBars) * availableWidth
                 : 0;
-              const showLabel = blockPixelWidth >= 60;
+
+              // Tiered label: ≥60px full word, <60px short code (always ≥1 letter)
+              const { full, short } = labelSets[i];
+              const displayLabel = blockPixelWidth >= 60 ? full : short;
 
               // Flip tooltip for blocks in the right ~30% of the layout
               const isNearRight = (barsUpTo[i] + scene.bars) > totalBars * 0.7;
@@ -1018,7 +1057,7 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
                     $color={colorVar}
                     $alpha={alpha}
                   >
-                    {showLabel && <BlockLabel>{labels[i]}</BlockLabel>}
+                    {displayLabel && <BlockLabel>{displayLabel}</BlockLabel>}
                     <SectionTooltip $flipLeft={isNearRight}>
                       <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                         {scene.name}
@@ -1045,6 +1084,87 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
           </BarCountRow>
         </VisualizationContainer>
       </ArrangementCard>
+      <TipsModal
+        isOpen={showTips}
+        onClose={() => setShowTips(false)}
+        title="Arrangement Guide"
+        content={
+          <>
+            <p>
+              The arrangement visualization shows your song's <strong>energy arc</strong> at a glance.
+              Each block is a section of your song.
+            </p>
+
+            <h3>Reading the visualization</h3>
+            <ul>
+              <li><strong>Width</strong> = number of bars (duration)</li>
+              <li><strong>Height</strong> = energy level (intensity)</li>
+              <li>The overall silhouette reads as the song's energy arc</li>
+            </ul>
+
+            <h3>Energy levels</h3>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              {([
+                { level: 4, label: 'Peak', height: '40px' },
+                { level: 3, label: 'High', height: '30px' },
+                { level: 2, label: 'Medium', height: '20px' },
+                { level: 1, label: 'Low', height: '12px' },
+              ] as const).map(({ level, label, height }) => (
+                <div key={level} style={{ display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
+                  <div style={{
+                    width: '24px',
+                    height,
+                    background: ENERGY_COLORS[level].clip,
+                    borderRadius: '3px',
+                    opacity: 0.45 + (level / 4) * 0.5,
+                  }} />
+                  <span style={{ fontSize: '11px', lineHeight: 1 }}>{label}</span>
+                </div>
+              ))}
+            </div>
+
+            <h3>Section codes</h3>
+            <p>Narrow blocks show abbreviated labels. Here's the key:</p>
+            <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--border)' }}>Code</th>
+                  <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--border)' }}>Section type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['V', 'Verse'],
+                  ['C', 'Chorus / Refrain'],
+                  ['I', 'Intro'],
+                  ['O', 'Outro'],
+                  ['Br', 'Bridge'],
+                  ['S', 'Solo'],
+                  ['H', 'Hook'],
+                  ['D', 'Drop'],
+                  ['Bl', 'Build'],
+                  ['Bk', 'Break / Breakdown'],
+                  ['P', 'Peak / Climax'],
+                ].map(([code, name]) => (
+                  <tr key={code}>
+                    <td style={{ padding: '3px 8px', fontWeight: 600 }}><code>{code}</code></td>
+                    <td style={{ padding: '3px 8px' }}>{name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: '11px', marginTop: '6px' }}>
+              Numbers are appended for repeated sections: <code>V1</code>, <code>V2</code>, <code>C2</code>, etc.
+            </p>
+
+            <h3>Templates</h3>
+            <p>
+              Choose from {Object.keys(ALL_TEMPLATES).length} arrangement templates across {CATEGORIES.length} categories.
+              Use the dice button to pick one at random. Hover any block for full details.
+            </p>
+          </>
+        }
+      />
     </ThemeAwareWrapper>
   );
 };
