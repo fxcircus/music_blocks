@@ -3,7 +3,8 @@ import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, THEME_ORDER, THEME_LABELS, ThemeName, lightTheme, darkTheme, vintageTheme, indieTheme, discoTheme, hiphopTheme, loadThemeFont } from '../../theme/ThemeProvider';
-import { FaCheck, FaTimes, FaLink, FaCoffee } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaShareSquare } from 'react-icons/fa';
+import { BiCoffeeTogo } from 'react-icons/bi';
 import { Icon } from '../../utils/IconHelper';
 import ThemeIcon from './ThemeIcons';
 import { loadBlockState } from '../../utils/blockStorage';
@@ -556,7 +557,7 @@ const Nav: FC = () => {
               title="Copy Share Link"
             >
               <IconWrapper>
-                <Icon icon={FaLink} size={16} />
+                <Icon icon={FaShareSquare} size={16} />
               </IconWrapper>
             </ActionButton>
             
@@ -569,7 +570,7 @@ const Nav: FC = () => {
               title="Support this project (on Buy Me Coffee)"
             >
               <IconWrapper>
-                <Icon icon={FaCoffee} size={16} />
+                <Icon icon={BiCoffeeTogo} size={16} />
               </IconWrapper>
             </SupportButton>
 

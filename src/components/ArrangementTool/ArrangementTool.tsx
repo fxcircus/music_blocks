@@ -585,6 +585,9 @@ const SceneList = styled.div`
   overflow-x: hidden;
   padding: ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.card};
+  display: flex;
+  flex-direction: column;
+  min-height: 440px;
 `;
 
 const SceneItem = styled.div<{ $energy: number }>`
@@ -618,6 +621,7 @@ const SceneContent = styled.div`
 const EnergyArcContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.card};
+  margin-top: auto;
 `;
 
 const EnergyArcChart = styled.div`

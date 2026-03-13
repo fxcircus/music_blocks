@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaGithub, FaReact, FaIcons, FaWaveSquare, FaChartBar, FaLink, FaQuestionCircle } from 'react-icons/fa';
+import { FaGithub, FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle } from 'react-icons/fa';
 import { GiTomato, GiMetronome } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
 import { MdDarkMode, MdAutoAwesome } from 'react-icons/md';
@@ -208,7 +208,7 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong><IconContainer><Icon icon={FaLink} size={16} /></IconContainer> Share Your Work:</Strong>
+              <Strong><IconContainer><Icon icon={FaShareSquare} size={16} /></IconContainer> Share Your Work:</Strong>
               <NestedList>
                 <ListItem>Copy a compressed URL with your full project state — settings, notes, block layout, everything.</ListItem>
               </NestedList>

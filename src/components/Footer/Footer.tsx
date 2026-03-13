@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FaCoffee, FaGithub } from 'react-icons/fa';
+import { FaGithub } from 'react-icons/fa';
+import { BiCoffeeTogo } from 'react-icons/bi';
 import { Icon } from '../../utils/IconHelper';
 
 const FooterContainer = styled.footer`
@@ -62,7 +63,7 @@ const Footer: React.FC = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <IconWrapper><Icon icon={FaCoffee} size={14} /></IconWrapper>
+          <IconWrapper><Icon icon={BiCoffeeTogo} size={14} /></IconWrapper>
           Support the Project
         </FooterLink>
       </FooterInner>

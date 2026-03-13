@@ -2456,7 +2456,7 @@ export default function InspirationGenerator({
                       onClick={() => setShowSoundDropdown(!showSoundDropdown)}
                       title="Sound settings"
                     >
-                      <Icon icon={getInstrumentVolumeIcon()} size={14} />
+                      <span style={{ display: 'inline-flex', width: 18, justifyContent: 'flex-start' }}><Icon icon={getInstrumentVolumeIcon()} size={14} /></span>
                     </VisualizerIconButton>
                     <SoundDropdownPanel
                       isOpen={showSoundDropdown}

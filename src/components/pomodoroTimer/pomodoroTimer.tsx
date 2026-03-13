@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase } from 'react-icons/fa';
@@ -109,15 +109,22 @@ const IconWrapper = styled.span`
   justify-content: center;
 `;
 
-const SettingsPanel = styled(motion.div)`
-  margin-top: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
+const SettingsDropdown = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  padding: ${({ theme }) => theme.spacing.md};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
+  z-index: 100;
+  min-width: 220px;
 `;
+
 
 const SettingsRow = styled.div`
   display: flex;
@@ -241,6 +248,20 @@ export default function PomodoroTimer({
   const [longBreakMinutes, setLongBreakMinutes] = useState(saved.current?.longBreakMinutes ?? 15);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+      setShowSettings(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showSettings) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettings, handleClickOutside]);
 
   const secondsToMinutes = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -494,70 +515,73 @@ export default function PomodoroTimer({
           title={mode === 'work' ? "Take a break" : "Back to focus"}
         >
           <IconWrapper>
-            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={20} />
+            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={24} />
           </IconWrapper>
         </TimerButton>
 
-        <TimerButton
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowSettings(!showSettings)}
-          title="Settings"
-        >
-          <IconWrapper><Icon icon={FaCog} size={20} /></IconWrapper>
-        </TimerButton>
+        <div ref={settingsRef} style={{ position: 'relative' }}>
+          <TimerButton
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowSettings(!showSettings)}
+            title="Settings"
+          >
+            <IconWrapper><Icon icon={FaCog} size={20} /></IconWrapper>
+          </TimerButton>
+          <AnimatePresence>
+            {showSettings && (
+              <SettingsDropdown
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SettingsRow>
+                  <SettingsLabel>Focus</SettingsLabel>
+                  <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsValue>{workMinutes} min</SettingsValue>
+                  <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+
+                <SettingsRow>
+                  <SettingsLabel>Break</SettingsLabel>
+                  <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsValue>{breakMinutes} min</SettingsValue>
+                  <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+
+                <SettingsRow>
+                  <SettingsLabel>Long</SettingsLabel>
+                  <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsValue>{longBreakMinutes} min</SettingsValue>
+                  <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+
+                <MuteRow onClick={() => setMuteAlert(!muteAlert)} title={muteAlert ? "Unmute alert" : "Mute alert"}>
+                  <IconWrapper>
+                    <Icon icon={muteAlert ? FaVolumeMute : FaVolumeUp} size={16} />
+                  </IconWrapper>
+                  <MuteLabel>{muteAlert ? 'Alert muted' : 'Alert sound on'}</MuteLabel>
+                </MuteRow>
+              </SettingsDropdown>
+            )}
+          </AnimatePresence>
+        </div>
       </TimerControls>
 
-      <AnimatePresence>
-        {showSettings && (
-          <SettingsPanel
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-          >
-            <SettingsRow>
-              <SettingsLabel>Focus</SettingsLabel>
-              <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
-                <Icon icon={FaMinus} size={10} />
-              </SmallButton>
-              <SettingsValue>{workMinutes} min</SettingsValue>
-              <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
-                <Icon icon={FaPlus} size={10} />
-              </SmallButton>
-            </SettingsRow>
-
-            <SettingsRow>
-              <SettingsLabel>Break</SettingsLabel>
-              <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
-                <Icon icon={FaMinus} size={10} />
-              </SmallButton>
-              <SettingsValue>{breakMinutes} min</SettingsValue>
-              <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
-                <Icon icon={FaPlus} size={10} />
-              </SmallButton>
-            </SettingsRow>
-
-            <SettingsRow>
-              <SettingsLabel>Long</SettingsLabel>
-              <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
-                <Icon icon={FaMinus} size={10} />
-              </SmallButton>
-              <SettingsValue>{longBreakMinutes} min</SettingsValue>
-              <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
-                <Icon icon={FaPlus} size={10} />
-              </SmallButton>
-            </SettingsRow>
-
-            <MuteRow onClick={() => setMuteAlert(!muteAlert)} title={muteAlert ? "Unmute alert" : "Mute alert"}>
-              <IconWrapper>
-                <Icon icon={muteAlert ? FaVolumeMute : FaVolumeUp} size={16} />
-              </IconWrapper>
-              <MuteLabel>{muteAlert ? 'Alert muted' : 'Alert sound on'}</MuteLabel>
-            </MuteRow>
-          </SettingsPanel>
-        )}
-      </AnimatePresence>
 
       <TipsModal
         isOpen={showTips}
