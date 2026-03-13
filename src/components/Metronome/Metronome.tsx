@@ -3,7 +3,7 @@ import styled, { useTheme } from 'styled-components';
 import { ThemeName } from '../../theme/ThemeProvider';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion } from 'framer-motion';
-import { FaVolumeMute, FaVolumeUp, FaVolumeDown, FaVolumeOff, FaPlay, FaPause, FaPlus, FaMinus, FaBug } from 'react-icons/fa';
+import { FaPlay, FaPause, FaPlus, FaMinus, FaBug, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
 import { Icon } from '../../utils/IconHelper';
 import ToolCardDnd from '../common/ToolCardDnd';
@@ -36,7 +36,7 @@ interface LoaderProps {
 const MetronomeDisplay = styled.div`
   width: 100%;
   position: relative;
-  height: 120px;
+  height: 180px;
   margin-bottom: ${({ theme }) => theme.spacing.xs};
   display: flex;
   align-items: flex-end;
@@ -44,23 +44,24 @@ const MetronomeDisplay = styled.div`
 `;
 
 const MetronomePendulum = styled(motion.div)<{ $useGradient?: boolean }>`
-  width: 4px;
-  height: 90px;
+  width: 6px;
+  height: 144px;
   background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
   position: relative;
+  z-index: 0;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   transform-origin: bottom center;
   box-shadow: ${({ theme }) => theme.shadows.small};
   cursor: pointer;
-  
+
   &::after {
     content: '';
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
+    width: 26px;
+    height: 26px;
     background: ${({ theme }) => theme.colors.primary};
     border-radius: 50%;
     box-shadow: ${({ theme }) => theme.shadows.medium};
@@ -68,28 +69,30 @@ const MetronomePendulum = styled(motion.div)<{ $useGradient?: boolean }>`
 `;
 
 const MetronomeBase = styled(motion.div)<{ $useGradient?: boolean }>`
-  width: 200px;
-  height: 25px;
+  width: 220px;
+  height: 31px;
   background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.large};
   position: absolute;
   bottom: 0;
+  z-index: 1;
   box-shadow: ${({ theme }) => theme.shadows.medium};
   cursor: pointer;
 `;
 
 const DialDisplay = styled.div`
   position: absolute;
-  bottom: 12px;
+  bottom: 0;
   left: 50%;
-  transform: translate(-52%, 50%);
+  transform: translateX(-52%);
+  height: 31px;
   z-index: 2;
   display: flex;
   align-items: center;
   gap: 0;
 
   .bpm-input {
-    font-size: ${({ theme }) => theme.fontSizes.lg};
+    font-size: 14px;
     font-weight: 700;
     color: #fff;
     background: transparent;
@@ -101,11 +104,10 @@ const DialDisplay = styled.div`
     cursor: pointer;
     width: 36px;
     margin-right: 25px;
-    // margin-left: 1px;
   }
 
   .dial-label {
-    font-size: ${({ theme }) => theme.fontSizes.xs};
+    font-size: 10px;
     font-weight: 600;
     color: ${({ theme }) => theme.colors.text};
     text-transform: uppercase;
@@ -115,7 +117,7 @@ const DialDisplay = styled.div`
   }
 
   .ts-button {
-    font-size: ${({ theme }) => theme.fontSizes.md};
+    font-size: 13px;
     font-weight: 700;
     color: #fff;
     background: transparent;
@@ -221,12 +223,42 @@ const BpmControls = styled.div`
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  height: 25px;
+  height: 31px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 200px;
+  gap: 220px;
   z-index: 1;
+`;
+
+const BottomActionBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const ActionButton = styled(motion.button)`
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(${({ theme }) => theme.fontSizes.md} * 1.1);
+  font-weight: 700;
+  padding: calc(${({ theme }) => theme.spacing.xs} * 1.1) calc(${({ theme }) => theme.spacing.md} * 1.1);
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  transition: color ${({ theme }) => theme.transitions.fast};
+  min-width: 57px;
+  gap: ${({ theme }) => theme.spacing.xs};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.secondary};
+  }
 `;
 
 const IconWrapper = styled.span`
@@ -607,6 +639,8 @@ const Metronome: FC<LoaderProps> = ({
     const [showSoundDropdown, setShowSoundDropdown] = useState(false);
     const tsDropdownRef = useRef<HTMLDivElement>(null);
     const soundDropdownRef = useRef<HTMLDivElement>(null);
+    const tapTimesRef = useRef<number[]>([]);
+    const tapResetTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Derive beats array and accent pattern from current time signature
     const tsConfig = TIME_SIGNATURES[timeSignature] || TIME_SIGNATURES['4/4'];
@@ -669,6 +703,10 @@ const Metronome: FC<LoaderProps> = ({
             if (ignoreTimeoutRef.current !== null) {
                 clearTimeout(ignoreTimeoutRef.current);
                 ignoreTimeoutRef.current = null;
+            }
+            if (tapResetTimerRef.current !== null) {
+                clearTimeout(tapResetTimerRef.current);
+                tapResetTimerRef.current = null;
             }
             
             // Clean up metronome
@@ -882,6 +920,54 @@ const Metronome: FC<LoaderProps> = ({
         setMetronomePlaying(!metronomePlaying);
     };
     
+    const handleTapTempo = () => {
+        const now = performance.now();
+
+        // Clear previous auto-reset timer
+        if (tapResetTimerRef.current) {
+            clearTimeout(tapResetTimerRef.current);
+        }
+
+        // Schedule auto-reset after 1 second of inactivity
+        tapResetTimerRef.current = setTimeout(() => {
+            tapTimesRef.current = [];
+            tapResetTimerRef.current = null;
+        }, 1000);
+
+        tapTimesRef.current.push(now);
+
+        // Keep only last 8 taps
+        if (tapTimesRef.current.length > 8) {
+            tapTimesRef.current = tapTimesRef.current.slice(-8);
+        }
+
+        const currentTaps = tapTimesRef.current;
+        if (currentTaps.length >= 2) {
+            // Calculate average interval across consecutive taps
+            const intervals: number[] = [];
+            for (let i = 1; i < currentTaps.length; i++) {
+                intervals.push(currentTaps[i] - currentTaps[i - 1]);
+            }
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const tapBpm = Math.round(60000 / avgInterval);
+            const clampedBpm = Math.max(40, Math.min(300, tapBpm));
+
+            debugLog(`Tap tempo: ${clampedBpm} BPM (from ${currentTaps.length} taps)`);
+
+            // Update local BPM only — do NOT sync back to Inspiration Generator
+            ignoreExternalUpdatesRef.current = true;
+            setBpm(clampedBpm);
+
+            if (ignoreTimeoutRef.current) {
+                clearTimeout(ignoreTimeoutRef.current);
+            }
+            ignoreTimeoutRef.current = setTimeout(() => {
+                ignoreExternalUpdatesRef.current = false;
+                ignoreTimeoutRef.current = null;
+            }, 500);
+        }
+    };
+
     const toggleDebug = () => {
         setShowDebug(!showDebug);
     };
@@ -923,7 +1009,6 @@ const Metronome: FC<LoaderProps> = ({
         };
     }, [showSoundDropdown]);
 
-    // Helper: get volume icon based on current volume level
     const getVolumeIcon = () => {
         if (metronomeVolume === 0 || muteSound) return FaVolumeMute;
         if (metronomeVolume < 0.33) return FaVolumeOff;
@@ -958,16 +1043,51 @@ const Metronome: FC<LoaderProps> = ({
                 </DebugOverlay>
             )}
             
-            <PlayPauseButton
-                onClick={toggleMetronome}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label={metronomePlaying ? "Pause metronome" : "Play metronome"}
-            >
-                <IconWrapper>
-                    {metronomePlaying ? <Icon icon={FaPause} size={24} /> : <Icon icon={FaPlay} size={24} />}
-                </IconWrapper>
-            </PlayPauseButton>
+            <BottomActionBar>
+                <ActionButton
+                    onClick={handleTapTempo}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Tap tempo"
+                    title="Tap tempo"
+                >
+                    TAP
+                </ActionButton>
+
+                <ActionButton
+                    onClick={toggleMetronome}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={metronomePlaying ? "Stop metronome" : "Play metronome"}
+                    title={metronomePlaying ? "Stop" : "Play"}
+                >
+                    <IconWrapper>
+                        {metronomePlaying ? <Icon icon={FaPause} size={16} /> : <Icon icon={FaPlay} size={16} />}
+                    </IconWrapper>
+                </ActionButton>
+
+                <div ref={soundDropdownRef} style={{ position: 'relative' }}>
+                    <ActionButton
+                        onClick={() => setShowSoundDropdown(!showSoundDropdown)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.9 }}
+                        aria-label="Sound settings"
+                        title="Sound settings"
+                    >
+                        <IconWrapper>
+                            <Icon icon={getVolumeIcon()} size={16} />
+                        </IconWrapper>
+                    </ActionButton>
+                    <SoundDropdownPanel
+                        isOpen={showSoundDropdown}
+                        themeOverride={metronomeThemeOverride}
+                        setThemeOverride={setMetronomeThemeOverride}
+                        volume={metronomeVolume}
+                        setVolume={setMetronomeVolume}
+                        style={{ top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
+                    />
+                </div>
+            </BottomActionBar>
 
             <MetronomeDisplay>
                 <DialDisplay>
@@ -1073,29 +1193,6 @@ const Metronome: FC<LoaderProps> = ({
                 ))}
             </BeatsRow>
 
-            <ControlsContainer>
-                <div ref={soundDropdownRef} style={{ position: 'relative' }}>
-                    <ControlButton
-                        onClick={() => setShowSoundDropdown(!showSoundDropdown)}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label="Sound settings"
-                        title="Sound settings"
-                    >
-                        <IconWrapper style={{ width: 28, justifyContent: 'flex-start' }}>
-                            <Icon icon={getVolumeIcon()} size={24} />
-                        </IconWrapper>
-                    </ControlButton>
-                    <SoundDropdownPanel
-                        isOpen={showSoundDropdown}
-                        themeOverride={metronomeThemeOverride}
-                        setThemeOverride={setMetronomeThemeOverride}
-                        volume={metronomeVolume}
-                        setVolume={setMetronomeVolume}
-                        style={{ top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
-                    />
-                </div>
-            </ControlsContainer>
             <TipsModal
                 isOpen={showTips}
                 onClose={() => setShowTips(false)}
@@ -1109,10 +1206,16 @@ const Metronome: FC<LoaderProps> = ({
                             Use the + and – controls to adjust BPM, or click directly on the BPM input field to change the tempo.
                         </p>
                         <p>
+                            Tap the TAP button rhythmically to set the tempo by feel — BPM is calculated from your tap intervals.
+                        </p>
+                        <p>
                             Click the time signature on the dial to change it. Supported: {TIME_SIGNATURE_OPTIONS.join(', ')}.
                         </p>
                         <p>
                             The beat dots reflect the current time signature, with accented beats highlighted.
+                        </p>
+                        <p>
+                            Use the speaker icon to choose from different metronome sounds and adjust the overall volume.
                         </p>
                     </>
                 }
