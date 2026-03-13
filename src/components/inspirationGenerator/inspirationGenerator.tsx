@@ -932,7 +932,7 @@ export default function InspirationGenerator({
   const [selectedChord, setSelectedChord] = useState<number | null>(null);
 
   // Add state for seventh chord mode
-  const [isSeventhMode, setIsSeventhMode] = useState<boolean>(false);
+  const [isSeventhMode, setIsSeventhMode] = useState<boolean>(() => localStorage.getItem('tilesIsSeventhMode') === 'true');
 
   // Add state for chord inversions
   const [inversionIndex, setInversionIndex] = useState<number>(0);
@@ -959,9 +959,9 @@ export default function InspirationGenerator({
   const setShowTips = setShowTipsExternal || setShowTipsInternal;
 
   // Visualizer toggle state
-  const [showPiano, setShowPiano] = useState(false);
-  const [showGuitar, setShowGuitar] = useState(false);
-  const [showProgressions, setShowProgressions] = useState(false);
+  const [showPiano, setShowPiano] = useState(() => localStorage.getItem('tilesShowPiano') === 'true');
+  const [showGuitar, setShowGuitar] = useState(() => localStorage.getItem('tilesShowGuitar') === 'true');
+  const [showProgressions, setShowProgressions] = useState(() => localStorage.getItem('tilesShowProgressions') === 'true');
   const [showSoundDropdown, setShowSoundDropdown] = useState(false);
   const soundDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1052,6 +1052,22 @@ export default function InspirationGenerator({
   useEffect(() => {
     localStorage.setItem('tilesTimeSignatureEl', timeSignatureEl);
   }, [timeSignatureEl]);
+
+  useEffect(() => {
+    localStorage.setItem('tilesShowPiano', String(showPiano));
+  }, [showPiano]);
+
+  useEffect(() => {
+    localStorage.setItem('tilesShowGuitar', String(showGuitar));
+  }, [showGuitar]);
+
+  useEffect(() => {
+    localStorage.setItem('tilesShowProgressions', String(showProgressions));
+  }, [showProgressions]);
+
+  useEffect(() => {
+    localStorage.setItem('tilesIsSeventhMode', String(isSeventhMode));
+  }, [isSeventhMode]);
 
   // Click outside handler to close dropdowns
   useEffect(() => {
