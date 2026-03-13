@@ -360,7 +360,7 @@ export const AppWrapper = styled.div`
   color: ${({ theme }) => theme.colors.text};
   transition: background-color ${({ theme }) => theme.transitions.normal}, color ${({ theme }) => theme.transitions.normal};
   font-family: ${({ theme }) => theme.fontFamily};
-  padding-top: 70px; /* Space for fixed navbar */
+  padding-top: 55px; /* Space for fixed navbar */
 `;
 
 // Create a consistent header component for all cards

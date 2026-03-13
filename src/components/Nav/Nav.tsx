@@ -3,7 +3,7 @@ import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, THEME_ORDER, THEME_LABELS, ThemeName, lightTheme, darkTheme, vintageTheme, indieTheme, discoTheme, hiphopTheme, loadThemeFont } from '../../theme/ThemeProvider';
-import { FaCheck, FaTimes, FaShareSquare } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaShareSquare, FaTh, FaQuestionCircle } from 'react-icons/fa';
 import { BiCoffeeTogo } from 'react-icons/bi';
 import { Icon } from '../../utils/IconHelper';
 import ThemeIcon from './ThemeIcons';
@@ -52,7 +52,7 @@ const NavInner = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
 `;
 
@@ -67,48 +67,27 @@ const NavBrand = styled(motion.div)`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const NavItems = styled.ul`
+const NavIconButton = styled(motion.button)<{ $active?: boolean; $variant?: 'secondary' | 'coffee' }>`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  list-style: none;
-  margin: 0;
-  padding: 0;
-`;
-
-const NavItem = styled(motion.li)`
-  position: relative;
+  align-items: center;
+  justify-content: center;
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
+  color: ${({ $active, $variant, theme }) => {
+    if ($active) return theme.colors.primary;
+    if ($variant === 'secondary') return theme.colors.textSecondary;
+    if ($variant === 'coffee') return '#FBB034';
+    return theme.colors.text;
+  }};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: ${({ theme }) => theme.spacing.xs};
   cursor: pointer;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-weight: 600;
-  transition: color ${({ theme }) => theme.transitions.fast};
-  color: ${({ theme }) => theme.colors.text};
-
-  &.active {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: ${({ theme }) => theme.colors.accentGradient};
-    transition: width ${({ theme }) => theme.transitions.normal};
-  }
-
-  &.active::after {
-    width: 100%;
-  }
+  text-decoration: none;
+  transition: color ${({ theme }) => theme.transitions.fast}, background-color ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-    
-    &::after {
-      width: 100%;
-    }
+    background-color: ${({ theme }) => `${theme.colors.primary}11`};
   }
 `;
 
@@ -116,6 +95,7 @@ const ImportExportGroup = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+  padding-right: 14px;
 `;
 
 const ActionButton = styled(motion.button)`
@@ -148,33 +128,6 @@ const ActionButton = styled(motion.button)`
       display: none;
     }
   }
-`;
-
-const SupportButton = styled(motion.a)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  background: linear-gradient(135deg, #FFDD00 0%, #FBB034 100%);
-  color: #1a1a1a;
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: ${({ theme }) => theme.shadows.small};
-  transition: transform ${({ theme }) => theme.transitions.fast}, box-shadow ${({ theme }) => theme.transitions.fast};
-  text-decoration: none;
-  font-size: ${({ theme }) => theme.fontSizes.md};
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 221, 0, 0.4);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
 `;
 
 const ThemePickerWrapper = styled.div`
@@ -521,58 +474,62 @@ const Nav: FC = () => {
         </NavBrand>
         
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <NavItems>
-            <NavItem 
-              className={window.location.pathname === '/' || window.location.pathname === '/music-tools-studio/' ? 'active' : ''}
-              whileHover={{ scale: 1.05 }} 
-              onClick={() => navigate('/')}
-            >
-              Project
-            </NavItem>
-            <NavItem 
-              className={window.location.pathname.includes('/about') ? 'active' : ''}
-              whileHover={{ scale: 1.05 }} 
-              onClick={() => navigate('/about')}
-            >
-              About
-            </NavItem>
-          </NavItems>
-        </motion.div>
-        
-        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
         >
           <ImportExportGroup>
-            <ActionButton 
+            <NavIconButton
+              $active={window.location.pathname === '/' || window.location.pathname === '/music-tools-studio/'}
+              onClick={() => navigate('/')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              title="Project"
+            >
+              <IconWrapper>
+                <Icon icon={FaTh} size={16} />
+              </IconWrapper>
+            </NavIconButton>
+
+            <NavIconButton
+              $variant="secondary"
+              onClick={() => navigate('/about')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              title="About"
+            >
+              <IconWrapper>
+                <Icon icon={FaQuestionCircle} size={16} />
+              </IconWrapper>
+            </NavIconButton>
+
+            <NavIconButton
+              $variant="secondary"
               onClick={handleShareLink}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               title="Copy Share Link"
             >
               <IconWrapper>
                 <Icon icon={FaShareSquare} size={16} />
               </IconWrapper>
-            </ActionButton>
+            </NavIconButton>
             
-            <SupportButton
+            <NavIconButton
+              as={motion.a}
               href="https://buymeacoffee.com/fxcircus"
               target="_blank"
               rel="noopener noreferrer"
-              whileHover={{ scale: 1.05 }}
+              $variant="coffee"
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               title="Support this project (on Buy Me Coffee)"
             >
               <IconWrapper>
                 <Icon icon={BiCoffeeTogo} size={16} />
               </IconWrapper>
-            </SupportButton>
+            </NavIconButton>
 
             {/* Legacy JSON export option. Can be re-enabled if needed.
             <ActionButton 
