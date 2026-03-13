@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, FC } from 'react';
+import React, { useState, useEffect, useRef, useMemo, FC } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FaDice } from 'react-icons/fa';
 import { Card } from '../common/StyledComponents';
@@ -412,17 +412,81 @@ const CATEGORY_COLORS: Record<string, string> = {
   "BRIAN ENO": "#40B0A0",
 };
 
-// Animations (must be defined before usage)
+// --- Section type detection & color mapping ---
 
-// Styled Components
+type SectionType = 'intro' | 'verse' | 'chorus' | 'bridge' | 'solo' | 'build';
+
+function getSectionType(name: string): SectionType {
+  const n = name.toLowerCase();
+  if (/chorus|hook|drop|peak|climax|explos|full[+\s]|full$|refrain|final\schorus/.test(n)) return 'chorus';
+  if (/solo|improv/.test(n)) return 'solo';
+  if (/bridge|break|interlude|strip|silence|unravel|thin/.test(n)) return 'bridge';
+  if (/build|develop|expand|intensif|transform|treatment|processed|crescendo|chaos|aggressive|pattern|enter|rebuild|riff/.test(n)) return 'build';
+  if (/intro|outro|fade|dissolve|coda|ghost|evaporate|near\ssilence|sound|opening|atmosphere|soundscape|count|tag|end\scold/.test(n)) return 'intro';
+  return 'verse';
+}
+
+// Maps section type → theme color key (all CSS-variable driven, no hardcoded hex)
+const SECTION_COLOR_KEYS: Record<SectionType, 'primary' | 'secondary' | 'error' | 'accent' | 'warning'> = {
+  intro: 'secondary',
+  verse: 'primary',
+  chorus: 'error',
+  bridge: 'accent',
+  solo: 'accent',
+  build: 'warning',
+};
+
+const ENERGY_LABELS: Record<number, string> = {
+  1: 'Low',
+  2: 'Medium',
+  3: 'High',
+  4: 'Peak',
+};
+
+const ENERGY_LABEL_COLOR_KEYS: Record<number, string> = {
+  1: 'secondary',
+  2: 'primary',
+  3: 'warning',
+  4: 'error',
+};
+
+/** Extract a one-word label per scene, deduplicating repeated first words. */
+function getLabels(scenes: Scene[]): string[] {
+  const firstWords = scenes.map(s => {
+    const cleaned = s.name
+      .replace(/^(Part\s+)?(I{1,3}V?|V?I{0,3}|[0-9]+)\s*[—–\-:]\s*/i, '')
+      .replace(/\s*[—–\-\/]\s*.*$/, '');
+    const words = cleaned.split(/[\s+,()]+/);
+    return words[0] || s.name.split(/[\s—–\-+\/,()]+/)[0];
+  });
+
+  const counts: Record<string, number> = {};
+  firstWords.forEach(w => { counts[w] = (counts[w] || 0) + 1; });
+
+  return scenes.map((s, i) => {
+    if (counts[firstWords[i]] > 1) {
+      const cleaned = s.name.replace(/^(Part\s+)?(I{1,3}V?|V?I{0,3}|[0-9]+)\s*[—–\-:]\s*/i, '');
+      const words = cleaned.split(/[\s—–\-+/,()]+/).filter(Boolean);
+      if (words.length > 1) return words[words.length - 1];
+    }
+    return firstWords[i];
+  });
+}
+
+// --- Styled Components ---
+
 const ThemeAwareWrapper = styled.div`
   --text-primary: ${({ theme }) => theme.colors.text};
   --text-secondary: ${({ theme }) => theme.colors.textSecondary};
   --primary: ${({ theme }) => theme.colors.primary};
   --secondary: ${({ theme }) => theme.colors.secondary};
+  --accent: ${({ theme }) => theme.colors.accent};
+  --warning: ${({ theme }) => theme.colors.warning};
+  --error: ${({ theme }) => theme.colors.error};
   --bg-card: ${({ theme }) => theme.colors.card};
   --bg-main: ${({ theme }) => theme.colors.background};
   --border: ${({ theme }) => theme.colors.border};
+  --button-text: ${({ theme }) => theme.colors.buttonText};
   width: 100%;
   height: 100%;
 `;
@@ -433,14 +497,8 @@ const ArrangementCard = styled(Card)`
   overflow: visible;
   display: flex;
   flex-direction: column;
-  height: 660px; /* Increased by 10% from 600px */
   position: relative;
-
-  @media (max-width: 768px) {
-    height: 550px; /* Increased by 10% from 500px */
-  }
 `;
-
 
 const TemplateSelector = styled.div`
   background: ${({ theme }) => theme.colors.card};
@@ -579,66 +637,117 @@ const TemplateOption = styled.button<{ $isSelected?: boolean }>`
   }
 `;
 
-const SceneList = styled.div`
+// --- Horizontal Bar Visualization ---
+
+const VisualizationContainer = styled.div`
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.card};
   display: flex;
   flex-direction: column;
-  min-height: 440px;
+  justify-content: flex-end;
+  padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.md} ${theme.spacing.sm}`};
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
 `;
 
-const SceneItem = styled.div<{ $energy: number }>`
-  position: relative;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  overflow: hidden;
-  background: ${({ theme }) => `${theme.colors.background}88`};
-  border: 1px solid ${({ theme, $energy }) =>
-    `${ENERGY_COLORS[$energy].fill}44`};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`;
-
-const SceneEnergyBar = styled.div<{ $energy: number }>`
+const SectionTooltip = styled.div<{ $flipLeft?: boolean }>`
+  display: none;
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: ${({ $energy }) => `${($energy / 4) * 100}%`};
-  background: ${({ $energy }) => ENERGY_COLORS[$energy].fill};
+  bottom: calc(100% + 10px);
+  ${({ $flipLeft }) => $flipLeft ? 'right: -8px;' : 'left: -8px;'}
+  width: 170px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: 10px 12px;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
 `;
 
-const SceneContent = styled.div`
+const SectionBlock = styled.div<{ $heightPct: number; $color: string; $alpha: number }>`
+  width: 100%;
+  height: ${({ $heightPct }) => $heightPct}%;
+  position: relative;
+  cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  overflow: visible;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${({ $color }) => $color};
+    opacity: ${({ $alpha }) => $alpha};
+    border-radius: inherit;
+    transition: opacity ${({ theme }) => theme.transitions.fast};
+  }
+
+  @media (hover: hover) {
+    &:hover::before {
+      opacity: 1;
+    }
+    &:hover ${SectionTooltip} {
+      display: block;
+    }
+  }
+`;
+
+const BarRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex: 1;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1px;
+`;
+
+const BlockColumn = styled.div<{ $flex: number }>`
+  flex: ${({ $flex }) => $flex};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  justify-content: flex-end;
+`;
+
+const BlockLabel = styled.span`
   position: relative;
   z-index: 1;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--button-text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 8px);
+  padding: 0 4px 5px;
+  line-height: 1;
+`;
+
+const BarCountRow = styled.div`
   display: flex;
-  align-items: center;
-  padding: ${({ theme }) => `11px ${theme.spacing.md}`};
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 3px;
 `;
 
-const EnergyArcContainer = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.card};
-  margin-top: auto;
+const BarCount = styled.div<{ $flex: number }>`
+  flex: ${({ $flex }) => $flex};
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-top: 4px;
+  line-height: 1;
+  min-width: 0;
 `;
 
-const EnergyArcChart = styled.div`
-  background: ${({ theme }) => `${theme.colors.background}44`};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  padding: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-`;
+// --- Helper functions ---
 
-const ArcEnergyBar = styled.div<{ $width: number; $height: number; $fill: string }>`
-  width: ${({ $width }) => `${$width}%`};
-  height: ${({ $height }) => `${$height}%`};
-  background: ${({ $fill }) => $fill};
-  border-radius: 3px 3px 0 0;
-`;
-
-// Helper functions
 function getAllTemplates(): Record<string, Template> {
   const all: Record<string, Template> = {};
   CATEGORIES.forEach((cat) => {
@@ -651,6 +760,8 @@ function getAllTemplates(): Record<string, Template> {
 
 const ALL_TEMPLATES = getAllTemplates();
 
+// --- Component ---
+
 const ArrangementTool: FC<ArrangementToolProps> = () => {
   const [selected, setSelected] = useState(() => {
     const saved = localStorage.getItem('tilesTemplate');
@@ -658,6 +769,8 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
   });
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const barRowRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -670,13 +783,35 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  // Measure container width for label visibility
+  useEffect(() => {
+    const el = barRowRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const template = ALL_TEMPLATES[selected];
   const totalBars = template.scenes.reduce((a, s) => a + s.bars, 0);
+
+  const labels = useMemo(() => getLabels(template.scenes), [template.scenes]);
+
+  const barsUpTo = useMemo(() => {
+    const result: number[] = [];
+    let cumulative = 0;
+    template.scenes.forEach(s => {
+      result.push(cumulative);
+      cumulative += s.bars;
+    });
+    return result;
+  }, [template.scenes]);
 
   const handleRandomTemplate = () => {
     const templateNames = Object.keys(ALL_TEMPLATES);
     const currentIndex = templateNames.indexOf(selected);
-    // Filter out the current selection to ensure we always get a different template
     const availableTemplates = templateNames.filter((_, index) => index !== currentIndex);
     const randomIndex = Math.floor(Math.random() * availableTemplates.length);
     const randomTemplate = availableTemplates[randomIndex];
@@ -699,6 +834,10 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     window.addEventListener('urlStateApplied', handler);
     return () => window.removeEventListener('urlStateApplied', handler);
   }, [selected]);
+
+  // Calculate available width minus gaps for label visibility check
+  const totalGaps = (template.scenes.length - 1) * 3;
+  const availableWidth = Math.max(0, containerWidth - totalGaps);
 
   return (
     <ThemeAwareWrapper>
@@ -849,64 +988,63 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
               <span style={{ color: 'var(--primary)', opacity: 0.7 }}>Heard in </span>{template.vibe}
             </div>
           </div>
-      </TemplateSelector>
+        </TemplateSelector>
 
-      <SceneList>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {template.scenes.map((scene, si) => {
-            const colors = ENERGY_COLORS[scene.energy];
-            return (
-              <SceneItem key={si} $energy={scene.energy}>
-                <SceneEnergyBar $energy={scene.energy} />
-                <SceneContent>
-                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', width: '16px', textAlign: 'right', flexShrink: 0 }}>
-                    {si + 1}
-                  </span>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '2px',
-                    background: colors.clip,
-                    flexShrink: 0,
-                    boxShadow: `0 0 8px ${colors.clip}55`
-                  }} />
-                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600, flex: 1 }}>
-                    {scene.name}
-                  </span>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                    {scene.bars} bars
-                  </span>
-                </SceneContent>
-              </SceneItem>
-            );
-          })}
-        </div>
+        {/* Horizontal bar visualization */}
+        <VisualizationContainer>
+          <BarRow ref={barRowRef}>
+            {template.scenes.map((scene, i) => {
+              const sectionType = getSectionType(scene.name);
+              const colorKey = SECTION_COLOR_KEYS[sectionType];
+              const colorVar = `var(--${colorKey})`;
+              const heightPct = scene.energy * 20; // 20%, 40%, 60%, 80%
+              const alpha = 0.45 + (scene.energy / 4) * 0.5;
 
-        <EnergyArcContainer>
-          <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '1px', paddingLeft: '2px' }}>
-            ENERGY ARC
-          </div>
-          <EnergyArcChart>
-            <div style={{ display: 'flex', gap: '2px', height: '40px', alignItems: 'flex-end' }}>
-              {template.scenes.map((scene, i) => {
-                const colors = ENERGY_COLORS[scene.energy];
-                const widthPercent = (scene.bars / totalBars) * 100;
-                const heightPercent = (scene.energy / 4) * 100;
-                return (
-                  <ArcEnergyBar
-                    key={i}
-                    $width={widthPercent}
-                    $height={heightPercent}
-                    $fill={colors.fill}
-                    title={`${scene.name} — ${scene.bars} bars`}
-                  />
-                );
-              })}
-            </div>
-          </EnergyArcChart>
-        </EnergyArcContainer>
-      </SceneList>
-    </ArrangementCard>
+              const blockPixelWidth = availableWidth > 0
+                ? (scene.bars / totalBars) * availableWidth
+                : 0;
+              const showLabel = blockPixelWidth >= 60;
+
+              // Flip tooltip for blocks in the right ~30% of the layout
+              const isNearRight = (barsUpTo[i] + scene.bars) > totalBars * 0.7;
+
+              const energyLabel = ENERGY_LABELS[scene.energy];
+              const energyColorVar = `var(--${ENERGY_LABEL_COLOR_KEYS[scene.energy]})`;
+
+              return (
+                <BlockColumn key={i} $flex={scene.bars}>
+                  <SectionBlock
+                    $heightPct={heightPct}
+                    $color={colorVar}
+                    $alpha={alpha}
+                  >
+                    {showLabel && <BlockLabel>{labels[i]}</BlockLabel>}
+                    <SectionTooltip $flipLeft={isNearRight}>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
+                        {scene.name}
+                      </div>
+                      <div style={{ height: '1px', background: 'var(--border)', margin: '6px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Bars</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontWeight: 600 }}>{scene.bars}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Energy</span>
+                        <span style={{ fontSize: '11px', color: energyColorVar, fontWeight: 600 }}>{energyLabel}</span>
+                      </div>
+                    </SectionTooltip>
+                  </SectionBlock>
+                </BlockColumn>
+              );
+            })}
+          </BarRow>
+          <BarCountRow>
+            {template.scenes.map((scene, i) => (
+              <BarCount key={i} $flex={scene.bars}>{scene.bars}</BarCount>
+            ))}
+          </BarCountRow>
+        </VisualizationContainer>
+      </ArrangementCard>
     </ThemeAwareWrapper>
   );
 };
