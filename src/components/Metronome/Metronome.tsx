@@ -173,15 +173,6 @@ const TsDropdownOption = styled.button<{ $isSelected: boolean }>`
   }
 `;
 
-const ControlsContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-top: ${({ theme }) => theme.spacing.sm};
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
 const ControlButton = styled(motion.button)`
   background: transparent;
   border: none;
@@ -197,10 +188,6 @@ const ControlButton = styled(motion.button)`
   &:hover {
     color: ${({ theme }) => theme.colors.secondary};
   }
-`;
-
-const PlayPauseButton = styled(ControlButton)`
-  font-size: ${({ theme }) => theme.fontSizes.xxxl};
 `;
 
 const BeatIndicator = styled(motion.div)`
