@@ -3,8 +3,6 @@ import styled, { keyframes } from 'styled-components';
 import { FaDice } from 'react-icons/fa';
 import { Card } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
-import TipsModal from '../common/TipsModal';
-import HelpButton from '../common/HelpButton';
 
 interface Scene {
   name: string;
@@ -792,7 +790,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
     return saved && ALL_TEMPLATES[saved] ? saved : 'Two Peaks';
   });
   const [isOpen, setIsOpen] = useState(false);
-  const [showTips, setShowTips] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const barRowRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -986,9 +983,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
               )}
             </div>
             <div style={{ display: 'flex', gap: '16px', flexShrink: 0, alignItems: 'center' }}>
-              <HelpButton onClick={() => setShowTips(true)} />
-            </div>
-            <div style={{ display: 'flex', gap: '16px', flexShrink: 0, alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '2px' }}>
                   SECTIONS
@@ -1084,87 +1078,6 @@ const ArrangementTool: FC<ArrangementToolProps> = () => {
           </BarCountRow>
         </VisualizationContainer>
       </ArrangementCard>
-      <TipsModal
-        isOpen={showTips}
-        onClose={() => setShowTips(false)}
-        title="Arrangement Guide"
-        content={
-          <>
-            <p>
-              The arrangement visualization shows your song's <strong>energy arc</strong> at a glance.
-              Each block is a section of your song.
-            </p>
-
-            <h3>Reading the visualization</h3>
-            <ul>
-              <li><strong>Width</strong> = number of bars (duration)</li>
-              <li><strong>Height</strong> = energy level (intensity)</li>
-              <li>The overall silhouette reads as the song's energy arc</li>
-            </ul>
-
-            <h3>Energy levels</h3>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-              {([
-                { level: 4, label: 'Peak', height: '40px' },
-                { level: 3, label: 'High', height: '30px' },
-                { level: 2, label: 'Medium', height: '20px' },
-                { level: 1, label: 'Low', height: '12px' },
-              ] as const).map(({ level, label, height }) => (
-                <div key={level} style={{ display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
-                  <div style={{
-                    width: '24px',
-                    height,
-                    background: ENERGY_COLORS[level].clip,
-                    borderRadius: '3px',
-                    opacity: 0.45 + (level / 4) * 0.5,
-                  }} />
-                  <span style={{ fontSize: '11px', lineHeight: 1 }}>{label}</span>
-                </div>
-              ))}
-            </div>
-
-            <h3>Section codes</h3>
-            <p>Narrow blocks show abbreviated labels. Here's the key:</p>
-            <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--border)' }}>Code</th>
-                  <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--border)' }}>Section type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ['V', 'Verse'],
-                  ['C', 'Chorus / Refrain'],
-                  ['I', 'Intro'],
-                  ['O', 'Outro'],
-                  ['Br', 'Bridge'],
-                  ['S', 'Solo'],
-                  ['H', 'Hook'],
-                  ['D', 'Drop'],
-                  ['Bl', 'Build'],
-                  ['Bk', 'Break / Breakdown'],
-                  ['P', 'Peak / Climax'],
-                ].map(([code, name]) => (
-                  <tr key={code}>
-                    <td style={{ padding: '3px 8px', fontWeight: 600 }}><code>{code}</code></td>
-                    <td style={{ padding: '3px 8px' }}>{name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style={{ fontSize: '11px', marginTop: '6px' }}>
-              Numbers are appended for repeated sections: <code>V1</code>, <code>V2</code>, <code>C2</code>, etc.
-            </p>
-
-            <h3>Templates</h3>
-            <p>
-              Choose from {Object.keys(ALL_TEMPLATES).length} arrangement templates across {CATEGORIES.length} categories.
-              Use the dice button to pick one at random. Hover any block for full details.
-            </p>
-          </>
-        }
-      />
     </ThemeAwareWrapper>
   );
 };

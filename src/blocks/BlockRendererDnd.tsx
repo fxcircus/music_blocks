@@ -198,41 +198,82 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           <TipsModal
             isOpen={showArrangementHelp}
             onClose={() => setShowArrangementHelp(false)}
-            title="About the Arrangement Tool"
+            title="Arrangement Guide"
             content={
               <>
-                <h3>Get Inspired by Song Structures</h3>
                 <p>
-                  The Arrangement tool is designed to help you break out of the "4-bar loop trap" and start thinking about complete song structures. Each template represents a different arrangement approach used by famous artists across various genres.
+                  Break out of the 4-bar loop trap. Each template represents an arrangement approach used by famous artists across genres.
                 </p>
 
-                <h3>How It Works</h3>
-                <p>
-                  <strong>Templates:</strong> Each template shows a complete song structure with different sections (Intro, Verse, Chorus, Bridge, Outro). The numbers indicate how many bars each section lasts.
-                </p>
-                <p>
-                  <strong>Energy Levels:</strong> The colored bars show the energy level of each section — from low (purple/blue) to high (orange/red). This helps you visualize the dynamic flow of the arrangement.
-                </p>
-                <p>
-                  <strong>Energy Arc:</strong> The bottom chart shows the overall energy curve of the song, helping you understand how tension and release work across the entire arrangement.
-                </p>
-
-                <h3>Tips for Using Templates</h3>
+                <h3>Reading the visualization</h3>
                 <ul>
-                  <li>Use the <strong>random button</strong> (dice icon) to quickly explore different arrangement ideas</li>
-                  <li>The templates are starting points — feel free to modify them for your own songs</li>
-                  <li>Pay attention to how different genres structure their songs differently</li>
-                  <li>Notice how energy builds and releases throughout successful arrangements</li>
+                  <li><strong>Width</strong> = number of bars (duration)</li>
+                  <li><strong>Height</strong> = energy level (intensity)</li>
+                  <li>The overall silhouette reads as the song's energy arc</li>
+                  <li>Hover any block for full section details</li>
                 </ul>
 
-                <h3>Breaking the Loop</h3>
-                <p>
-                  When you have a good 4 or 8-bar loop, use these templates to imagine how it could work as a verse, chorus, or bridge. Consider:
+                <h3>Energy levels</h3>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {([
+                    { level: 4, label: 'Peak', height: '40px', color: '#D14545' },
+                    { level: 3, label: 'High', height: '30px', color: '#E08A3A' },
+                    { level: 2, label: 'Medium', height: '20px', color: '#C4B236' },
+                    { level: 1, label: 'Low', height: '12px', color: '#3A7BBF' },
+                  ] as const).map(({ level, label, height, color }) => (
+                    <div key={level} style={{ display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
+                      <div style={{
+                        width: '24px',
+                        height,
+                        background: color,
+                        borderRadius: '3px',
+                        opacity: 0.45 + (level / 4) * 0.5,
+                      }} />
+                      <span style={{ fontSize: '12px', lineHeight: 1 }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <h3>Section codes</h3>
+                <p>Narrow blocks show abbreviated labels:</p>
+                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid currentColor', opacity: 0.3 }}>Code</th>
+                      <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid currentColor', opacity: 0.3 }}>Section type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['V', 'Verse'],
+                      ['C', 'Chorus / Refrain'],
+                      ['I', 'Intro'],
+                      ['O', 'Outro'],
+                      ['Br', 'Bridge'],
+                      ['S', 'Solo'],
+                      ['H', 'Hook'],
+                      ['D', 'Drop'],
+                      ['Bl', 'Build'],
+                      ['Bk', 'Break / Breakdown'],
+                      ['P', 'Peak / Climax'],
+                    ].map(([code, name]) => (
+                      <tr key={code}>
+                        <td style={{ padding: '3px 8px', fontWeight: 600 }}><code>{code}</code></td>
+                        <td style={{ padding: '3px 8px' }}>{name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontSize: '11px', marginTop: '6px' }}>
+                  Numbers are appended for repeated sections: <code>V1</code>, <code>V2</code>, <code>C2</code>, etc.
                 </p>
+
+                <h3>Tips</h3>
                 <ul>
-                  <li>What would a stripped-down version sound like for verses?</li>
-                  <li>How can you make the chorus pop with added energy?</li>
-                  <li>Where would a bridge take the song harmonically or rhythmically?</li>
+                  <li>Use the <strong>dice button</strong> to quickly explore different arrangement ideas</li>
+                  <li>Templates are starting points — modify bar counts and energy to fit your song</li>
+                  <li>Notice how energy builds and releases throughout successful arrangements</li>
+                  <li>When you have a good loop, use these structures to imagine how it could work as a verse, chorus, or bridge</li>
                 </ul>
               </>
             }
