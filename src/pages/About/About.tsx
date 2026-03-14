@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaGithub, FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle } from 'react-icons/fa';
+import { FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle } from 'react-icons/fa';
 import { GiTomato, GiMetronome } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
 import { MdDarkMode, MdAutoAwesome } from 'react-icons/md';
@@ -75,17 +75,6 @@ const NestedList = styled.ul`
   padding-left: ${({ theme }) => theme.spacing.lg};
 `;
 
-const StyledLink = styled.a`
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-  transition: all ${({ theme }) => theme.transitions.fast};
-  font-weight: 500;
-  
-  &:hover {
-    color: ${({ theme }) => theme.colors.secondary};
-    text-decoration: underline;
-  }
-`;
 
 const Strong = styled.strong`
   font-weight: 600;
@@ -142,11 +131,6 @@ const AboutPage = () => {
           </Paragraph>
           <Paragraph style={{ textAlign: 'center' }}>
             Each block is a different tool designed to help musicians get inspired, jot down ideas, get unstuck, and share what they're working on with friends.
-          </Paragraph>
-          <Paragraph style={{ textAlign: 'center' }}>
-             <StyledLink href="https://github.com/fxcircus/music_blocks" target="_blank" rel="noopener noreferrer">
-              View the source code on GitHub <Icon icon={FaGithub} size={16} />
-            </StyledLink>
           </Paragraph>
         </Section>
         
@@ -268,6 +252,10 @@ const AboutPage = () => {
             </TechItem>
           </TechList>
         </Section>
+
+        <Paragraph style={{ textAlign: 'center', marginBottom: 0 }}>
+          &copy; Roy Daniel
+        </Paragraph>
 
       </AboutCard>
     </AboutContainer>

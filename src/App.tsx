@@ -4,7 +4,7 @@ import ThemeProvider from './theme/ThemeProvider';
 import { SoundSettingsProvider } from './context/SoundSettingsContext';
 import { AppWrapper } from './components/common/StyledComponents';
 import Nav from './components/Nav/Nav';
-import Footer from './components/Footer/Footer';
+
 import CurrentProject from './pages/CurrentProject/CurrentProject';
 import AboutPage from './pages/About/About';
 import './App.css';
@@ -31,7 +31,7 @@ export default function App(): JSX.Element {
             <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Footer />
+
         </BrowserRouter>
       </AppWrapper>
       </SoundSettingsProvider>
