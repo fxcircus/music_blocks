@@ -792,6 +792,11 @@ const dicePickerInKeyframes = keyframes`
   100% { opacity: 1; transform: translateX(-50%) translateY(0); }
 `;
 
+const dicePickerInLeftKeyframes = keyframes`
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
+
 const diceShakeAnimation = css`
   animation: ${diceShakeKeyframes} 0.08s ease-in-out infinite;
 `;
@@ -874,6 +879,7 @@ const DiceRootPicker = styled(DicePickerDropdown)<{ $viewMode?: 'grid' | 'circle
     $viewMode === 'circle' ? '300px' : '280px'};
   left: 0;
   transform: none;
+  animation: ${dicePickerInLeftKeyframes} 0.15s ease-out;
 `;
 
 const DiceScalePicker = styled(DicePickerDropdown)`
