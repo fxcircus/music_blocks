@@ -96,23 +96,24 @@ const MetronomeToggleBtn = styled.button<{ $active: boolean }>`
   }
 `;
 
-/* Cogwheel settings button */
+/* Cogwheel settings button – sized to match HelpButton (28×28) */
 const SettingsIconBtn = styled.button<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  margin-left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: ${({ theme }) => theme.spacing.xs};
   border: none;
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : theme.colors.border};
-    color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : `${theme.colors.primary}22`};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -1295,119 +1296,121 @@ const Metronome: FC<LoaderProps> = ({
             canRemove={canRemove}
             dragHandleProps={dragHandleProps}
             isRecentlyDragged={isRecentlyDragged}
-            additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
-            titleExtra={
-                <div ref={settingsRef} style={{ position: 'relative' }}>
-                    <SettingsIconBtn
-                        $active={showSettings}
-                        onClick={() => setShowSettings(!showSettings)}
-                        title="Metronome settings"
-                    >
-                        <Icon icon={FaCog} size={14} />
-                    </SettingsIconBtn>
-                    <AnimatePresence>
-                        {showSettings && (
-                            <SettingsDropdown
-                                initial={{ opacity: 0, y: -8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                transition={{ duration: 0.15 }}
-                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                            >
-                                {/* View Mode — header + toggle inline */}
-                                <SettingsRow>
-                                    <SettingsHeader style={{ padding: 0 }}>View Mode</SettingsHeader>
-                                    <MetronomeToggleContainer>
-                                        <MetronomeToggleBtn
-                                            $active={blocksMode}
-                                            onClick={() => handleSetMode('blocks')}
-                                            title="Blocks view"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
-                                                <rect x="1" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                                <rect x="10" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                                <rect x="1" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                                <rect x="10" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                            </svg>
-                                        </MetronomeToggleBtn>
-                                        <MetronomeToggleBtn
-                                            $active={!blocksMode}
-                                            onClick={() => handleSetMode('pendulum')}
-                                            title="Pendulum view"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
-                                                <line x1="9" y1="2" x2="5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                <circle cx="9" cy="2" r="2" fill="currentColor"/>
-                                                <rect x="2" y="13" width="14" height="3" rx="1.5" fill="currentColor"/>
-                                            </svg>
-                                        </MetronomeToggleBtn>
-                                    </MetronomeToggleContainer>
-                                </SettingsRow>
-
-                                <SettingsDivider />
-
-                                {/* Volume */}
-                                <SVolRow>
-                                    <SVolIcon
-                                        onClick={toggleMute}
-                                        title={metronomeVolume === 0 ? 'Unmute' : 'Mute'}
-                                    >
-                                        <Icon icon={getVolumeIcon()} size={16} />
-                                    </SVolIcon>
-                                    <SVolSlider
-                                        type="range"
-                                        min="0"
-                                        max="1"
-                                        step="0.01"
-                                        value={metronomeVolume}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            const v = parseFloat(e.target.value);
-                                            if (v > 0) preMuteVolumeRef.current = v;
-                                            setMetronomeVolume(v);
-                                        }}
-                                        title={`Volume: ${Math.round(metronomeVolume * 100)}%`}
-                                    />
-                                    <SVolPercent>{Math.round(metronomeVolume * 100)}%</SVolPercent>
-                                </SVolRow>
-
-                                <SettingsDivider />
-
-                                {/* Sound theme */}
-                                <SettingsHeader>Sound</SettingsHeader>
-                                <ByThemeButton
-                                    $active={metronomeThemeOverride === 'byTheme'}
-                                    onClick={() => setMetronomeThemeOverride('byTheme')}
+            additionalControls={
+                <>
+                    <HelpButton onClick={() => setShowTips(true)} />
+                    <div ref={settingsRef} style={{ position: 'relative' }}>
+                        <SettingsIconBtn
+                            $active={showSettings}
+                            onClick={() => setShowSettings(!showSettings)}
+                            title="Metronome settings"
+                        >
+                            <Icon icon={FaCog} size={16} />
+                        </SettingsIconBtn>
+                        <AnimatePresence>
+                            {showSettings && (
+                                <SettingsDropdown
+                                    initial={{ opacity: 0, y: -8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.15 }}
+                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 >
-                                    <span style={{ flex: 1 }}>By Theme</span>
-                                    {metronomeThemeOverride === 'byTheme' && (
-                                        <span style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                                            <Icon icon={FaCheck} size={10} />
-                                        </span>
-                                    )}
-                                </ByThemeButton>
-                                <SIconGrid>
-                                    {THEME_ORDER.map((t) => {
-                                        const isActive = metronomeThemeOverride === t;
-                                        const isByThemeHint = metronomeThemeOverride === 'byTheme' && t === themeName;
-                                        return (
-                                            <SIconButton
-                                                key={t}
-                                                $active={isActive}
-                                                $isByThemeHint={isByThemeHint}
-                                                onClick={() => setMetronomeThemeOverride(t as ThemeOverride)}
-                                                title={THEME_LABELS[t]}
+                                    {/* View Mode — header + toggle inline */}
+                                    <SettingsRow>
+                                        <SettingsHeader style={{ padding: 0 }}>View Mode</SettingsHeader>
+                                        <MetronomeToggleContainer>
+                                            <MetronomeToggleBtn
+                                                $active={blocksMode}
+                                                onClick={() => handleSetMode('blocks')}
+                                                title="Blocks view"
                                             >
-                                                <span style={{ color: THEME_PRIMARY[t], display: 'inline-flex' }}>
-                                                    <ThemeIcon theme={t} size={18} />
-                                                </span>
-                                            </SIconButton>
-                                        );
-                                    })}
-                                </SIconGrid>
-                            </SettingsDropdown>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                                <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                                                    <rect x="1" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                                                    <rect x="10" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                                                    <rect x="1" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                                                    <rect x="10" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                                                </svg>
+                                            </MetronomeToggleBtn>
+                                            <MetronomeToggleBtn
+                                                $active={!blocksMode}
+                                                onClick={() => handleSetMode('pendulum')}
+                                                title="Pendulum view"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                                                    <line x1="9" y1="2" x2="5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                    <circle cx="9" cy="2" r="2" fill="currentColor"/>
+                                                    <rect x="2" y="13" width="14" height="3" rx="1.5" fill="currentColor"/>
+                                                </svg>
+                                            </MetronomeToggleBtn>
+                                        </MetronomeToggleContainer>
+                                    </SettingsRow>
+
+                                    <SettingsDivider />
+
+                                    {/* Volume */}
+                                    <SVolRow>
+                                        <SVolIcon
+                                            onClick={toggleMute}
+                                            title={metronomeVolume === 0 ? 'Unmute' : 'Mute'}
+                                        >
+                                            <Icon icon={getVolumeIcon()} size={16} />
+                                        </SVolIcon>
+                                        <SVolSlider
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.01"
+                                            value={metronomeVolume}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                const v = parseFloat(e.target.value);
+                                                if (v > 0) preMuteVolumeRef.current = v;
+                                                setMetronomeVolume(v);
+                                            }}
+                                            title={`Volume: ${Math.round(metronomeVolume * 100)}%`}
+                                        />
+                                        <SVolPercent>{Math.round(metronomeVolume * 100)}%</SVolPercent>
+                                    </SVolRow>
+
+                                    <SettingsDivider />
+
+                                    {/* Sound theme */}
+                                    <SettingsHeader>Sound</SettingsHeader>
+                                    <ByThemeButton
+                                        $active={metronomeThemeOverride === 'byTheme'}
+                                        onClick={() => setMetronomeThemeOverride('byTheme')}
+                                    >
+                                        <span style={{ flex: 1 }}>By Theme</span>
+                                        {metronomeThemeOverride === 'byTheme' && (
+                                            <span style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                                                <Icon icon={FaCheck} size={10} />
+                                            </span>
+                                        )}
+                                    </ByThemeButton>
+                                    <SIconGrid>
+                                        {THEME_ORDER.map((t) => {
+                                            const isActive = metronomeThemeOverride === t;
+                                            const isByThemeHint = metronomeThemeOverride === 'byTheme' && t === themeName;
+                                            return (
+                                                <SIconButton
+                                                    key={t}
+                                                    $active={isActive}
+                                                    $isByThemeHint={isByThemeHint}
+                                                    onClick={() => setMetronomeThemeOverride(t as ThemeOverride)}
+                                                    title={THEME_LABELS[t]}
+                                                >
+                                                    <span style={{ color: THEME_PRIMARY[t], display: 'inline-flex' }}>
+                                                        <ThemeIcon theme={t} size={18} />
+                                                    </span>
+                                                </SIconButton>
+                                            );
+                                        })}
+                                    </SIconGrid>
+                                </SettingsDropdown>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </>
             }
         >
             {config.DEBUG_MODE && (

@@ -120,22 +120,24 @@ const IconWrapper = styled.span`
   justify-content: center;
 `;
 
+/* Cogwheel settings button – sized to match HelpButton (28×28) */
 const SettingsIconBtn = styled.button<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  margin-left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: ${({ theme }) => theme.spacing.xs};
   border: none;
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : theme.colors.border};
-    color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : `${theme.colors.primary}22`};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -625,118 +627,120 @@ export default function PomodoroTimer({
       dragHandleProps={dragHandleProps}
       isRecentlyDragged={isRecentlyDragged}
       canRemove={canRemove}
-      additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
-      titleExtra={
-        <div ref={settingsRef} style={{ position: 'relative' }}>
-          <SettingsIconBtn $active={showSettings} onClick={() => setShowSettings(!showSettings)} title="Timer settings">
-            <Icon icon={FaCog} size={14} />
-          </SettingsIconBtn>
-          <AnimatePresence>
-            {showSettings && (
-              <SettingsDropdown
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.15 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <SettingsRow>
-                  <SettingsHeader>View Mode</SettingsHeader>
-                  <FlowToggleContainer>
-                    <FlowToggleBtn $active={!showHeatmap} onClick={() => { setShowHeatmap(false); localStorage.setItem('flowViewMode', 'timer'); }} title="Timer">
-                      <Icon icon={FaClock} size={12} />
-                    </FlowToggleBtn>
-                    <FlowToggleBtn $active={showHeatmap} onClick={() => { setShowHeatmap(true); localStorage.setItem('flowViewMode', 'history'); }} title="Session history">
-                      <Icon icon={FaTrophy} size={12} />
-                    </FlowToggleBtn>
-                  </FlowToggleContainer>
-                </SettingsRow>
+      additionalControls={
+        <>
+          <HelpButton onClick={() => setShowTips(true)} />
+          <div ref={settingsRef} style={{ position: 'relative' }}>
+            <SettingsIconBtn $active={showSettings} onClick={() => setShowSettings(!showSettings)} title="Timer settings">
+              <Icon icon={FaCog} size={16} />
+            </SettingsIconBtn>
+            <AnimatePresence>
+              {showSettings && (
+                <SettingsDropdown
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <SettingsRow>
+                    <SettingsHeader>View Mode</SettingsHeader>
+                    <FlowToggleContainer>
+                      <FlowToggleBtn $active={!showHeatmap} onClick={() => { setShowHeatmap(false); localStorage.setItem('flowViewMode', 'timer'); }} title="Timer">
+                        <Icon icon={FaClock} size={12} />
+                      </FlowToggleBtn>
+                      <FlowToggleBtn $active={showHeatmap} onClick={() => { setShowHeatmap(true); localStorage.setItem('flowViewMode', 'history'); }} title="Session history">
+                        <Icon icon={FaTrophy} size={12} />
+                      </FlowToggleBtn>
+                    </FlowToggleContainer>
+                  </SettingsRow>
 
-                <VolumeRow>
-                  <VolumeIcon
-                    onClick={toggleMute}
-                    title={alertVolume === 0 ? "Unmute alert" : "Mute alert"}
-                  >
-                    <Icon icon={alertVolume === 0 ? FaVolumeMute : FaVolumeUp} size={16} />
-                  </VolumeIcon>
-                  <VolumeSlider
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={alertVolume}
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (v > 0) preMuteVolumeRef.current = v;
-                      setAlertVolume(v);
-                    }}
-                    onMouseUp={previewAlertSound}
-                    onTouchEnd={previewAlertSound}
-                    title={`Alert volume: ${Math.round(alertVolume * 100)}%`}
-                  />
-                </VolumeRow>
-                <SettingsDivider />
-                <SettingsHeader>Timer</SettingsHeader>
-                <SettingsRow>
-                  <SettingsLabel>Focus</SettingsLabel>
-                  <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={workMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setWorkMinutes(v); }}
-                    onBlur={() => setWorkMinutes(Math.max(1, Math.min(60, workMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Focus duration in minutes (1–60)"
-                  />
-                  <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
+                  <VolumeRow>
+                    <VolumeIcon
+                      onClick={toggleMute}
+                      title={alertVolume === 0 ? "Unmute alert" : "Mute alert"}
+                    >
+                      <Icon icon={alertVolume === 0 ? FaVolumeMute : FaVolumeUp} size={16} />
+                    </VolumeIcon>
+                    <VolumeSlider
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={alertVolume}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        if (v > 0) preMuteVolumeRef.current = v;
+                        setAlertVolume(v);
+                      }}
+                      onMouseUp={previewAlertSound}
+                      onTouchEnd={previewAlertSound}
+                      title={`Alert volume: ${Math.round(alertVolume * 100)}%`}
+                    />
+                  </VolumeRow>
+                  <SettingsDivider />
+                  <SettingsHeader>Timer</SettingsHeader>
+                  <SettingsRow>
+                    <SettingsLabel>Focus</SettingsLabel>
+                    <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
+                      <Icon icon={FaMinus} size={10} />
+                    </SmallButton>
+                    <SettingsInput
+                      type="number"
+                      value={workMinutes}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setWorkMinutes(v); }}
+                      onBlur={() => setWorkMinutes(Math.max(1, Math.min(60, workMinutes)))}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                      title="Focus duration in minutes (1–60)"
+                    />
+                    <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
+                      <Icon icon={FaPlus} size={10} />
+                    </SmallButton>
+                  </SettingsRow>
 
-                <SettingsRow>
-                  <SettingsLabel>Break</SettingsLabel>
-                  <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={breakMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setBreakMinutes(v); }}
-                    onBlur={() => setBreakMinutes(Math.max(1, Math.min(30, breakMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Break duration in minutes (1–30)"
-                  />
-                  <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
+                  <SettingsRow>
+                    <SettingsLabel>Break</SettingsLabel>
+                    <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
+                      <Icon icon={FaMinus} size={10} />
+                    </SmallButton>
+                    <SettingsInput
+                      type="number"
+                      value={breakMinutes}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setBreakMinutes(v); }}
+                      onBlur={() => setBreakMinutes(Math.max(1, Math.min(30, breakMinutes)))}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                      title="Break duration in minutes (1–30)"
+                    />
+                    <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
+                      <Icon icon={FaPlus} size={10} />
+                    </SmallButton>
+                  </SettingsRow>
 
-                <SettingsRow>
-                  <SettingsLabel>Long</SettingsLabel>
-                  <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={longBreakMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setLongBreakMinutes(v); }}
-                    onBlur={() => setLongBreakMinutes(Math.max(2, Math.min(60, longBreakMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Long break duration in minutes (2–60)"
-                  />
-                  <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
-              </SettingsDropdown>
-            )}
-          </AnimatePresence>
-        </div>
+                  <SettingsRow>
+                    <SettingsLabel>Long</SettingsLabel>
+                    <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
+                      <Icon icon={FaMinus} size={10} />
+                    </SmallButton>
+                    <SettingsInput
+                      type="number"
+                      value={longBreakMinutes}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setLongBreakMinutes(v); }}
+                      onBlur={() => setLongBreakMinutes(Math.max(2, Math.min(60, longBreakMinutes)))}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                      title="Long break duration in minutes (2–60)"
+                    />
+                    <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
+                      <Icon icon={FaPlus} size={10} />
+                    </SmallButton>
+                  </SettingsRow>
+                </SettingsDropdown>
+              )}
+            </AnimatePresence>
+          </div>
+        </>
       }
     >
       <ViewArea>

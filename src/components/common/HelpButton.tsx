@@ -17,23 +17,11 @@ const StyledHelpButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  transition: opacity ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast}, background-color ${({ theme }) => theme.transitions.fast};
-  opacity: 0;
-
-  /* Always visible on mobile/tablet (no hover available) */
-  @media (max-width: 768px) {
-    opacity: 1;
-  }
-
-  /* Show on parent hover or when focused */
-  .tool-card:hover &,
-  .inspiration-card:hover &,
-  .varispeed-card:hover &,
-  .arrangement-card:hover &,
-  &:focus {
-    opacity: 1;
-  }
+  transition: color ${({ theme }) => theme.transitions.fast}, background-color ${({ theme }) => theme.transitions.fast};
+  opacity: 1;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
