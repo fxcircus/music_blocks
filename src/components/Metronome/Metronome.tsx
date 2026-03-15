@@ -11,6 +11,7 @@ import ThemeIcon from '../Nav/ThemeIcons';
 import ToolCardDnd from '../common/ToolCardDnd';
 import TipsModal from '../common/TipsModal';
 import HelpButton from '../common/HelpButton';
+import { STORAGE_KEYS } from '../../utils/storageService';
 import config from '../../config';
 
 type ThemeOverride = 'byTheme' | ThemeName;
@@ -885,6 +886,9 @@ const Metronome: FC<LoaderProps> = ({
     const [showTsDropdown, setShowTsDropdown] = useState(false);
     const [tapFlash, setTapFlash] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [tapAutoPlay, setTapAutoPlay] = useState<boolean>(() =>
+      localStorage.getItem(STORAGE_KEYS.METRONOME_TAP_AUTOPLAY) !== 'false'
+    );
     const tsDropdownRef = useRef<HTMLDivElement>(null);
     const settingsRef = useRef<HTMLDivElement>(null);
     const preMuteVolumeRef = useRef(0.3);
@@ -1177,6 +1181,12 @@ const Metronome: FC<LoaderProps> = ({
         setTapFlash(true);
         setTimeout(() => setTapFlash(false), 120);
 
+        // Auto-start playback on tap if enabled and not already playing
+        if (tapAutoPlay && !metronomePlaying) {
+            setCurrentBeat(0);
+            setMetronomePlaying(true);
+        }
+
         const now = performance.now();
 
         // Clear previous auto-reset timer
@@ -1406,6 +1416,23 @@ const Metronome: FC<LoaderProps> = ({
                                             );
                                         })}
                                     </SIconGrid>
+
+                                    <SettingsDivider />
+
+                                    {/* Tap tempo auto-play */}
+                                    <ByThemeButton
+                                        $active={tapAutoPlay}
+                                        onClick={() => {
+                                            const next = !tapAutoPlay;
+                                            setTapAutoPlay(next);
+                                            localStorage.setItem(STORAGE_KEYS.METRONOME_TAP_AUTOPLAY, String(next));
+                                        }}
+                                    >
+                                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Icon icon={tapAutoPlay ? FaRegCheckSquare : FaRegSquare} size={14} />
+                                        </span>
+                                        <span style={{ flex: 1 }}>Tap starts playback</span>
+                                    </ByThemeButton>
                                 </SettingsDropdown>
                             )}
                         </AnimatePresence>

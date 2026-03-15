@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   SOUND_INSTRUMENT_THEME: `${PREFIX}SoundInstrumentTheme`,
   VOLUME_METRONOME: `${PREFIX}VolumeMetronome`,
   VOLUME_INSTRUMENT: `${PREFIX}VolumeInstrument`,
+  METRONOME_TAP_AUTOPLAY: `${PREFIX}MetronomeTapAutoplay`,
 };
 
 /**
