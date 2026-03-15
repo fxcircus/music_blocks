@@ -3,6 +3,7 @@ import styled, { useTheme } from 'styled-components';
 import { ThemeName } from '../../theme/ThemeProvider';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion } from 'framer-motion';
+import { keyframes } from 'styled-components';
 import { FaPlay, FaPause, FaPlus, FaMinus, FaBug, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
 import { Icon } from '../../utils/IconHelper';
@@ -33,21 +34,77 @@ interface LoaderProps {
     isRecentlyDragged?: boolean;
 }
 
-const MetronomeDisplay = styled.div`
-  width: 100%;
-  position: relative;
-  height: 180px;
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+// Blocks mode helpers
+function getRows(totalBeats: number): number[] {
+  if (totalBeats <= 4) return [totalBeats];
+  if (totalBeats === 5) return [3, 2];
+  if (totalBeats === 6) return [3, 3];
+  if (totalBeats === 7) return [4, 3];
+  return [totalBeats];
+}
+
+function getBlockSize(totalBeats: number): number {
+  if (totalBeats <= 3) return 64;
+  if (totalBeats === 4) return 58;
+  return 54;
+}
+
+const blockPulse = keyframes`
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 `;
 
-const MetronomePendulum = styled(motion.div)<{ $useGradient?: boolean }>`
+const modeFade = keyframes`
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
+
+// Toggle in header
+const MetronomeToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  padding: 2px;
+  margin-left: 8px;
+`;
+
+const MetronomeToggleBtn = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active, theme }) => $active ? theme.colors.primary + '22' : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+
+  &:hover {
+    background: ${({ $active, theme }) => $active ? theme.colors.primary + '33' : theme.colors.border};
+  }
+`;
+
+// Fixed-height content area
+const ContentArea = styled.div`
+  width: 100%;
+  position: relative;
+  height: 210px;
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+
+// Pendulum (kept for pendulum mode)
+const MetronomePendulum = styled(motion.div)`
   width: 6px;
   height: 144px;
-  background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
-  position: relative;
+  background: ${({ theme }) => theme.colors.primary};
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  margin-left: -3px;
   z-index: 0;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   transform-origin: bottom center;
@@ -68,73 +125,146 @@ const MetronomePendulum = styled(motion.div)<{ $useGradient?: boolean }>`
   }
 `;
 
-const MetronomeBase = styled(motion.div)<{ $useGradient?: boolean }>`
-  width: 220px;
-  height: 31px;
-  background: ${({ theme, $useGradient }) => $useGradient ? theme.colors.accentGradient : theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
+// Blocks mode area
+const BlocksArea = styled.div`
   position: absolute;
-  bottom: 0;
-  z-index: 1;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   cursor: pointer;
+  animation: ${modeFade} 0.25s ease-out;
 `;
 
-const DialDisplay = styled.div`
+const BlockRow = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+`;
+
+const StyledBeatBlock = styled.div<{ $size: number; $isActive: boolean; $isPlaying: boolean }>`
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border-radius: 8px;
+  border: 2px solid ${({ $isActive, $isPlaying, theme }) =>
+    $isActive && $isPlaying ? theme.colors.primary : theme.colors.border};
+  background: ${({ $isActive, $isPlaying, theme }) =>
+    $isActive && $isPlaying ? theme.colors.primary : theme.colors.background};
+  transition: ${({ $isActive, $isPlaying }) =>
+    $isActive && $isPlaying ? 'none' : 'all 0.15s ease'};
+  animation: ${({ $isActive, $isPlaying }) =>
+    $isActive && $isPlaying ? blockPulse : 'none'} 0.15s ease-out;
+  box-shadow: ${({ $isActive, $isPlaying, theme }) =>
+    $isActive && $isPlaying
+      ? `0 0 20px ${theme.colors.primary}80, inset 0 0 12px ${theme.colors.primary}4D`
+      : 'none'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const BeatNumber = styled.span<{ $isActive: boolean; $isPlaying: boolean }>`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${({ $isActive, $isPlaying, theme }) =>
+    $isActive && $isPlaying ? '#fff' : theme.colors.border};
+  transition: color 0.15s;
+`;
+
+// Unified control pill
+const ControlPillContainer = styled.div`
   position: absolute;
   bottom: 0;
   left: 50%;
-  transform: translateX(-52%);
-  height: 31px;
+  transform: translateX(-50%);
   z-index: 2;
+`;
+
+const ControlPillStyled = styled.div`
+  background: ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.large};
+  padding: 6px 14px;
   display: flex;
   align-items: center;
-  gap: 0;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+  white-space: nowrap;
+`;
 
-  .bpm-input {
-    font-size: 14px;
-    font-weight: 700;
+const PillButton = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
     color: #fff;
-    background: transparent;
-    border: none;
-    padding: 4px 0;
-    text-align: center;
-    outline: none;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-    cursor: pointer;
-    width: 36px;
-    margin-right: 25px;
   }
+`;
 
-  .dial-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.text};
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0;
-    padding: 0 2px;
-  }
+const PillLabel = styled.span`
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+`;
 
-  .ts-button {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    background: transparent;
-    border: none;
-    padding: 4px 2px;
-    text-align: center;
-    outline: none;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-    cursor: pointer;
-    white-space: nowrap;
-    position: relative;
-  }
+const PillSeparator = styled.div`
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 2px;
+`;
+
+const PillInput = styled.input`
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  width: 36px;
+  text-align: center;
+  outline: none;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+`;
+
+const PillTsButton = styled.button`
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+`;
+
+// Pendulum mode wrapper
+const PendulumArea = styled.div`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  animation: ${modeFade} 0.25s ease-out;
 `;
 
 const TsDropdownWrapper = styled.div`
   position: absolute;
-  top: calc(100% + 8px);
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -173,23 +303,6 @@ const TsDropdownOption = styled.button<{ $isSelected: boolean }>`
   }
 `;
 
-const ControlButton = styled(motion.button)`
-  background: transparent;
-  border: none;
-  color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: ${({ theme }) => theme.fontSizes.xl};
-  padding: ${({ theme }) => theme.spacing.sm};
-  transition: color ${({ theme }) => theme.transitions.fast};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
 const BeatIndicator = styled(motion.div)`
   width: 10px;
   height: 10px;
@@ -203,19 +316,6 @@ const BeatsRow = styled.div`
   justify-content: center;
   margin-top: ${({ theme }) => theme.spacing.sm};
   width: 100%;
-`;
-
-const BpmControls = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 31px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 220px;
-  z-index: 1;
 `;
 
 const BottomActionBar = styled.div`
@@ -612,9 +712,10 @@ const Metronome: FC<LoaderProps> = ({
 }) => {
     const theme = useTheme();
     const { effectiveMetronomeTheme, metronomeVolume, setMetronomeVolume, metronomeThemeOverride, setMetronomeThemeOverride } = useSoundSettings();
-    const useGradient = false;
-
     // State
+    const [metronomeMode, setMetronomeMode] = useState<'blocks' | 'pendulum'>(() =>
+      (localStorage.getItem('metronomeMode') as 'blocks' | 'pendulum') || 'blocks'
+    );
     const [metronomePlaying, setMetronomePlaying] = useState(false);
     const [muteSound] = useState(false);
     const [bpm, setBpm] = useState(initialBpm);
@@ -955,6 +1056,11 @@ const Metronome: FC<LoaderProps> = ({
         }
     };
 
+    const handleSetMode = (mode: 'blocks' | 'pendulum') => {
+        setMetronomeMode(mode);
+        localStorage.setItem('metronomeMode', mode);
+    };
+
     const toggleDebug = () => {
         setShowDebug(!showDebug);
     };
@@ -1003,6 +1109,10 @@ const Metronome: FC<LoaderProps> = ({
         return FaVolumeUp;
     };
 
+    const blocksMode = metronomeMode === 'blocks';
+    const rows = getRows(beats.length);
+    const blockSize = getBlockSize(beats.length);
+
     return (
         <ToolCardDnd
             title="Metronome"
@@ -1012,13 +1122,40 @@ const Metronome: FC<LoaderProps> = ({
             dragHandleProps={dragHandleProps}
             isRecentlyDragged={isRecentlyDragged}
             additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
+            titleExtra={
+                <MetronomeToggleContainer>
+                    <MetronomeToggleBtn
+                        $active={blocksMode}
+                        onClick={() => handleSetMode('blocks')}
+                        title="Blocks view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                            <rect x="1" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                            <rect x="10" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                            <rect x="1" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                            <rect x="10" y="10" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                        </svg>
+                    </MetronomeToggleBtn>
+                    <MetronomeToggleBtn
+                        $active={!blocksMode}
+                        onClick={() => handleSetMode('pendulum')}
+                        title="Pendulum view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                            <line x1="9" y1="2" x2="5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="9" cy="2" r="2" fill="currentColor"/>
+                            <rect x="2" y="13" width="14" height="3" rx="1.5" fill="currentColor"/>
+                        </svg>
+                    </MetronomeToggleBtn>
+                </MetronomeToggleContainer>
+            }
         >
             {config.DEBUG_MODE && (
                 <DebugButton onClick={toggleDebug} aria-label="Toggle debug panel">
                     <Icon icon={FaBug} size={16} />
                 </DebugButton>
             )}
-            
+
             {showDebug && (
                 <DebugOverlay>
                     <h4>Debug Log</h4>
@@ -1029,7 +1166,7 @@ const Metronome: FC<LoaderProps> = ({
                     </pre>
                 </DebugOverlay>
             )}
-            
+
             <BottomActionBar>
                 <ActionButton
                     onClick={handleTapTempo}
@@ -1076,109 +1213,128 @@ const Metronome: FC<LoaderProps> = ({
                 </div>
             </BottomActionBar>
 
-            <MetronomeDisplay>
-                <DialDisplay>
-                    <span className="dial-label">BPM |</span>
-                    <input
-                        className="bpm-input"
-                        type="text"
-                        inputMode="numeric"
-                        value={bpmInput}
-                        onChange={handleBpmInputChange}
-                        onBlur={commitBpmInput}
-                        onKeyDown={handleBpmInputKeyDown}
-                        onClick={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.target.select()}
-                        aria-label="BPM value"
-                    />
-                    <span className="dial-label">Time |</span>
-                    <div ref={tsDropdownRef} style={{ position: 'relative' }}>
-                        <button
-                            className="ts-button"
-                            onClick={(e) => { e.stopPropagation(); setShowTsDropdown(!showTsDropdown); }}
-                            aria-label="Time signature"
-                        >
-                            {timeSignature}
-                        </button>
-                        {showTsDropdown && (
-                            <TsDropdownWrapper>
-                                <TsDropdown>
-                                    {TIME_SIGNATURE_OPTIONS.map((ts) => (
-                                        <TsDropdownOption
-                                            key={ts}
-                                            $isSelected={ts === timeSignature}
-                                            onClick={(e) => { e.stopPropagation(); handleTsSelect(ts); }}
-                                        >
-                                            {ts}
-                                        </TsDropdownOption>
-                                    ))}
-                                </TsDropdown>
-                            </TsDropdownWrapper>
-                        )}
-                    </div>
-                </DialDisplay>
-                <MetronomeBase
-                    $useGradient={useGradient}
-                    onClick={toggleMetronome}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                />
-                <MetronomePendulum
-                    $useGradient={useGradient}
-                    key={`pendulum-${bpm}-${metronomePlaying}`}
-                    animate={{
-                        rotate: metronomePlaying ? [20, -20, 20] : 0
-                    }}
-                    transition={metronomePlaying ? {
-                        repeat: Infinity,
-                        duration: 60 / bpm,
-                        ease: "easeInOut",
-                        repeatType: "loop"
-                    } : {
-                        duration: 0.3,
-                        ease: "easeOut"
-                    }}
-                    onClick={toggleMetronome}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                />
-                <BpmControls>
-                    <ControlButton
-                        onClick={handleDecreaseBpm}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label="Decrease BPM"
-                    >
-                        <IconWrapper>
-                            <Icon icon={FaMinus} size={18} />
-                        </IconWrapper>
-                    </ControlButton>
-                    <ControlButton
-                        onClick={handleIncreaseBpm}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label="Increase BPM"
-                    >
-                        <IconWrapper>
-                            <Icon icon={FaPlus} size={18} />
-                        </IconWrapper>
-                    </ControlButton>
-                </BpmControls>
-            </MetronomeDisplay>
-            
-            <BeatsRow>
-                {beats.map((beat) => (
-                    <BeatIndicator
-                        key={beat}
-                        animate={{
-                            scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
-                            backgroundColor: currentBeat === beat && metronomePlaying ?
-                                [theme.colors.primary, theme.colors.accent, theme.colors.primary] : theme.colors.primary
-                        }}
-                        transition={{ duration: 0.2 }}
-                    />
-                ))}
-            </BeatsRow>
+            <ContentArea>
+                {/* Blocks mode */}
+                {blocksMode && (
+                    <BlocksArea onClick={toggleMetronome}>
+                        {(() => {
+                            let idx = 0;
+                            return rows.map((count, rowIdx) => {
+                                const rowBeats: number[] = [];
+                                for (let i = 0; i < count; i++) { rowBeats.push(idx); idx++; }
+                                return (
+                                    <BlockRow key={rowIdx}>
+                                        {rowBeats.map((beat) => (
+                                            <StyledBeatBlock
+                                                key={beat}
+                                                $size={blockSize}
+                                                $isActive={currentBeat === beat}
+                                                $isPlaying={metronomePlaying}
+                                            >
+                                                <BeatNumber $isActive={currentBeat === beat} $isPlaying={metronomePlaying}>
+                                                    {beat + 1}
+                                                </BeatNumber>
+                                            </StyledBeatBlock>
+                                        ))}
+                                    </BlockRow>
+                                );
+                            });
+                        })()}
+                    </BlocksArea>
+                )}
+
+                {/* Pendulum mode */}
+                {!blocksMode && (
+                    <PendulumArea>
+                        <MetronomePendulum
+                            key={`pendulum-${bpm}-${metronomePlaying}`}
+                            animate={{
+                                rotate: metronomePlaying ? [20, -20, 20] : 0
+                            }}
+                            transition={metronomePlaying ? {
+                                repeat: Infinity,
+                                duration: 60 / bpm,
+                                ease: "easeInOut",
+                                repeatType: "loop"
+                            } : {
+                                duration: 0.3,
+                                ease: "easeOut"
+                            }}
+                            onClick={toggleMetronome}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        />
+                    </PendulumArea>
+                )}
+
+                {/* Control pill — always pinned at bottom */}
+                <ControlPillContainer>
+                    <ControlPillStyled>
+                        <PillButton onClick={(e) => { e.stopPropagation(); handleDecreaseBpm(); }} aria-label="Decrease BPM">
+                            <Icon icon={FaMinus} size={10} />
+                        </PillButton>
+                        <PillLabel>BPM</PillLabel>
+                        <PillSeparator />
+                        <PillInput
+                            type="text"
+                            inputMode="numeric"
+                            value={bpmInput}
+                            onChange={handleBpmInputChange}
+                            onBlur={commitBpmInput}
+                            onKeyDown={handleBpmInputKeyDown}
+                            onClick={(e) => e.stopPropagation()}
+                            onFocus={(e) => e.target.select()}
+                            aria-label="BPM value"
+                        />
+                        <PillButton onClick={(e) => { e.stopPropagation(); handleIncreaseBpm(); }} aria-label="Increase BPM">
+                            <Icon icon={FaPlus} size={10} />
+                        </PillButton>
+                        <PillSeparator />
+                        <PillLabel>TIME</PillLabel>
+                        <PillSeparator />
+                        <div ref={tsDropdownRef} style={{ position: 'relative' }}>
+                            <PillTsButton
+                                onClick={(e) => { e.stopPropagation(); setShowTsDropdown(!showTsDropdown); }}
+                                aria-label="Time signature"
+                            >
+                                {timeSignature}
+                            </PillTsButton>
+                            {showTsDropdown && (
+                                <TsDropdownWrapper>
+                                    <TsDropdown>
+                                        {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                                            <TsDropdownOption
+                                                key={ts}
+                                                $isSelected={ts === timeSignature}
+                                                onClick={(e) => { e.stopPropagation(); handleTsSelect(ts); }}
+                                            >
+                                                {ts}
+                                            </TsDropdownOption>
+                                        ))}
+                                    </TsDropdown>
+                                </TsDropdownWrapper>
+                            )}
+                        </div>
+                    </ControlPillStyled>
+                </ControlPillContainer>
+            </ContentArea>
+
+            {/* Beat dots — pendulum mode only */}
+            {!blocksMode && (
+                <BeatsRow>
+                    {beats.map((beat) => (
+                        <BeatIndicator
+                            key={beat}
+                            animate={{
+                                scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
+                                backgroundColor: currentBeat === beat && metronomePlaying ?
+                                    [theme.colors.primary, theme.colors.accent, theme.colors.primary] : theme.colors.primary
+                            }}
+                            transition={{ duration: 0.2 }}
+                        />
+                    ))}
+                </BeatsRow>
+            )}
 
             <TipsModal
                 isOpen={showTips}
@@ -1187,19 +1343,16 @@ const Metronome: FC<LoaderProps> = ({
                 content={
                     <>
                         <p>
-                            You can click directly on the metronome dial to start or stop playback.
+                            Use the toggle in the header to switch between Blocks and Pendulum views. Click on the blocks or pendulum to start/stop playback.
                         </p>
                         <p>
-                            Use the + and – controls to adjust BPM, or click directly on the BPM input field to change the tempo.
+                            Use the − and + controls in the bottom pill to adjust BPM, or click directly on the BPM value to type a number.
                         </p>
                         <p>
                             Tap the TAP button rhythmically to set the tempo by feel — BPM is calculated from your tap intervals.
                         </p>
                         <p>
-                            Click the time signature on the dial to change it. Supported: {TIME_SIGNATURE_OPTIONS.join(', ')}.
-                        </p>
-                        <p>
-                            The beat dots reflect the current time signature, with accented beats highlighted.
+                            Click the time signature in the pill to change it. Supported: {TIME_SIGNATURE_OPTIONS.join(', ')}.
                         </p>
                         <p>
                             Use the speaker icon to choose from different metronome sounds and adjust the overall volume.

@@ -17,6 +17,7 @@ interface ToolCardDndProps {
   hideHeader?: boolean;
   showControlsOnly?: boolean;
   additionalControls?: ReactNode;
+  titleExtra?: ReactNode;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
   onShowHelp?: () => void;
@@ -120,6 +121,7 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   hideHeader = false,
   showControlsOnly = false,
   additionalControls,
+  titleExtra,
   dragHandleProps,
   isRecentlyDragged = false,
   onShowHelp,
@@ -182,6 +184,7 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
           <CardTitle onClick={handleHeaderClick}>
             {title}
           </CardTitle>
+          {titleExtra}
         </DraggableCardHeader>
       )}
 
