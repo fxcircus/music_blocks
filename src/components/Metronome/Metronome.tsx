@@ -596,44 +596,8 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       osc.stop(time + 0.10);
     },
   },
-  // Vintage — bright woodblock knock
+  // Vintage — finger snap (swapped from disco)
   vintage: {
-    play(ctx, time, isAccent, volume) {
-      const master = createMasterGain(ctx, volume);
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = isAccent ? 1200 : 600;
-      const vol = isAccent ? 0.45 : 0.28;
-      osc.connect(gain);
-      gain.connect(master);
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(vol, time + 0.005);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
-      osc.start(time);
-      osc.stop(time + 0.08);
-    },
-  },
-  // Indie — lo-fi square-wave tape click
-  indie: {
-    play(ctx, time, isAccent, volume) {
-      const master = createMasterGain(ctx, volume);
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.value = isAccent ? 1000 : 500;
-      const vol = isAccent ? 0.25 : 0.15;
-      osc.connect(gain);
-      gain.connect(master);
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(vol, time + 0.003);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
-      osc.start(time);
-      osc.stop(time + 0.06);
-    },
-  },
-  // Disco — finger snap
-  disco: {
     play(ctx, time, isAccent, volume) {
       const master = createMasterGain(ctx, volume);
       // Noise layer — the snap body
@@ -671,6 +635,42 @@ const SOUND_PROFILES: Record<ThemeName, SoundProfile> = {
       oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
       osc.start(time);
       osc.stop(time + 0.04);
+    },
+  },
+  // Indie — lo-fi square-wave tape click
+  indie: {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = isAccent ? 1000 : 500;
+      const vol = isAccent ? 0.25 : 0.15;
+      osc.connect(gain);
+      gain.connect(master);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+      osc.start(time);
+      osc.stop(time + 0.06);
+    },
+  },
+  // Disco — bright woodblock knock (swapped from vintage)
+  disco: {
+    play(ctx, time, isAccent, volume) {
+      const master = createMasterGain(ctx, volume);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = isAccent ? 1200 : 600;
+      const vol = isAccent ? 0.45 : 0.28;
+      osc.connect(gain);
+      gain.connect(master);
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+      osc.start(time);
+      osc.stop(time + 0.08);
     },
   },
   // Hip Hop — crisp hi-hat shimmer (filtered noise burst)
