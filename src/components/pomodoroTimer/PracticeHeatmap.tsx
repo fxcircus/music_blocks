@@ -13,10 +13,10 @@ interface PracticeHeatmapProps {
 
 const WEEKS = 16;
 const DAYS_PER_WEEK = 7;
-const CELL_SIZE = 12;
-const CELL_GAP = 3;
+const CELL_SIZE = 14;
+const CELL_GAP = 4;
 const DAY_LABELS = ['M', '', 'W', '', 'F', '', 'S'];
-const DAY_LABEL_WIDTH = 16;
+const DAY_LABEL_WIDTH = 18;
 
 const STREAK_TIERS = [
   { min: 90, icon: '\uD83D\uDC51', label: 'Legendary' },

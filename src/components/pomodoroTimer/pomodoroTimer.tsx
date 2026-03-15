@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUndo, FaPlay, FaPause, FaCoffee, FaCog, FaVolumeMute, FaVolumeUp, FaMinus, FaPlus, FaBriefcase, FaTrophy, FaClock } from 'react-icons/fa';
@@ -62,7 +62,7 @@ const InnerModeLabel = styled.span`
 `;
 
 const ViewArea = styled.div`
-  height: 248px;
+  height: 290px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,7 +87,8 @@ const InnerDot = styled.div<{ $completed: boolean }>`
 
 const TimerControls = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 8px;
   width: 210px;
   margin: 0 auto;
 `;
@@ -119,6 +120,25 @@ const IconWrapper = styled.span`
   justify-content: center;
 `;
 
+const SettingsIconBtn = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : theme.colors.border};
+    color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+  }
+`;
+
 const SettingsDropdown = styled(motion.div)`
   position: absolute;
   top: calc(100% + 8px);
@@ -127,7 +147,7 @@ const SettingsDropdown = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   box-shadow: ${({ theme }) => theme.shadows.large};
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -135,6 +155,47 @@ const SettingsDropdown = styled(motion.div)`
   min-width: 220px;
 `;
 
+const SettingsHeader = styled.div`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  text-align: left;
+`;
+
+const SettingsDivider = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.border};
+  margin: ${({ theme }) => `${theme.spacing.xs} 0`};
+`;
+
+const FlowToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  padding: 2px;
+`;
+
+const FlowToggleBtn = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active, theme }) => $active ? theme.colors.primary + '22' : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+
+  &:hover {
+    background: ${({ $active, theme }) => $active ? theme.colors.primary + '33' : theme.colors.border};
+  }
+`;
 
 const SettingsRow = styled.div`
   display: flex;
@@ -342,25 +403,29 @@ export default function PomodoroTimer({
   const [workMinutes, setWorkMinutes] = useState(saved.current?.workMinutes ?? 25);
   const [breakMinutes, setBreakMinutes] = useState(saved.current?.breakMinutes ?? 5);
   const [longBreakMinutes, setLongBreakMinutes] = useState(saved.current?.longBreakMinutes ?? 15);
-  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(() => localStorage.getItem('flowViewMode') === 'history');
   const [practiceLog, setPracticeLog] = useState<PracticeEntry[]>(loadPracticeLog);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const preMuteVolumeRef = useRef(alertVolume > 0 ? alertVolume : 0.3);
 
-  const handleClickOutside = useCallback((e: MouseEvent) => {
-    if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
-      setShowSettings(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (showSettings) {
+    if (!showSettings) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    // Delay attaching so the opening click doesn't immediately close
+    const id = requestAnimationFrame(() => {
       document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSettings, handleClickOutside]);
+    });
+    return () => {
+      cancelAnimationFrame(id);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettings]);
 
   const secondsToMinutes = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -561,6 +626,118 @@ export default function PomodoroTimer({
       isRecentlyDragged={isRecentlyDragged}
       canRemove={canRemove}
       additionalControls={<HelpButton onClick={() => setShowTips(true)} />}
+      titleExtra={
+        <div ref={settingsRef} style={{ position: 'relative' }}>
+          <SettingsIconBtn $active={showSettings} onClick={() => setShowSettings(!showSettings)} title="Timer settings">
+            <Icon icon={FaCog} size={14} />
+          </SettingsIconBtn>
+          <AnimatePresence>
+            {showSettings && (
+              <SettingsDropdown
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SettingsRow>
+                  <SettingsHeader>View Mode</SettingsHeader>
+                  <FlowToggleContainer>
+                    <FlowToggleBtn $active={!showHeatmap} onClick={() => { setShowHeatmap(false); localStorage.setItem('flowViewMode', 'timer'); }} title="Timer">
+                      <Icon icon={FaClock} size={12} />
+                    </FlowToggleBtn>
+                    <FlowToggleBtn $active={showHeatmap} onClick={() => { setShowHeatmap(true); localStorage.setItem('flowViewMode', 'history'); }} title="Session history">
+                      <Icon icon={FaTrophy} size={12} />
+                    </FlowToggleBtn>
+                  </FlowToggleContainer>
+                </SettingsRow>
+
+                <VolumeRow>
+                  <VolumeIcon
+                    onClick={toggleMute}
+                    title={alertVolume === 0 ? "Unmute alert" : "Mute alert"}
+                  >
+                    <Icon icon={alertVolume === 0 ? FaVolumeMute : FaVolumeUp} size={16} />
+                  </VolumeIcon>
+                  <VolumeSlider
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={alertVolume}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (v > 0) preMuteVolumeRef.current = v;
+                      setAlertVolume(v);
+                    }}
+                    onMouseUp={previewAlertSound}
+                    onTouchEnd={previewAlertSound}
+                    title={`Alert volume: ${Math.round(alertVolume * 100)}%`}
+                  />
+                </VolumeRow>
+                <SettingsDivider />
+                <SettingsHeader>Timer</SettingsHeader>
+                <SettingsRow>
+                  <SettingsLabel>Focus</SettingsLabel>
+                  <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsInput
+                    type="number"
+                    value={workMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setWorkMinutes(v); }}
+                    onBlur={() => setWorkMinutes(Math.max(1, Math.min(60, workMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Focus duration in minutes (1–60)"
+                  />
+                  <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+
+                <SettingsRow>
+                  <SettingsLabel>Break</SettingsLabel>
+                  <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsInput
+                    type="number"
+                    value={breakMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setBreakMinutes(v); }}
+                    onBlur={() => setBreakMinutes(Math.max(1, Math.min(30, breakMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Break duration in minutes (1–30)"
+                  />
+                  <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+
+                <SettingsRow>
+                  <SettingsLabel>Long</SettingsLabel>
+                  <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
+                    <Icon icon={FaMinus} size={10} />
+                  </SmallButton>
+                  <SettingsInput
+                    type="number"
+                    value={longBreakMinutes}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setLongBreakMinutes(v); }}
+                    onBlur={() => setLongBreakMinutes(Math.max(2, Math.min(60, longBreakMinutes)))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    title="Long break duration in minutes (2–60)"
+                  />
+                  <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
+                    <Icon icon={FaPlus} size={10} />
+                  </SmallButton>
+                </SettingsRow>
+              </SettingsDropdown>
+            )}
+          </AnimatePresence>
+        </div>
+      }
     >
       <ViewArea>
         {showHeatmap ? (
@@ -632,17 +809,6 @@ export default function PomodoroTimer({
           <IconWrapper><Icon icon={FaUndo} size={20} /></IconWrapper>
         </TimerButton>
 
-        <TimerButton
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={mode === 'work' ? takeBreak : skipToWork}
-          title={mode === 'work' ? "Skip to break" : "Skip to focus"}
-        >
-          <IconWrapper>
-            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={24} />
-          </IconWrapper>
-        </TimerButton>
-
         <PlayPauseButton
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
@@ -657,114 +823,13 @@ export default function PomodoroTimer({
         <TimerButton
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setShowHeatmap(!showHeatmap)}
-          title={showHeatmap ? "Back to timer" : "Session history"}
+          onClick={mode === 'work' ? takeBreak : skipToWork}
+          title={mode === 'work' ? "Skip to break" : "Skip to focus"}
         >
-          <IconWrapper><Icon icon={showHeatmap ? FaClock : FaTrophy} size={20} /></IconWrapper>
+          <IconWrapper>
+            <Icon icon={mode === 'work' ? FaCoffee : FaBriefcase} size={24} />
+          </IconWrapper>
         </TimerButton>
-
-        <div ref={settingsRef} style={{ position: 'relative' }}>
-          <TimerButton
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setShowSettings(!showSettings)}
-            title="Timer settings"
-          >
-            <IconWrapper><Icon icon={FaCog} size={20} /></IconWrapper>
-          </TimerButton>
-          <AnimatePresence>
-            {showSettings && (
-              <SettingsDropdown
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.15 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <SettingsRow>
-                  <SettingsLabel>Focus</SettingsLabel>
-                  <SmallButton onClick={() => setWorkMinutes(Math.max(1, workMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease focus time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={workMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setWorkMinutes(v); }}
-                    onBlur={() => setWorkMinutes(Math.max(1, Math.min(60, workMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Focus duration in minutes (1–60)"
-                  />
-                  <SmallButton onClick={() => setWorkMinutes(Math.min(60, workMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase focus time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
-
-                <SettingsRow>
-                  <SettingsLabel>Break</SettingsLabel>
-                  <SmallButton onClick={() => setBreakMinutes(Math.max(1, breakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease break time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={breakMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setBreakMinutes(v); }}
-                    onBlur={() => setBreakMinutes(Math.max(1, Math.min(30, breakMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Break duration in minutes (1–30)"
-                  />
-                  <SmallButton onClick={() => setBreakMinutes(Math.min(30, breakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase break time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
-
-                <SettingsRow>
-                  <SettingsLabel>Long</SettingsLabel>
-                  <SmallButton onClick={() => setLongBreakMinutes(Math.max(2, longBreakMinutes - 1))} whileTap={{ scale: 0.9 }} title="Decrease long break time">
-                    <Icon icon={FaMinus} size={10} />
-                  </SmallButton>
-                  <SettingsInput
-                    type="number"
-                    value={longBreakMinutes}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setLongBreakMinutes(v); }}
-                    onBlur={() => setLongBreakMinutes(Math.max(2, Math.min(60, longBreakMinutes)))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                    title="Long break duration in minutes (2–60)"
-                  />
-                  <SmallButton onClick={() => setLongBreakMinutes(Math.min(60, longBreakMinutes + 1))} whileTap={{ scale: 0.9 }} title="Increase long break time">
-                    <Icon icon={FaPlus} size={10} />
-                  </SmallButton>
-                </SettingsRow>
-
-                <VolumeRow>
-                  <VolumeIcon
-                    onClick={toggleMute}
-                    title={alertVolume === 0 ? "Unmute alert" : "Mute alert"}
-                  >
-                    <Icon icon={alertVolume === 0 ? FaVolumeMute : FaVolumeUp} size={16} />
-                  </VolumeIcon>
-                  <VolumeSlider
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={alertVolume}
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (v > 0) preMuteVolumeRef.current = v;
-                      setAlertVolume(v);
-                    }}
-                    onMouseUp={previewAlertSound}
-                    onTouchEnd={previewAlertSound}
-                    title={`Alert volume: ${Math.round(alertVolume * 100)}%`}
-                  />
-                </VolumeRow>
-              </SettingsDropdown>
-            )}
-          </AnimatePresence>
-        </div>
       </TimerControls>
 
       <TipsModal
