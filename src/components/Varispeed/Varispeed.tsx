@@ -46,7 +46,7 @@ const BPM_MIN = 10;
 const BPM_MAX = 200;
 
 // Cryptex constants
-const ITEM_H = 64;   // Row height in pixels
+const ITEM_H = 58;   // Row height in pixels
 const TOTAL = 25;     // -12 to +12 semitones
 const VISIBLE = 7;    // 3 above + center + 3 below
 

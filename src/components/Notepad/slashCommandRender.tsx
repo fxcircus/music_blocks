@@ -24,6 +24,12 @@ export function createSlashCommandRender(themeRef: React.RefObject<any>) {
         document.body.appendChild(container);
         root = createRoot(container);
 
+        const handleClose = () => {
+          if (root) { root.unmount(); root = null; }
+          if (container) { container.remove(); container = null; }
+          menuRef = null;
+        };
+
         root.render(
           <ThemeProvider theme={themeRef.current}>
             <SlashCommandMenu
@@ -31,6 +37,7 @@ export function createSlashCommandRender(themeRef: React.RefObject<any>) {
               items={props.items}
               command={props.command}
               clientRect={props.clientRect}
+              onClose={handleClose}
             />
           </ThemeProvider>
         );
@@ -43,6 +50,12 @@ export function createSlashCommandRender(themeRef: React.RefObject<any>) {
       }) => {
         if (!root) return;
 
+        const handleClose = () => {
+          if (root) { root.unmount(); root = null; }
+          if (container) { container.remove(); container = null; }
+          menuRef = null;
+        };
+
         root.render(
           <ThemeProvider theme={themeRef.current}>
             <SlashCommandMenu
@@ -50,6 +63,7 @@ export function createSlashCommandRender(themeRef: React.RefObject<any>) {
               items={props.items}
               command={props.command}
               clientRect={props.clientRect}
+              onClose={handleClose}
             />
           </ThemeProvider>
         );

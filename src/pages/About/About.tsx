@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle, FaEye } from 'react-icons/fa';
+import { BiCoffeeTogo } from 'react-icons/bi';
 import { GiTomato, GiMetronome, GiGuitarHead } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
 import { MdDarkMode, MdAutoAwesome, MdQueueMusic } from 'react-icons/md';
@@ -131,6 +132,17 @@ const AboutPage = () => {
           </Paragraph>
           <Paragraph style={{ textAlign: 'center' }}>
             Each block is a different tool designed to help musicians get inspired, jot down ideas, get unstuck, and share what they're working on with friends.
+          </Paragraph>
+          <Paragraph style={{ textAlign: 'center' }}>
+            <a
+              href="https://buymeacoffee.com/fxcircus"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <IconContainer><Icon icon={BiCoffeeTogo} size={16} /></IconContainer>
+              Support this project on Buy Me a Coffee
+            </a>
           </Paragraph>
         </Section>
         

@@ -230,57 +230,61 @@ export const loadBlockState = (): AppState => {
           console.log('[Storage] Loaded rootEl:', inspirationBlock.state.rootEl);
         }
 
-        // Migration: inject visualize block for existing v2 users
-        const hasVisualize = parsedState.blocks?.some(b => b.type === 'visualize');
-        if (!hasVisualize) {
-          console.log('[Storage] Migrating: adding visualize block');
-          // Shift all blocks with order >= 1 up by 1
-          const updatedBlocks = parsedState.blocks.map(b => ({
-            ...b,
-            order: b.order >= 1 ? b.order + 1 : b.order,
-          }));
-          // Add visualize block at order 1 with state migrated from localStorage
-          updatedBlocks.push({
-            instanceId: 'visualize',
-            type: 'visualize',
-            order: 1,
-            visible: true,
-            state: {
-              showPiano: localStorage.getItem('tilesShowPiano') === 'true',
-              showGuitar: localStorage.getItem('tilesShowGuitar') === 'true',
-            },
-          });
-          parsedState = { ...parsedState, blocks: updatedBlocks };
-          saveBlockState(parsedState);
+        // One-time migration: inject visualize block for existing v2 users
+        // Only run if the migration flag hasn't been set yet (avoids re-adding after user removal)
+        const visualizeMigrated = localStorage.getItem('tilesMigration_visualize');
+        if (!visualizeMigrated) {
+          const hasVisualize = parsedState.blocks?.some(b => b.type === 'visualize');
+          if (!hasVisualize) {
+            console.log('[Storage] Migrating: adding visualize block');
+            const updatedBlocks = parsedState.blocks.map(b => ({
+              ...b,
+              order: b.order >= 1 ? b.order + 1 : b.order,
+            }));
+            updatedBlocks.push({
+              instanceId: 'visualize',
+              type: 'visualize',
+              order: 1,
+              visible: true,
+              state: {
+                showPiano: localStorage.getItem('tilesShowPiano') === 'true',
+                showGuitar: localStorage.getItem('tilesShowGuitar') === 'true',
+              },
+            });
+            parsedState = { ...parsedState, blocks: updatedBlocks };
+            saveBlockState(parsedState);
+          }
+          localStorage.setItem('tilesMigration_visualize', 'done');
         }
 
-        // Migration: inject progressions block for existing v2 users
-        const hasProgressions = parsedState.blocks?.some(b => b.type === 'progressions');
-        if (!hasProgressions) {
-          console.log('[Storage] Migrating: adding progressions block');
-          // Shift all blocks with order >= 2 up by 1
-          const updatedBlocks = parsedState.blocks.map(b => ({
-            ...b,
-            order: b.order >= 2 ? b.order + 1 : b.order,
-          }));
-          // Migrate savedProgressionIndex from localStorage
-          const savedIdx = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
-          updatedBlocks.push({
-            instanceId: 'progressions',
-            type: 'progressions',
-            order: 2,
-            visible: true,
-            state: {
-              savedProgressionIndex: savedIdx,
-            },
-          });
-          parsedState = { ...parsedState, blocks: updatedBlocks };
-          // Also remove showProgressions from visualize block state if present
-          const visualizeBlock = parsedState.blocks.find(b => b.type === 'visualize');
-          if (visualizeBlock && 'showProgressions' in visualizeBlock.state) {
-            delete visualizeBlock.state.showProgressions;
+        // One-time migration: inject progressions block for existing v2 users
+        const progressionsMigrated = localStorage.getItem('tilesMigration_progressions');
+        if (!progressionsMigrated) {
+          const hasProgressions = parsedState.blocks?.some(b => b.type === 'progressions');
+          if (!hasProgressions) {
+            console.log('[Storage] Migrating: adding progressions block');
+            const updatedBlocks = parsedState.blocks.map(b => ({
+              ...b,
+              order: b.order >= 2 ? b.order + 1 : b.order,
+            }));
+            const savedIdx = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
+            updatedBlocks.push({
+              instanceId: 'progressions',
+              type: 'progressions',
+              order: 2,
+              visible: true,
+              state: {
+                savedProgressionIndex: savedIdx,
+              },
+            });
+            parsedState = { ...parsedState, blocks: updatedBlocks };
+            const visualizeBlock = parsedState.blocks.find(b => b.type === 'visualize');
+            if (visualizeBlock && 'showProgressions' in visualizeBlock.state) {
+              delete visualizeBlock.state.showProgressions;
+            }
+            saveBlockState(parsedState);
           }
-          saveBlockState(parsedState);
+          localStorage.setItem('tilesMigration_progressions', 'done');
         }
 
         // Migration: add selectedChord/isSeventhMode to generator state if missing
