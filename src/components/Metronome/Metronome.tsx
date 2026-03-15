@@ -1181,12 +1181,6 @@ const Metronome: FC<LoaderProps> = ({
         setTapFlash(true);
         setTimeout(() => setTapFlash(false), 120);
 
-        // Auto-start playback on tap if enabled and not already playing
-        if (tapAutoPlay && !metronomePlaying) {
-            setCurrentBeat(0);
-            setMetronomePlaying(true);
-        }
-
         const now = performance.now();
 
         // Clear previous auto-reset timer
@@ -1223,6 +1217,12 @@ const Metronome: FC<LoaderProps> = ({
             // Update local BPM only — do NOT sync back to Generator
             ignoreExternalUpdatesRef.current = true;
             setBpm(clampedBpm);
+
+            // Auto-start playback once a tempo is established (2+ taps)
+            if (tapAutoPlay && !metronomePlaying) {
+                setCurrentBeat(0);
+                setMetronomePlaying(true);
+            }
 
             if (ignoreTimeoutRef.current) {
                 clearTimeout(ignoreTimeoutRef.current);
