@@ -31,18 +31,24 @@ The core composition tool. Roll the dice to randomize musical parameters and dis
 - **📏 Scale Tones with Intervals** — Each scale degree shows the semitone distance to the next note
 - **Circle of Fifths** — Switch the root note selector to a Circle of Fifths view for harmonic navigation
 
-#### 🎹 Piano Visualizer
+---
 
-Toggle from the Scale Tones row to show an interactive 2-octave piano keyboard.
+### 👁 Visualize
+
+Interactive piano and guitar fretboard visualizations that stay in sync with the Generator block.
+
+#### 🎹 Piano
+
+Toggle to show an interactive 2-octave piano keyboard.
 
 - Highlighted keys show scale notes (purple), root notes (blue), and chord tones
 - Click or tap any highlighted key to hear the note played
 - Pressed keys turn red with a glow effect
 - Notes play at the correct octave via Web Audio API
 
-#### 🎸 Guitar Visualizer
+#### 🎸 Guitar Fretboard
 
-Toggle from the Scale Tones row to show an interactive fretboard using the **CAGED system**.
+Toggle to show an interactive fretboard using the **CAGED system**.
 
 - **CAGED Position Navigation** — 5 overlapping positions (E, D, C, A, G shapes) computed dynamically from the root note. Use ‹ › arrow buttons to scroll through positions
 - **12-Fret Range** — Full fretboard coverage (frets 0–12) shown through a 5-fret sliding viewport
@@ -52,19 +58,30 @@ Toggle from the Scale Tones row to show an interactive fretboard using the **CAG
 - **Open Strings** — Hollow circles at fret 0 with a nut marker when the open position is in view
 - **"R" Labels** — Root notes are marked with "R" for quick identification
 
-15 scales are supported: Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Harmonic Minor, Melodic Minor, Hungarian Minor, Double Harmonic, Phrygian Dominant, Pentatonic Major, Pentatonic Minor, and Blues.
+---
 
-#### 🎶 Chord Progressions
+### 🎶 Progressions
 
-Toggle from the Scale Tones row to open the chord progressions panel. Browse and play common progressions that automatically adapt to whatever root and scale you've selected.
+Browse and play common chord progressions that automatically adapt to whatever root and scale you've selected in the Generator.
 
-- **70 Named Progressions** across 8 categories: Utility, Pop, Rock, Jazz, Blues, Emotional, EDM, and Classical
+- **66 Named Progressions** across 8 categories: Utility, Pop, Rock, Jazz, Blues, Emotional, EDM, and Classical
 - **Utility Progressions** — Educational tools including All Scale Chords, Cadence Sampler, Two-Chord Vamps, and Circle of Fifths Walk
-- **Dropdown Browser** — Browse all progressions organized by genre, with example songs listed for each (e.g., "Anthem — Don't Stop Believin', Let It Be, No Woman No Cry")
+- **Dropdown Browser** — Browse all progressions organized by genre, with "Heard in" descriptions showing example songs (e.g., "Anthem — Don't Stop Believin', Let It Be, No Woman No Cry")
 - **🎲 Randomize** — Dice button picks a random progression from any category
 - **▶ Playback** — Play the full progression with chords sounding simultaneously. Piano and guitar visualizations highlight each chord in real time as it plays
 - **Clickable Chord Pills** — Click any chord degree in the progression to hear it and see it highlighted on piano/guitar
 - **⬇ MIDI Export** — Download any progression as a `.mid` file. The filename includes the key, scale, and progression name (e.g., `A Minor - Anthem - I V vi IV.mid`). Drag the file directly into Ableton or any DAW — each chord is one bar and the clip follows your project tempo
+
+---
+
+### 🎸 Tuner
+
+Chromatic tuner with real-time pitch detection using your device's microphone.
+
+- **A440 Reference** — Standard concert pitch tuning
+- **Visual Needle** — Displays cents sharp or flat from the nearest detected note
+- **Note Detection** — Shows the detected note name in real time
+- **Microphone Toggle** — Start and stop listening with a single click
 
 ---
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle } from 'react-icons/fa';
-import { GiTomato, GiMetronome } from 'react-icons/gi';
+import { FaReact, FaIcons, FaWaveSquare, FaChartBar, FaShareSquare, FaQuestionCircle, FaEye } from 'react-icons/fa';
+import { GiTomato, GiMetronome, GiGuitarHead } from 'react-icons/gi';
 import { IoMdDocument } from 'react-icons/io';
-import { MdDarkMode, MdAutoAwesome } from 'react-icons/md';
+import { MdDarkMode, MdAutoAwesome, MdQueueMusic } from 'react-icons/md';
 import { Container, Card, CardHeader, CardTitle } from '../../components/common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 
@@ -150,7 +150,29 @@ const AboutPage = () => {
               <NestedList>
                 <ListItem>Randomize scales, BPM, and sounds. Lock in what you like and shuffle the rest.</ListItem>
                 <ListItem>Interactive chord degrees with highlighting and seventh chord support.</ListItem>
-                <ListItem>Visual piano and guitar displays showing scale notes and chord tones.</ListItem>
+              </NestedList>
+            </ListItem>
+            <ListItem>
+              <Strong><IconContainer><Icon icon={FaEye} size={16} /></IconContainer> Visualize:</Strong>
+              <NestedList>
+                <ListItem>Interactive piano keyboard and guitar fretboard showing scale notes, root notes, and chord tones in real time.</ListItem>
+                <ListItem>Click any highlighted note on the piano or fretboard to hear it played at the correct octave.</ListItem>
+                <ListItem>Guitar fretboard uses the CAGED system with 5 navigable positions across 12 frets.</ListItem>
+              </NestedList>
+            </ListItem>
+            <ListItem>
+              <Strong><IconContainer><Icon icon={MdQueueMusic} size={16} /></IconContainer> Progressions:</Strong>
+              <NestedList>
+                <ListItem>Browse 66 named chord progressions across 8 genres: Pop, Rock, Jazz, Blues, Emotional, EDM, Classical, and Utility.</ListItem>
+                <ListItem>Play full progressions or click individual chord pills to hear chords and see them highlighted on the piano and fretboard.</ListItem>
+                <ListItem>Export any progression as a MIDI file for drag-and-drop into your DAW.</ListItem>
+              </NestedList>
+            </ListItem>
+            <ListItem>
+              <Strong><IconContainer><Icon icon={GiGuitarHead} size={16} /></IconContainer> Tuner:</Strong>
+              <NestedList>
+                <ListItem>Chromatic tuner with real-time pitch detection using your microphone (A440 reference).</ListItem>
+                <ListItem>Visual needle display showing cents sharp or flat from the nearest note.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
