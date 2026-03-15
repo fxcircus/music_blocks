@@ -1789,12 +1789,12 @@ export default function InspirationGenerator({
     };
 
     if (diceMode) {
-      // In dice mode: animate dice for 300ms, then apply values
+      // In dice mode: animate dice for 150ms, then apply values
       setAllRolling(true);
       setTimeout(() => {
         setAllRolling(false);
         applyUpdates();
-      }, 300);
+      }, 150);
     } else {
       applyUpdates();
     }
@@ -2308,7 +2308,7 @@ export default function InspirationGenerator({
             rotate: [0, -15, 12, -18, 15, -8, 5, 0],
             scale: [1, 1.05, 1.08, 1.1, 1.08, 1.05, 1.02, 1],
           } : {}}
-          transition={(animate || allRolling) ? { duration: allRolling ? 0.3 : 0.5, ease: "easeOut" } : {}}
+          transition={(animate || allRolling) ? { duration: allRolling ? 0.15 : 0.5, ease: "easeOut" } : {}}
         >
           <IconWrapper><Icon icon={FaDice} size={24} /></IconWrapper>
         </DiceButton>
