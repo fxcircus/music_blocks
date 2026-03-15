@@ -24,11 +24,12 @@ export const getDefaultAppState = (): AppState => {
   const defaultBlockConfig = [
     { id: 'inspirationGenerator', order: 0, visible: true },  // Row 1 left
     { id: 'visualize', order: 1, visible: true },             // Row 1 right
-    { id: 'flowTimer', order: 2, visible: true },             // Row 2 left
-    { id: 'notes', order: 3, visible: true },                 // Row 2 right
-    { id: 'metronome', order: 4, visible: true },             // Row 3 left
-    { id: 'varispeed', order: 5, visible: true },             // Row 3 right
-    { id: 'arrangementTool', order: 6, visible: true },       // Row 4 left
+    { id: 'progressions', order: 2, visible: true },          // Row 2 left
+    { id: 'flowTimer', order: 3, visible: true },             // Row 2 right
+    { id: 'notes', order: 4, visible: true },                 // Row 3 left
+    { id: 'metronome', order: 5, visible: true },             // Row 3 right
+    { id: 'varispeed', order: 6, visible: true },             // Row 4 left
+    { id: 'arrangementTool', order: 7, visible: true },       // Row 4 right
   ];
 
   const blocks: BlockInstance[] = defaultBlockConfig.map(config => ({
@@ -100,13 +101,21 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
       state: {
         showPiano: localStorage.getItem('tilesShowPiano') === 'true',
         showGuitar: localStorage.getItem('tilesShowGuitar') === 'true',
-        showProgressions: localStorage.getItem('tilesShowProgressions') === 'true',
+      },
+    },
+    {
+      instanceId: 'progressions',
+      type: 'progressions',
+      order: 2,
+      visible: true,
+      state: {
+        savedProgressionIndex: parseInt(localStorage.getItem('tilesProgression') || '0', 10),
       },
     },
     {
       instanceId: 'flowTimer',
       type: 'flowTimer',
-      order: 2,
+      order: 3,
       visible: true,
       state: {
         time: 1500, // Default 25 minutes
@@ -116,7 +125,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'notes',
       type: 'notes',
-      order: 3,
+      order: 4,
       visible: true,
       state: {
         notes: oldState.notes || DEFAULT_STATE.notes,
@@ -125,7 +134,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'metronome',
       type: 'metronome',
-      order: 4,
+      order: 5,
       visible: true,
       state: {
         bpm: parseInt(oldState.bpmEl || DEFAULT_STATE.bpmEl, 10),
@@ -136,7 +145,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'varispeed',
       type: 'varispeed',
-      order: 5,
+      order: 6,
       visible: true,
       state: {
         bpm: 120,
@@ -146,7 +155,7 @@ export const migrateOldStateToBlocks = (oldState: TilesState): AppState => {
     {
       instanceId: 'arrangementTool',
       type: 'arrangementTool',
-      order: 6,
+      order: 7,
       visible: true,
       state: {
         selectedTemplate: 'Two Peaks',
@@ -239,10 +248,38 @@ export const loadBlockState = (): AppState => {
             state: {
               showPiano: localStorage.getItem('tilesShowPiano') === 'true',
               showGuitar: localStorage.getItem('tilesShowGuitar') === 'true',
-              showProgressions: localStorage.getItem('tilesShowProgressions') === 'true',
             },
           });
           parsedState = { ...parsedState, blocks: updatedBlocks };
+          saveBlockState(parsedState);
+        }
+
+        // Migration: inject progressions block for existing v2 users
+        const hasProgressions = parsedState.blocks?.some(b => b.type === 'progressions');
+        if (!hasProgressions) {
+          console.log('[Storage] Migrating: adding progressions block');
+          // Shift all blocks with order >= 2 up by 1
+          const updatedBlocks = parsedState.blocks.map(b => ({
+            ...b,
+            order: b.order >= 2 ? b.order + 1 : b.order,
+          }));
+          // Migrate savedProgressionIndex from localStorage
+          const savedIdx = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
+          updatedBlocks.push({
+            instanceId: 'progressions',
+            type: 'progressions',
+            order: 2,
+            visible: true,
+            state: {
+              savedProgressionIndex: savedIdx,
+            },
+          });
+          parsedState = { ...parsedState, blocks: updatedBlocks };
+          // Also remove showProgressions from visualize block state if present
+          const visualizeBlock = parsedState.blocks.find(b => b.type === 'visualize');
+          if (visualizeBlock && 'showProgressions' in visualizeBlock.state) {
+            delete visualizeBlock.state.showProgressions;
+          }
           saveBlockState(parsedState);
         }
 

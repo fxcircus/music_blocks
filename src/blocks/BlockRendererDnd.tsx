@@ -429,12 +429,27 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           generatorNotes={generatorNotes || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']}
           generatorRoot={generatorRoot || 'C'}
           generatorScale={generatorScale || 'Major'}
-          generatorBpm={globalBpm || '100'}
           generatorSelectedChord={generatorSelectedChord ?? null}
           generatorIsSeventhMode={generatorIsSeventhMode ?? false}
           showPiano={block.state.showPiano ?? true}
           showGuitar={block.state.showGuitar ?? false}
-          showProgressions={block.state.showProgressions ?? false}
+          onStateChange={(updates: Record<string, any>) => updateBlockState(updates)}
+          showTips={showTips}
+          setShowTips={setShowTips}
+        />
+      );
+      break;
+
+    case 'progressions':
+      blockContent = (
+        <BlockComponent
+          generatorNotes={generatorNotes || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']}
+          generatorRoot={generatorRoot || 'C'}
+          generatorScale={generatorScale || 'Major'}
+          generatorBpm={globalBpm || '100'}
+          generatorSelectedChord={generatorSelectedChord ?? null}
+          generatorIsSeventhMode={generatorIsSeventhMode ?? false}
+          savedProgressionIndex={block.state.savedProgressionIndex || 0}
           onStateChange={(updates: Record<string, any>) => updateBlockState(updates)}
           onSelectChord={(chord: number | null) => {
             if (onUpdateGeneratorState) {
@@ -645,8 +660,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         canRemove={canRemove}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
-        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed' || block.type === 'visualize') ? () => setShowTips(true) : undefined}
-        alignTop={block.type === 'inspirationGenerator' || block.type === 'visualize'}
+        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed' || block.type === 'visualize' || block.type === 'progressions') ? () => setShowTips(true) : undefined}
+        alignTop={block.type === 'inspirationGenerator' || block.type === 'visualize' || block.type === 'progressions'}
         additionalControls={block.type === 'inspirationGenerator' ? (
           <div ref={settingsRef} style={{ position: 'relative' }}>
             <SettingsIconBtn

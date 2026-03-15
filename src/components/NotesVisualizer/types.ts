@@ -19,12 +19,6 @@ export interface NotesVisualizerProps {
   playingNoteIndex?: number;    // Currently playing note (-1 if not playing)
   showPiano: boolean;
   showGuitar: boolean;
-  showProgressions: boolean;
-  bpm: number;
-  scaleNoteCount: number;
-  initialProgressionIndex?: number;
-  onSelectChord: (degree: number | null) => void;
-  onProgressionChange?: (index: number) => void;
 }
 
 export interface PianoVisualizerProps {

@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaGuitar, FaCog, FaDownload } from 'react-icons/fa';
+import { FaGuitar } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
-import { MdQueueMusic } from 'react-icons/md';
 import { Icon } from '../../utils/IconHelper';
-import { scaleNoteCounts } from '../../utils/musicTheory';
 import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 
@@ -62,14 +60,11 @@ interface VisualizeBlockProps {
   generatorNotes: string[];
   generatorRoot: string;
   generatorScale: string;
-  generatorBpm: string;
   generatorSelectedChord: number | null;
   generatorIsSeventhMode: boolean;
   showPiano: boolean;
   showGuitar: boolean;
-  showProgressions: boolean;
   onStateChange: (updates: Record<string, any>) => void;
-  onSelectChord: (chord: number | null) => void;
   showTips?: boolean;
   setShowTips?: (show: boolean) => void;
 }
@@ -78,14 +73,11 @@ const VisualizeBlock: React.FC<VisualizeBlockProps> = ({
   generatorNotes,
   generatorRoot,
   generatorScale,
-  generatorBpm,
   generatorSelectedChord,
   generatorIsSeventhMode,
   showPiano,
   showGuitar,
-  showProgressions,
   onStateChange,
-  onSelectChord,
   showTips: showTipsExternal,
   setShowTips: setShowTipsExternal,
 }) => {
@@ -106,26 +98,10 @@ const VisualizeBlock: React.FC<VisualizeBlockProps> = ({
     return () => window.removeEventListener('generatorPlayingNote', handler);
   }, []);
 
-  // Chord progression persistence
-  const savedProgressionIndex = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
-  const handleProgressionChange = useCallback((index: number) => {
-    localStorage.setItem('tilesProgression', String(index));
-  }, []);
-
-  const scaleNoteCount = scaleNoteCounts[generatorScale] || 7;
-
   return (
     <div>
       <VisualizerSegmentedRow>
         <SegmentedGroup>
-          <VisualizerSegment
-            $isActive={showProgressions}
-            onClick={() => onStateChange({ showProgressions: !showProgressions })}
-            title="Toggle chord progressions panel"
-          >
-            <Icon icon={MdQueueMusic} size={16} />
-            Chord Progressions
-          </VisualizerSegment>
           <VisualizerSegment
             $isActive={showPiano}
             onClick={() => onStateChange({ showPiano: !showPiano })}
@@ -157,12 +133,6 @@ const VisualizeBlock: React.FC<VisualizeBlockProps> = ({
           playingNoteIndex={playingNoteIndex}
           showPiano={showPiano}
           showGuitar={showGuitar}
-          showProgressions={showProgressions}
-          bpm={parseInt(generatorBpm) || 120}
-          scaleNoteCount={scaleNoteCount}
-          initialProgressionIndex={savedProgressionIndex}
-          onSelectChord={onSelectChord}
-          onProgressionChange={handleProgressionChange}
         />
       </CompactVisualizerWrapper>
 
@@ -175,7 +145,7 @@ const VisualizeBlock: React.FC<VisualizeBlockProps> = ({
             <p>
               <Icon icon={GiPianoKeys} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-              Use the toggle buttons to show or hide the <strong>Piano</strong>, <strong>Guitar Fretboard</strong>, and <strong>Chord Progressions</strong> visualizations. Everything stays in sync with the Generator block.
+              Use the toggle buttons to show or hide the <strong>Piano</strong> and <strong>Guitar Fretboard</strong> visualizations. Everything stays in sync with the Generator block.
             </p>
             <p>
               <Icon icon={GiPianoKeys} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
@@ -184,18 +154,6 @@ const VisualizeBlock: React.FC<VisualizeBlockProps> = ({
             <p>
               <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               Click any highlighted note on the <strong>fretboard</strong> to hear it played. The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
-            </p>
-            <p>
-              <Icon icon={MdQueueMusic} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-              Browse 66 named <strong>chord progressions</strong> across 7 genres (Pop, Rock, Jazz, Blues, Emotional, EDM, Classical) using the dropdown. Click the dice to pick a random progression, hit play to hear all chords played in sequence, or click any chord pill to hear it individually. Piano and guitar visualizations update in real time as chords play.
-            </p>
-            <p>
-              <Icon icon={FaDownload} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-              Export any chord progression as a <strong>MIDI file</strong> using the download button. The file is named with the key, scale, and progression (e.g., "A Minor - Anthem - I V vi IV.mid") and can be dragged directly into a DAW like Ableton. Each chord gets one full bar, and the clip will follow your project tempo.
-            </p>
-            <p>
-              <Icon icon={FaCog} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-              <strong>Audio volume and instrument sounds</strong> are controlled by the Generator block's settings (the cogwheel icon on the Generator card). Changes there apply to all playback across both blocks.
             </p>
             <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
               <p style={{ fontWeight: 600, marginBottom: 6 }}>

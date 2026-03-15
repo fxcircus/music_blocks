@@ -103,8 +103,9 @@ export const encodeAppStateToURL = (appState: AppState): string => {
     url.searchParams.delete(param);
   });
 
-  // Get chord progression from localStorage
-  const progression = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
+  // Get chord progression from block state
+  const progressionsBlock = appState.blocks.find(b => b.type === 'progressions');
+  const progression = progressionsBlock?.state?.savedProgressionIndex ?? parseInt(localStorage.getItem('tilesProgression') || '0', 10);
 
   const payload = toShareable(appState, progression);
   const json = JSON.stringify(payload);

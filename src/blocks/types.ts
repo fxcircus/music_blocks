@@ -128,7 +128,10 @@ export interface InspirationGeneratorState {
 export interface VisualizeState {
   showPiano: boolean;
   showGuitar: boolean;
-  showProgressions: boolean;
+}
+
+export interface ProgressionsState {
+  savedProgressionIndex: number;
 }
 
 export interface MetronomeState {

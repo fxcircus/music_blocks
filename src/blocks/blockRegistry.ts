@@ -16,10 +16,12 @@ import Varispeed from '../components/Varispeed';
 import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
 import Tuner from '../components/Tuner/Tuner';
 import VisualizeBlock from '../components/VisualizeBlock/VisualizeBlock';
+import ProgressionsBlock from '../components/ProgressionsBlock/ProgressionsBlock';
 
 // Import icons
 import { GiTomato, GiMetronome, GiGuitarHead } from 'react-icons/gi';
 import { FaEye, FaWaveSquare, FaChartBar } from 'react-icons/fa';
+import { MdQueueMusic } from 'react-icons/md';
 import { IoMdDocument } from 'react-icons/io';
 import { MdAutoAwesome } from 'react-icons/md';
 
@@ -78,7 +80,18 @@ export const BLOCK_REGISTRY: BlockType[] = [
       showProgressions: false,
     },
     category: 'music',
-    description: 'Piano, guitar fretboard, and chord progression visualizations',
+    description: 'Piano and guitar fretboard visualizations',
+  },
+  {
+    id: 'progressions',
+    name: 'Progressions',
+    icon: MdQueueMusic,
+    component: ProgressionsBlock,
+    defaultState: {
+      savedProgressionIndex: 0,
+    },
+    category: 'music',
+    description: 'Browse and play 66 chord progressions across 8 genres',
   },
   {
     id: 'metronome',

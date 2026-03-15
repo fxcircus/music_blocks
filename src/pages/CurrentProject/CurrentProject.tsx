@@ -295,6 +295,9 @@ const CurrentProject: FC<LoaderProps> = () => {
 
                 // Update chord progression
                 if (decoded.progression !== undefined) {
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'progressions', {
+                        savedProgressionIndex: decoded.progression,
+                    });
                     localStorage.setItem('tilesProgression', String(decoded.progression));
                 }
 
@@ -343,6 +346,9 @@ const CurrentProject: FC<LoaderProps> = () => {
                 }
 
                 if (decoded.progression !== undefined) {
+                    updatedBlockState = updateBlockStateUtil(updatedBlockState, 'progressions', {
+                        savedProgressionIndex: decoded.progression,
+                    });
                     localStorage.setItem('tilesProgression', String(decoded.progression));
                 }
 

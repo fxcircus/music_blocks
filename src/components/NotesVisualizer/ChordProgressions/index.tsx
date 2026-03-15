@@ -406,13 +406,6 @@ const HeardInLabel = styled.span`
   opacity: 0.7;
 `;
 
-const HeardInRow = styled.div`
-  font-size: 10px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  margin-left: 38px;
-  text-align: left;
-`;
-
 const PlayBtn = styled.button<{ $isPlaying: boolean }>`
   background: ${({ $isPlaying, theme }) =>
     $isPlaying ? theme.colors.primary : 'transparent'};
@@ -442,7 +435,6 @@ const ChordPillsRow = styled.div`
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
-  margin-left: 38px;
 `;
 
 const ChordPill = styled.button<{ $isActive: boolean; $isPlaying: boolean }>`
@@ -490,8 +482,8 @@ const ExportBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 56px;
+  height: 56px;
   padding: 0;
   flex-shrink: 0;
   transition: all 0.15s;
@@ -840,21 +832,15 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
           </ThemeProvider>,
           document.body
         )}
-        <PlayBtn $isPlaying={isPlaying} onClick={startPlayback} title={isPlaying ? 'Stop' : 'Play progression'}>
-          <Icon icon={isPlaying ? FaStop : FaPlay} size={12} />
-        </PlayBtn>
         <ExportBtn onClick={handleExport} title="Download chord progression as MIDI file">
-          <Icon icon={FaDownload} size={12} />
+          <Icon icon={FaDownload} size={24} />
         </ExportBtn>
       </TopRow>
 
-      {currentProgression.desc && (
-        <HeardInRow>
-          {currentProgression.category !== 'utility' && <HeardInLabel>Heard in </HeardInLabel>}{currentProgression.desc}
-        </HeardInRow>
-      )}
-
       <ChordPillsRow>
+        <PlayBtn $isPlaying={isPlaying} onClick={startPlayback} title={isPlaying ? 'Stop' : 'Play progression'}>
+          <Icon icon={isPlaying ? FaStop : FaPlay} size={12} />
+        </PlayBtn>
         {effectiveDegrees.map((deg, i) => (
           <React.Fragment key={i}>
             {i > 0 && <Arrow>{'>'}</Arrow>}
