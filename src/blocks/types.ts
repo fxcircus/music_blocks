@@ -149,3 +149,7 @@ export interface VarispeedState {
 export interface ArrangementToolState {
   selectedTemplate: string;
 }
+
+export interface TunerState {
+  isListening: boolean;
+}

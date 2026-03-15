@@ -14,9 +14,10 @@ import Metronome from '../components/Metronome/Metronome';
 import Notepad from '../components/Notepad/Notepad';
 import Varispeed from '../components/Varispeed';
 import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
+import Tuner from '../components/Tuner/Tuner';
 
 // Import icons
-import { GiTomato, GiMetronome } from 'react-icons/gi';
+import { GiTomato, GiMetronome, GiGuitarHead } from 'react-icons/gi';
 import { FaWaveSquare, FaChartBar } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
 import { MdAutoAwesome } from 'react-icons/md';
@@ -111,6 +112,17 @@ export const BLOCK_REGISTRY: BlockType[] = [
     },
     category: 'music',
     description: 'Song structure templates and arrangement patterns',
+  },
+  {
+    id: 'tuner',
+    name: 'Tuner',
+    icon: GiGuitarHead,
+    component: Tuner,
+    defaultState: {
+      isListening: false,
+    },
+    category: 'music',
+    description: 'Chromatic tuner with real-time pitch detection (A440)',
   },
 ];
 

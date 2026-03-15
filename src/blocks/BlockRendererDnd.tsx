@@ -350,7 +350,7 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   };
 
   // Blocks that already have their own ToolCard built in
-  const blocksWithOwnToolCard = ['flowTimer', 'metronome'];
+  const blocksWithOwnToolCard = ['flowTimer', 'metronome', 'tuner'];
   const hasOwnToolCard = blocksWithOwnToolCard.includes(block.type);
 
   // Blocks that have their own header styling (don't need ToolCard wrapper)
@@ -454,6 +454,17 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           generatorRoot={generatorRoot}
           showTips={showTips}
           setShowTips={setShowTips}
+        />
+      );
+      break;
+
+    case 'tuner':
+      blockContent = (
+        <BlockComponent
+          onRemove={onRemove}
+          canRemove={canRemove}
+          dragHandleProps={dragHandleProps}
+          isRecentlyDragged={isRecentlyDragged}
         />
       );
       break;
