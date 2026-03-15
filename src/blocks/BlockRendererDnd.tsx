@@ -58,23 +58,24 @@ const ModeToggleBtn = styled.button<{ $active: boolean }>`
   }
 `;
 
-/* Cogwheel settings button */
+/* Cogwheel settings button – sized to match HelpButton (28×28) */
 const SettingsIconBtn = styled.button<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  margin-left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: ${({ theme }) => theme.spacing.xs};
   border: none;
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : theme.colors.border};
-    color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : `${theme.colors.primary}22`};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -595,14 +596,14 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         isRecentlyDragged={isRecentlyDragged}
         onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
         alignTop={block.type === 'inspirationGenerator'}
-        titleExtra={block.type === 'inspirationGenerator' ? (
+        additionalControls={block.type === 'inspirationGenerator' ? (
           <div ref={settingsRef} style={{ position: 'relative' }}>
             <SettingsIconBtn
               $active={showSettings}
               onClick={() => setShowSettings(!showSettings)}
               title="Generator settings"
             >
-              <Icon icon={FaCog} size={14} />
+              <Icon icon={FaCog} size={16} />
             </SettingsIconBtn>
             <AnimatePresence>
               {showSettings && (

@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode } from 'react';
 import styled from 'styled-components';
 import { Card, CardTitle, CardIconWrapper } from './StyledComponents';
 import { Icon } from '../../utils/IconHelper';
@@ -64,40 +64,27 @@ const ControlButtons = styled.div`
   top: ${({ theme }) => theme.spacing.sm};
   right: ${({ theme }) => theme.spacing.sm};
   display: flex;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   z-index: 10;
 `;
 
-const ControlButton = styled.button<{ $visible?: boolean }>`
+const ControlButton = styled.button`
   background: transparent;
   color: #b33939; /* Dark red color for the X icon */
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
   cursor: pointer;
-  opacity: ${({ $visible }) => $visible ? 1 : 0};
+  opacity: 1;
   transition: ${({ theme }) => theme.transitions.normal};
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  pointer-events: ${({ $visible }) => $visible ? 'auto' : 'none'};
-
-  /* Always visible on mobile/tablet (no hover available) */
-  @media (max-width: 768px) {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* Show on card hover or when active */
-  .tool-card:hover & {
-    opacity: 1;
-    pointer-events: auto;
-  }
 
   &:hover:not(:disabled) {
-    opacity: 1;
     transform: scale(1.05);
     border-color: #b33939;
     background: rgba(179, 57, 57, 0.1);
@@ -127,20 +114,10 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   onShowHelp,
   alignTop = false
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-
-  // Show remove button if recently dragged
-  const showRemoveButton = isHovered || isActive || isRecentlyDragged;
-
   const handleRemoveClick = () => {
     if (onRemove) {
       onRemove();
     }
-  };
-
-  const handleHeaderClick = () => {
-    setIsActive(!isActive);
   };
 
   return (
@@ -149,8 +126,6 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Control buttons for help and remove */}
       {(onRemove || additionalControls || onShowHelp) && (
@@ -166,7 +141,6 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
             <ControlButton
               onClick={handleRemoveClick}
               disabled={!canRemove}
-              $visible={showRemoveButton}
               title="Remove block"
             >
               <Icon icon={FaTimes} size={14} />
@@ -181,7 +155,7 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
           <CardIconWrapper>
             <Icon icon={icon} size={20} />
           </CardIconWrapper>
-          <CardTitle onClick={handleHeaderClick}>
+          <CardTitle>
             {title}
           </CardTitle>
           {titleExtra}

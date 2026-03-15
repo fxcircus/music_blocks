@@ -10,7 +10,7 @@ const DragHandleWrapper = styled.div<{ $isDraggable?: boolean }>`
   transform: translateY(-50%);
   cursor: ${({ $isDraggable }) => $isDraggable ? 'grab' : 'default'};
   color: ${({ theme }) => theme.colors.textSecondary};
-  opacity: 0;
+  opacity: 0.4;
   transition: opacity ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
   padding: 4px;
   display: flex;
@@ -20,27 +20,18 @@ const DragHandleWrapper = styled.div<{ $isDraggable?: boolean }>`
   user-select: none;
   z-index: 10;
 
-  /* Show on card hover */
-  .tool-card:hover &,
-  .inspiration-card:hover &,
-  .varispeed-card:hover & {
-    opacity: 0.4;
-  }
-
   &:hover {
-    opacity: 0.8 !important;
+    opacity: 0.8;
     color: ${({ theme }) => theme.colors.primary};
   }
 
   &:active {
     cursor: grabbing;
-    opacity: 1 !important;
+    opacity: 1;
   }
 
-  /* Always show on mobile since hover isn't available */
   @media (max-width: 768px) {
     left: 4px;
-    opacity: 0.3;
   }
 `;
 
