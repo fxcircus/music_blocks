@@ -296,7 +296,8 @@ const SelectorBtn = styled.button<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  padding: 4px 8px;
+  padding: 4px 12px;
+  height: 56px;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: 600;
   font-family: inherit;
@@ -321,12 +322,29 @@ const CategoryBadge = styled.span`
   flex-shrink: 0;
 `;
 
-const SelectorLabel = styled.span`
+const SelectorLabel = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+`;
+
+const SelectorName = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
+`;
+
+const SelectorDesc = styled.span`
+  font-size: 10px;
+  font-weight: 400;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.7;
 `;
 
 const SelectorCaret = styled.span<{ $isOpen: boolean }>`
@@ -797,7 +815,14 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
         <SelectorWrapper ref={selectorRef}>
           <SelectorBtn $isOpen={dropdownOpen} onClick={toggleDropdown}>
             <CategoryBadge>{categoryLabel}</CategoryBadge>
-            <SelectorLabel>{currentProgression.name}</SelectorLabel>
+            <SelectorLabel>
+              <SelectorName>{currentProgression.name}</SelectorName>
+              {currentProgression.desc && (
+                <SelectorDesc>
+                  {currentProgression.category !== 'utility' && 'Heard in '}{currentProgression.desc}
+                </SelectorDesc>
+              )}
+            </SelectorLabel>
             <SelectorCaret $isOpen={dropdownOpen}>&#9660;</SelectorCaret>
           </SelectorBtn>
         </SelectorWrapper>
@@ -805,7 +830,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
           <ThemeProvider theme={theme}>
             <DropdownPanel
               ref={dropdownPanelRef}
-              style={{ top: dropdownPos.top, left: dropdownPos.left, minWidth: dropdownPos.width, width: 'max-content', maxWidth: 400 }}
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
             >
               {CATEGORIES.map(cat => (
                 <React.Fragment key={cat.key}>
