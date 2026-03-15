@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled, { useTheme, keyframes, css } from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaVolumeDown, FaVolumeOff, FaVolumeMute, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
 import { Card } from '../common/StyledComponents';
@@ -17,7 +17,6 @@ import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../utils/audioProfiles';
-import SoundDropdownPanel from '../common/SoundDropdownPanel';
 
 
 // Chord quality mapping for different modes
@@ -158,11 +157,11 @@ const TableRow = styled.tr`
 `;
 
 const SpacerCell = styled.td`
-  width: 30px;
+  width: 8px;
   padding: 0;
-  
+
   @media (max-width: 768px) {
-    width: 20px;
+    width: 4px;
   }
 `;
 
@@ -185,17 +184,17 @@ const LabelCell = styled.td`
   padding: ${({ theme }) => `${theme.spacing.xs} 0`};
   color: ${({ theme }) => theme.colors.textSecondary};
   font-weight: 500;
-  width: 120px;
+  width: 100px;
   vertical-align: middle;
   height: 100%;
   text-align: left;
   white-space: nowrap;
-  padding-left: ${({ theme }) => theme.spacing.md};
-  
+  padding-left: ${({ theme }) => theme.spacing.xs};
+
   @media (max-width: 768px) {
-    width: 100px;
+    width: 80px;
     padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-    padding-left: ${({ theme }) => theme.spacing.sm};
+    padding-left: ${({ theme }) => theme.spacing.xs};
     font-size: ${({ theme }) => theme.fontSizes.sm};
   }
 `;
@@ -445,46 +444,22 @@ const Tooltip = styled.div`
   }
 `;
 
-// Update the ChordDegreesContainer to handle dynamic spacing
-const ChordDegreesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
+const ChordDegreesContainer = styled.div<{ $noteCount?: number; $isSeventhMode?: boolean }>`
   display: flex;
-  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
-  gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-    $isSeventhMode ? theme.spacing.xs : $noteCount < 7 ? '0' : theme.spacing.sm};
+  justify-content: space-around;
   overflow-x: visible;
-  padding-right: ${({ theme }) => theme.spacing.sm};
-  width: ${({ $isSeventhMode }) => $isSeventhMode ? '350px' : '320px'};
+  width: 100%;
   position: relative;
   z-index: 10;
-
-  @media (max-width: 768px) {
-    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
-    padding-right: ${({ theme }) => theme.spacing.xs};
-    gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-      $isSeventhMode ? '4px' : $noteCount < 7 ? '0' : theme.spacing.xs};
-    width: ${({ $isSeventhMode }) => $isSeventhMode ? '260px' : '240px'};
-  }
 `;
 
-// Update the ScaleTonesContainer to handle dynamic spacing
-const ScaleTonesContainer = styled.div<{ $noteCount: number; $isSeventhMode?: boolean }>`
+const ScaleTonesContainer = styled.div<{ $noteCount?: number; $isSeventhMode?: boolean }>`
   display: flex;
-  justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
-  gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-    $isSeventhMode ? theme.spacing.xs : $noteCount < 7 ? '0' : theme.spacing.sm};
+  justify-content: space-around;
   overflow-x: visible;
-  padding-right: ${({ theme }) => theme.spacing.sm};
-  width: ${({ $isSeventhMode }) => $isSeventhMode ? '350px' : '320px'};
+  width: 100%;
   position: relative;
   z-index: 10;
-
-  @media (max-width: 768px) {
-    justify-content: ${({ $noteCount }) => $noteCount < 7 ? 'space-around' : 'flex-start'};
-    padding-right: ${({ theme }) => theme.spacing.xs};
-    gap: ${({ theme, $noteCount, $isSeventhMode }) =>
-      $isSeventhMode ? '4px' : $noteCount < 7 ? '0' : theme.spacing.xs};
-    width: ${({ $isSeventhMode }) => $isSeventhMode ? '260px' : '240px'};
-  }
 `;
 
 const LockIconWrapper = styled.div<{ $isLocked: boolean }>`
@@ -663,33 +638,42 @@ const PlayButton = styled.button<{ $isPlaying: boolean }>`
   }
 `;
 
-const VisualizerButtonRow = styled.div`
+const VisualizerSegmentedRow = styled.div`
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
 `;
 
-const LabeledVisualizerButton = styled.button<{ $isActive: boolean }>`
+const SegmentedGroup = styled.div`
+  display: inline-flex;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const VisualizerSegment = styled.button<{ $isActive: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
+  padding: 5px 14px;
+  border: none;
+  border-right: 1px solid ${({ theme }) => theme.colors.border};
   background: ${({ $isActive, theme }) =>
     $isActive ? theme.colors.primary : 'transparent'};
   color: ${({ $isActive, theme }) =>
     $isActive ? theme.colors.buttonText : theme.colors.textSecondary};
-  border: 2px solid ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary : theme.colors.border};
   cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  transition: background ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: 500;
+
+  &:last-child {
+    border-right: none;
+  }
 
   &:hover {
     background: ${({ $isActive, theme }) =>
       $isActive ? theme.colors.primary : `${theme.colors.primary}22`};
-    transform: scale(1.05);
   }
 `;
 
@@ -804,9 +788,9 @@ const diceShakeAnimation = css`
 const DiceModeContainer = styled.div`
   animation: ${diceModeInKeyframes} 0.25s ease-out;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: space-evenly;
-  gap: 4px 8px;
+  gap: 0;
   padding: 4px 0;
   width: 100%;
 `;
@@ -839,8 +823,8 @@ const DieLabel = styled.span`
 `;
 
 const DieSvgWrapper = styled.div<{ $rolling?: boolean; $accent?: string }>`
-  width: 96px;
-  height: 96px;
+  width: 105px;
+  height: 105px;
   flex-shrink: 0;
   ${({ $rolling }) => $rolling && diceShakeAnimation}
   filter: ${({ $rolling, $accent }) =>
@@ -1200,7 +1184,7 @@ export default function InspirationGenerator({
   diceMode: diceModeExternal,
   setDiceMode: setDiceModeExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
-  const { effectiveInstrumentTheme, instrumentVolume, setInstrumentVolume, instrumentThemeOverride, setInstrumentThemeOverride } = useSoundSettings();
+  const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
   const [locked, setLocked] = useState<LockedState>({
     root: false,
@@ -1248,8 +1232,6 @@ export default function InspirationGenerator({
   const [showPiano, setShowPiano] = useState(() => localStorage.getItem('tilesShowPiano') === 'true');
   const [showGuitar, setShowGuitar] = useState(() => localStorage.getItem('tilesShowGuitar') === 'true');
   const [showProgressions, setShowProgressions] = useState(() => localStorage.getItem('tilesShowProgressions') === 'true');
-  const [showSoundDropdown, setShowSoundDropdown] = useState(false);
-  const soundDropdownRef = useRef<HTMLDivElement>(null);
 
   // Chord progression persistence
   const savedProgressionIndex = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
@@ -1512,28 +1494,6 @@ export default function InspirationGenerator({
     };
   }, [openDropdown]);
 
-  // Close sound dropdown on outside click
-  useEffect(() => {
-    const handleSoundClickOutside = (event: MouseEvent) => {
-      if (soundDropdownRef.current && !soundDropdownRef.current.contains(event.target as Node)) {
-        setShowSoundDropdown(false);
-      }
-    };
-    if (showSoundDropdown) {
-      document.addEventListener('mousedown', handleSoundClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleSoundClickOutside);
-    };
-  }, [showSoundDropdown]);
-
-  // Helper: get volume icon based on current instrument volume
-  const getInstrumentVolumeIcon = () => {
-    if (instrumentVolume === 0) return FaVolumeMute;
-    if (instrumentVolume < 0.33) return FaVolumeOff;
-    if (instrumentVolume < 0.66) return FaVolumeDown;
-    return FaVolumeUp;
-  };
 
   const maxBpm = 140;
   const minBpm = 75;
@@ -2315,14 +2275,25 @@ export default function InspirationGenerator({
 
         <StyledTable>
           <colgroup>
-            <col style={{ width: '30px' }} />
+            <col style={{ width: '8px' }} />
             <col style={{ width: '35px' }} />
-            <col style={{ width: '120px' }} />
+            <col style={{ width: '100px' }} />
             <col />
           </colgroup>
           <tbody>
-            {/* Table Mode - Parameter Rows */}
-            {!diceMode && (<>
+            {/* Mode-specific area — fixed min-height so switching doesn't shift layout */}
+            <tr>
+              <td colSpan={4} style={{ padding: 0 }}>
+                <div style={{ minHeight: 185 }}>
+                  {!diceMode && (
+                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '8px' }} />
+                        <col style={{ width: '35px' }} />
+                        <col style={{ width: '100px' }} />
+                        <col />
+                      </colgroup>
+                      <tbody>
             <TableRow>
               <SpacerCell />
               <TableHeader>
@@ -2553,13 +2524,12 @@ export default function InspirationGenerator({
                 <Divider />
               </SeparatorCell>
             </tr>
-            </>)}
+                      </tbody>
+                    </table>
+                  )}
 
-            {/* Dice Mode - Parameter Dice */}
-            {diceMode && (<>
-              <tr>
-                <td colSpan={4} style={{ padding: '8px 0' }}>
-                  <DiceModeContainer>
+                  {diceMode && (
+                    <DiceModeContainer>
                       {/* Root - d12 (pentagon) */}
                       <DieComponent
                         dieType="d12" paramKey="root" label="Root" value={rootEl}
@@ -2678,15 +2648,11 @@ export default function InspirationGenerator({
                         externalRolling={allRolling && !locked.sound}
                         editable={false} options={sounds}
                       />
-                  </DiceModeContainer>
-                </td>
-              </tr>
-              <tr>
-                <SeparatorCell colSpan={4}>
-                  <Divider />
-                </SeparatorCell>
-              </tr>
-            </>)}
+                    </DiceModeContainer>
+                  )}
+                </div>
+              </td>
+            </tr>
 
             {/* Chord Degrees section integrated into the table - with seventh toggle in TableHeader */}
             <TableRow className="chord-scale-row">
@@ -2808,60 +2774,37 @@ export default function InspirationGenerator({
               </ExtendedInfoCell>
             </TableRow>
 
-            {/* Separator after Scale Tones row */}
-            <tr>
-              <SeparatorCell colSpan={4}>
-                <Divider />
-              </SeparatorCell>
-            </tr>
-
             {/* Visualizer toggle buttons row */}
             <tr>
               <td colSpan={4} style={{ padding: 0 }}>
-                <VisualizerButtonRow>
-                  <LabeledVisualizerButton
-                    $isActive={showProgressions}
-                    onClick={() => setShowProgressions(!showProgressions)}
-                    title="Toggle chord progressions panel"
-                  >
-                    <Icon icon={MdQueueMusic} size={16} />
-                    Progressions
-                  </LabeledVisualizerButton>
-                  <LabeledVisualizerButton
-                    $isActive={showPiano}
-                    onClick={() => setShowPiano(!showPiano)}
-                    title="Toggle piano visualization"
-                  >
-                    <Icon icon={GiPianoKeys} size={16} />
-                    Piano
-                  </LabeledVisualizerButton>
-                  <LabeledVisualizerButton
-                    $isActive={showGuitar}
-                    onClick={() => setShowGuitar(!showGuitar)}
-                    title="Toggle guitar fretboard visualization"
-                  >
-                    <Icon icon={FaGuitar} size={14} />
-                    Fretboard
-                  </LabeledVisualizerButton>
-                  <div ref={soundDropdownRef} style={{ position: 'relative' }}>
-                    <LabeledVisualizerButton
-                      $isActive={showSoundDropdown}
-                      onClick={() => setShowSoundDropdown(!showSoundDropdown)}
-                      title="Sound settings"
+                <VisualizerSegmentedRow>
+                  <SegmentedGroup>
+                    <VisualizerSegment
+                      $isActive={showProgressions}
+                      onClick={() => setShowProgressions(!showProgressions)}
+                      title="Toggle chord progressions panel"
                     >
-                      <Icon icon={getInstrumentVolumeIcon()} size={14} />
-                      Sound
-                    </LabeledVisualizerButton>
-                    <SoundDropdownPanel
-                      isOpen={showSoundDropdown}
-                      themeOverride={instrumentThemeOverride}
-                      setThemeOverride={setInstrumentThemeOverride}
-                      volume={instrumentVolume}
-                      setVolume={setInstrumentVolume}
-                      style={{ top: 'calc(100% + 8px)', right: 0 }}
-                    />
-                  </div>
-                </VisualizerButtonRow>
+                      <Icon icon={MdQueueMusic} size={16} />
+                      Chord Progressions
+                    </VisualizerSegment>
+                    <VisualizerSegment
+                      $isActive={showPiano}
+                      onClick={() => setShowPiano(!showPiano)}
+                      title="Toggle piano visualization"
+                    >
+                      <Icon icon={GiPianoKeys} size={16} />
+                      Piano
+                    </VisualizerSegment>
+                    <VisualizerSegment
+                      $isActive={showGuitar}
+                      onClick={() => setShowGuitar(!showGuitar)}
+                      title="Toggle guitar fretboard visualization"
+                    >
+                      <Icon icon={FaGuitar} size={14} />
+                      Fretboard
+                    </VisualizerSegment>
+                  </SegmentedGroup>
+                </VisualizerSegmentedRow>
               </td>
             </tr>
           </tbody>

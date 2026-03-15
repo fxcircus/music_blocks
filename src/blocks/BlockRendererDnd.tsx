@@ -6,14 +6,29 @@
  * and the existing block components.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaDice, FaList } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaDice, FaList, FaCog, FaCheck, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp } from 'react-icons/fa';
 import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCardDnd from '../components/common/ToolCardDnd';
 import TipsModal from '../components/common/TipsModal';
 import { Icon } from '../utils/IconHelper';
+import { useSoundSettings } from '../context/SoundSettingsContext';
+import { useTheme as useAppTheme, THEME_ORDER, THEME_LABELS, ThemeName, lightTheme, darkTheme, vintageTheme, indieTheme, discoTheme, hiphopTheme } from '../theme/ThemeProvider';
+import ThemeIcon from '../components/Nav/ThemeIcons';
+
+type ThemeOverride = 'byTheme' | ThemeName;
+
+const THEME_PRIMARY: Record<ThemeName, string> = {
+  light: lightTheme.colors.primary,
+  dark: darkTheme.colors.primary,
+  vintage: vintageTheme.colors.primary,
+  indie: indieTheme.colors.primary,
+  disco: discoTheme.colors.primary,
+  hiphop: hiphopTheme.colors.primary,
+};
 
 /* Segmented toggle for dice/table mode */
 const ModeToggleContainer = styled.div`
@@ -40,6 +55,182 @@ const ModeToggleBtn = styled.button<{ $active: boolean }>`
 
   &:hover {
     background: ${({ $active, theme }) => $active ? theme.colors.primary + '33' : theme.colors.border};
+  }
+`;
+
+/* Cogwheel settings button */
+const SettingsIconBtn = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ $active, theme }) => $active ? `${theme.colors.primary}33` : theme.colors.border};
+    color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+  }
+`;
+
+const SettingsDropdown = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  box-shadow: ${({ theme }) => theme.shadows.large};
+  min-width: 180px;
+  overflow: visible;
+  padding: ${({ theme }) => theme.spacing.sm};
+`;
+
+const SettingsDivider = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.border};
+  margin: ${({ theme }) => `${theme.spacing.xs} 0`};
+`;
+
+const SettingsHeader = styled.div`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  text-align: left;
+`;
+
+const SettingsRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+`;
+
+const VolumeRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+`;
+
+const VolumeIcon = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  padding: 2px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const VolumeSlider = styled.input`
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: ${({ theme }) => theme.colors.border};
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+    border: none;
+  }
+`;
+
+const VolumePercent = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  min-width: 32px;
+  text-align: right;
+`;
+
+const ByThemeButton = styled.button<{ $active: boolean }>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: 4px ${({ theme }) => theme.spacing.sm};
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
+  border: none;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ $active }) => $active ? 700 : 500};
+  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
+  text-align: left;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+
+  &:hover {
+    background: ${({ theme }) => `${theme.colors.primary}11`};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const IconGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  margin-top: 2px;
+`;
+
+const IconButton = styled.button<{ $active: boolean; $isByThemeHint: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  background: ${({ $active, $isByThemeHint, theme }) =>
+    $active ? `${theme.colors.primary}22` :
+    $isByThemeHint ? `${theme.colors.textSecondary}10` :
+    'transparent'};
+  border: 1.5px solid ${({ $active, $isByThemeHint, theme }) =>
+    $active ? theme.colors.primary :
+    $isByThemeHint ? theme.colors.textSecondary + '40' :
+    theme.colors.border + '80'};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  opacity: ${({ $isByThemeHint }) => $isByThemeHint ? 0.45 : 1};
+  margin: 0 auto;
+
+  &:hover {
+    transform: scale(1.1);
+    opacity: 1;
+    border-color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -93,11 +284,48 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   const [showArrangementHelp, setShowArrangementHelp] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [diceMode, setDiceMode] = useState<boolean>(() => localStorage.getItem('tilesDiceMode') === 'true');
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const preMuteVolumeRef = useRef(0.3);
+
+  const { instrumentVolume, setInstrumentVolume, instrumentThemeOverride, setInstrumentThemeOverride } = useSoundSettings();
+  const { themeName } = useAppTheme();
 
   const handleSetDiceMode = useCallback((val: boolean) => {
     setDiceMode(val);
     localStorage.setItem('tilesDiceMode', String(val));
   }, []);
+
+  // Close settings dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    if (showSettings) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettings]);
+
+  const getInstrumentVolumeIcon = () => {
+    if (instrumentVolume === 0) return FaVolumeMute;
+    if (instrumentVolume < 0.33) return FaVolumeOff;
+    if (instrumentVolume < 0.66) return FaVolumeDown;
+    return FaVolumeUp;
+  };
+
+  const toggleMute = useCallback(() => {
+    if (instrumentVolume > 0) {
+      preMuteVolumeRef.current = instrumentVolume;
+      setInstrumentVolume(0);
+    } else {
+      setInstrumentVolume(preMuteVolumeRef.current);
+    }
+  }, [instrumentVolume, setInstrumentVolume]);
 
   // Get the component and type info for this block
   const BlockComponent = getBlockComponent(block.type);
@@ -368,22 +596,108 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
         alignTop={block.type === 'inspirationGenerator'}
         titleExtra={block.type === 'inspirationGenerator' ? (
-          <ModeToggleContainer>
-            <ModeToggleBtn
-              $active={!diceMode}
-              onClick={() => handleSetDiceMode(false)}
-              title="Table view"
+          <div ref={settingsRef} style={{ position: 'relative' }}>
+            <SettingsIconBtn
+              $active={showSettings}
+              onClick={() => setShowSettings(!showSettings)}
+              title="Generator settings"
             >
-              <Icon icon={FaList} size={11} />
-            </ModeToggleBtn>
-            <ModeToggleBtn
-              $active={diceMode}
-              onClick={() => handleSetDiceMode(true)}
-              title="Dice view"
-            >
-              <Icon icon={FaDice} size={12} />
-            </ModeToggleBtn>
-          </ModeToggleContainer>
+              <Icon icon={FaCog} size={14} />
+            </SettingsIconBtn>
+            <AnimatePresence>
+              {showSettings && (
+                <SettingsDropdown
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                >
+                  {/* View Mode — header + toggle inline */}
+                  <SettingsRow>
+                    <SettingsHeader style={{ padding: 0 }}>View Mode</SettingsHeader>
+                    <ModeToggleContainer style={{ marginLeft: 0 }}>
+                      <ModeToggleBtn
+                        $active={!diceMode}
+                        onClick={() => handleSetDiceMode(false)}
+                        title="Table view"
+                      >
+                        <Icon icon={FaList} size={11} />
+                      </ModeToggleBtn>
+                      <ModeToggleBtn
+                        $active={diceMode}
+                        onClick={() => handleSetDiceMode(true)}
+                        title="Dice view"
+                      >
+                        <Icon icon={FaDice} size={12} />
+                      </ModeToggleBtn>
+                    </ModeToggleContainer>
+                  </SettingsRow>
+
+                  <SettingsDivider />
+
+                  {/* Volume */}
+                  <VolumeRow>
+                    <VolumeIcon
+                      onClick={toggleMute}
+                      title={instrumentVolume === 0 ? 'Unmute' : 'Mute'}
+                    >
+                      <Icon icon={getInstrumentVolumeIcon()} size={16} />
+                    </VolumeIcon>
+                    <VolumeSlider
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={instrumentVolume}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const v = parseFloat(e.target.value);
+                        if (v > 0) preMuteVolumeRef.current = v;
+                        setInstrumentVolume(v);
+                      }}
+                      title={`Volume: ${Math.round(instrumentVolume * 100)}%`}
+                    />
+                    <VolumePercent>{Math.round(instrumentVolume * 100)}%</VolumePercent>
+                  </VolumeRow>
+
+                  <SettingsDivider />
+
+                  {/* Sound theme */}
+                  <SettingsHeader>Sound</SettingsHeader>
+                  <ByThemeButton
+                    $active={instrumentThemeOverride === 'byTheme'}
+                    onClick={() => setInstrumentThemeOverride('byTheme')}
+                  >
+                    <span style={{ flex: 1 }}>By Theme</span>
+                    {instrumentThemeOverride === 'byTheme' && (
+                      <span style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                        <Icon icon={FaCheck} size={10} />
+                      </span>
+                    )}
+                  </ByThemeButton>
+                  <IconGrid>
+                    {THEME_ORDER.map((t) => {
+                      const isActive = instrumentThemeOverride === t;
+                      const isByThemeHint = instrumentThemeOverride === 'byTheme' && t === themeName;
+                      return (
+                        <IconButton
+                          key={t}
+                          $active={isActive}
+                          $isByThemeHint={isByThemeHint}
+                          onClick={() => setInstrumentThemeOverride(t as ThemeOverride)}
+                          title={THEME_LABELS[t]}
+                        >
+                          <span style={{ color: THEME_PRIMARY[t], display: 'inline-flex' }}>
+                            <ThemeIcon theme={t} size={18} />
+                          </span>
+                        </IconButton>
+                      );
+                    })}
+                  </IconGrid>
+                </SettingsDropdown>
+              )}
+            </AnimatePresence>
+          </div>
         ) : undefined}
       >
         {blockContent}
