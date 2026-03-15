@@ -1471,7 +1471,6 @@ const Metronome: FC<LoaderProps> = ({
             isRecentlyDragged={isRecentlyDragged}
             additionalControls={
                 <>
-                    <HelpButton onClick={() => setShowTips(true)} />
                     <div ref={settingsRef} style={{ position: 'relative' }}>
                         <SettingsIconBtn
                             $active={showSettings}
@@ -1598,6 +1597,7 @@ const Metronome: FC<LoaderProps> = ({
                             )}
                         </AnimatePresence>
                     </div>
+                    <HelpButton onClick={() => setShowTips(true)} />
                 </>
             }
         >

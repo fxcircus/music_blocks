@@ -629,7 +629,6 @@ export default function PomodoroTimer({
       canRemove={canRemove}
       additionalControls={
         <>
-          <HelpButton onClick={() => setShowTips(true)} />
           <div ref={settingsRef} style={{ position: 'relative' }}>
             <SettingsIconBtn $active={showSettings} onClick={() => setShowSettings(!showSettings)} title="Timer settings">
               <Icon icon={FaCog} size={16} />
@@ -740,6 +739,7 @@ export default function PomodoroTimer({
               )}
             </AnimatePresence>
           </div>
+          <HelpButton onClick={() => setShowTips(true)} />
         </>
       }
     >
