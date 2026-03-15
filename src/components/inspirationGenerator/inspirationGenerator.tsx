@@ -1,7 +1,7 @@
 // src/components/Generator/Generator.tsx
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import styled, { useTheme } from 'styled-components';
+import styled, { useTheme, keyframes, css } from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaVolumeDown, FaVolumeOff, FaVolumeMute, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
@@ -92,6 +92,8 @@ interface componentProps {
   isRecentlyDragged?: boolean;
   showTips?: boolean;
   setShowTips?: (show: boolean) => void;
+  diceMode?: boolean;
+  setDiceMode?: (diceMode: boolean) => void;
 }
 
 // Styled components
@@ -131,7 +133,7 @@ const StyledTable = styled.table`
   border-collapse: separate;
   border-spacing: 0;
   margin: ${({ theme }) => theme.spacing.xs} 0;
-  table-layout: auto;
+  table-layout: fixed;
   overflow: visible;
 `;
 
@@ -203,7 +205,6 @@ const ValueCell = styled.td`
   color: ${({ theme }) => theme.colors.text};
   font-weight: 600;
   text-align: right;
-  max-width: 40%;
   white-space: nowrap;
   overflow: hidden;
   vertical-align: middle;
@@ -623,52 +624,6 @@ const SeventhToggleButton = styled.button<{ $isActive: boolean }>`
   }
 `;
 
-// Inversion control buttons
-const InversionControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  margin-left: ${({ theme }) => theme.spacing.sm};
-  min-width: 120px;
-`;
-
-const InversionButton = styled.button<{ $disabled?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  background-color: ${({ $disabled }) => $disabled ? 'transparent' : 'transparent'};
-  color: ${({ $disabled, theme }) =>
-    $disabled ? theme.colors.border : theme.colors.textSecondary};
-  border: 2px solid ${({ $disabled, theme }) =>
-    $disabled ? theme.colors.border : theme.colors.border};
-  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: bold;
-
-  &:hover:not(:disabled) {
-    transform: scale(1.1);
-    background-color: ${({ theme }) => `${theme.colors.primary}22`};
-    border-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:disabled {
-    opacity: 0.3;
-  }
-`;
-
-const InversionDisplay = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.text};
-  font-weight: 500;
-  min-width: 60px;
-  text-align: center;
-`;
-
 // Play button for audio playback
 const PlayButton = styled.button<{ $isPlaying: boolean }>`
   display: flex;
@@ -708,19 +663,17 @@ const PlayButton = styled.button<{ $isPlaying: boolean }>`
   }
 `;
 
-const VisualizerIcons = styled.div`
+const VisualizerButtonRow = styled.div`
   display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-  margin-left: ${({ theme }) => theme.spacing.xs};
+  justify-content: space-evenly;
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
 `;
 
-const VisualizerIconButton = styled.button<{ $isActive: boolean }>`
-  display: flex;
+const LabeledVisualizerButton = styled.button<{ $isActive: boolean }>`
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  gap: 6px;
+  padding: 4px 12px;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   background: ${({ $isActive, theme }) =>
     $isActive ? theme.colors.primary : 'transparent'};
@@ -730,6 +683,8 @@ const VisualizerIconButton = styled.button<{ $isActive: boolean }>`
     $isActive ? theme.colors.primary : theme.colors.border};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: 500;
 
   &:hover {
     background: ${({ $isActive, theme }) =>
@@ -810,6 +765,323 @@ function getCircleDistance(a: number, b: number): number {
   const diff = Math.abs(a - b);
   return Math.min(diff, 12 - diff);
 }
+
+// ── Dice Mode ────────────────────────────────────────────────────────
+
+const diceShakeKeyframes = keyframes`
+  0%   { transform: translate(0,0) rotate(0deg); }
+  10%  { transform: translate(-3px,-2px) rotate(-6deg); }
+  20%  { transform: translate(4px,1px) rotate(5deg); }
+  30%  { transform: translate(-2px,3px) rotate(-4deg); }
+  40%  { transform: translate(3px,-3px) rotate(7deg); }
+  50%  { transform: translate(-4px,2px) rotate(-5deg); }
+  60%  { transform: translate(2px,-1px) rotate(6deg); }
+  70%  { transform: translate(-3px,-3px) rotate(-7deg); }
+  80%  { transform: translate(4px,2px) rotate(4deg); }
+  90%  { transform: translate(-2px,1px) rotate(-3deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
+`;
+
+const diceModeInKeyframes = keyframes`
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
+
+const dicePickerInKeyframes = keyframes`
+  0% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+`;
+
+const diceShakeAnimation = css`
+  animation: ${diceShakeKeyframes} 0.08s ease-in-out infinite;
+`;
+
+const DiceModeContainer = styled.div`
+  animation: ${diceModeInKeyframes} 0.25s ease-out;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: 4px 8px;
+  padding: 4px 0;
+  width: 100%;
+`;
+
+const DieContainer = styled.div<{ $locked?: boolean; $editable?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: ${({ $editable, $locked }) => $editable && !$locked ? 'pointer' : 'default'};
+  opacity: ${({ $locked }) => $locked ? 0.4 : 1};
+  transition: opacity 0.4s;
+  user-select: none;
+  position: relative;
+`;
+
+const DieLabelRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const DieLabel = styled.span`
+  font-size: 10px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  line-height: 1;
+  white-space: nowrap;
+`;
+
+const DieSvgWrapper = styled.div<{ $rolling?: boolean; $accent?: string }>`
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  ${({ $rolling }) => $rolling && diceShakeAnimation}
+  filter: ${({ $rolling, $accent }) =>
+    $rolling ? `drop-shadow(0 0 16px ${$accent}bb)` : `drop-shadow(0 0 4px ${$accent}33)`};
+  transition: filter 0.3s;
+
+  @media (max-width: 480px) {
+    width: 76px;
+    height: 76px;
+  }
+`;
+
+const DicePickerDropdown = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: ${({ theme }) => theme.colors.card};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  margin-top: 4px;
+  animation: ${dicePickerInKeyframes} 0.15s ease-out;
+  max-height: 320px;
+  overflow-y: auto;
+`;
+
+const DiceRootPicker = styled(DicePickerDropdown)<{ $viewMode?: 'grid' | 'circle' }>`
+  grid-template-columns: ${({ $viewMode }) =>
+    $viewMode === 'circle' ? '1fr' : 'repeat(3, 1fr)'};
+  width: ${({ $viewMode }) =>
+    $viewMode === 'circle' ? '300px' : '280px'};
+`;
+
+const DiceScalePicker = styled(DicePickerDropdown)`
+  grid-template-columns: repeat(2, 1fr);
+  width: 320px;
+`;
+
+const DiceTimeSigPicker = styled(DicePickerDropdown)`
+  grid-template-columns: repeat(3, 1fr);
+  width: 200px;
+  min-width: 200px;
+`;
+
+const DiceBpmPicker = styled(DicePickerDropdown)`
+  grid-template-columns: 1fr;
+  width: auto;
+  min-width: 140px;
+  padding: 8px;
+`;
+
+// ── Die Shape SVG Components ──────────────────────────────────────────
+
+function D4Shape({ color }: { color: string }) {
+  return <polygon points="50,8 92,82 8,82" fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+}
+
+function D6Shape({ color }: { color: string }) {
+  return <rect x="14" y="14" width="72" height="72" rx="8" fill="none" stroke={color} strokeWidth="2.5" />;
+}
+
+function D8Shape({ color }: { color: string }) {
+  return <polygon points="50,6 94,50 50,94 6,50" fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+}
+
+function D12Shape({ color }: { color: string }) {
+  const cx = 50, cy = 50, r = 42;
+  const pts = Array.from({ length: 5 }, (_, i) => {
+    const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+  }).join(" ");
+  return <polygon points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+}
+
+function D20Shape({ color }: { color: string }) {
+  const cx = 50, cy = 50, r = 44;
+  return (
+    <>
+      <polygon points={Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+      }).join(" ")} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />
+      {Array.from({ length: 6 }, (_, i) => {
+        const a1 = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        const a2 = (Math.PI * 2 * ((i + 1) % 6)) / 6 - Math.PI / 2;
+        const mx = (cx + r * Math.cos(a1) + cx + r * Math.cos(a2)) / 2;
+        const my = (cy + r * Math.sin(a1) + cy + r * Math.sin(a2)) / 2;
+        return <line key={i} x1={mx} y1={my} x2={cx} y2={cy} stroke={color} strokeWidth="1.2" opacity="0.35" />;
+      })}
+    </>
+  );
+}
+
+const DIE_SHAPES: Record<string, React.FC<{ color: string }>> = {
+  d4: D4Shape, d6: D6Shape, d8: D8Shape, d12: D12Shape, d20: D20Shape,
+};
+
+function DieTextSvg({ value, die, fill, fontSize }: {
+  value: string; die: string; fill: string; fontSize: string;
+}) {
+  const cy = die === "d4" ? 62 : 53;
+  const words = value.split(" ");
+  if (words.length > 1) {
+    const lh = Math.min(parseInt(fontSize) + 2, 14);
+    const startY = cy - ((words.length - 1) * lh) / 2;
+    return (
+      <text x="50" textAnchor="middle" fill={fill} fontSize={fontSize}
+        fontFamily="inherit" fontWeight="700">
+        {words.map((w, i) => <tspan key={i} x="50" y={startY + i * lh}>{w}</tspan>)}
+      </text>
+    );
+  }
+  return (
+    <text x="50" y={cy} textAnchor="middle" dominantBaseline="middle"
+      fill={fill} fontSize={fontSize}
+      fontFamily="inherit" fontWeight="700">{value}</text>
+  );
+}
+
+// ── Die Component ─────────────────────────────────────────────────────
+
+function DieComponent({
+  dieType, paramKey, label, value, locked, onToggleLock,
+  externalRolling, editable, options,
+  renderPicker,
+}: {
+  dieType: string;
+  paramKey: string;
+  label: string;
+  value: string;
+  locked: boolean;
+  onToggleLock: () => void;
+  externalRolling: boolean;
+  editable: boolean;
+  options: string[];
+  renderPicker?: (onClose: () => void) => React.ReactNode;
+}) {
+  const theme = useTheme() as any;
+  const [displayValue, setDisplayValue] = useState(value);
+  const [washKey, setWashKey] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevValueRef = useRef(value);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rolling = externalRolling && !locked;
+
+  // Click outside to close picker
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [pickerOpen]);
+
+  // Rapid value cycling during roll
+  useEffect(() => {
+    if (externalRolling && !locked && options.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setDisplayValue(options[Math.floor(Math.random() * options.length)]);
+      }, 50);
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }
+  }, [externalRolling, locked, options]);
+
+  // Sync display value and trigger wash
+  useEffect(() => {
+    if (!externalRolling && value !== prevValueRef.current) {
+      setWashKey((k) => k + 1);
+      setDisplayValue(value);
+      prevValueRef.current = value;
+    }
+    if (!externalRolling) setDisplayValue(value);
+  }, [value, externalRolling]);
+
+  // Close picker when rolling starts
+  useEffect(() => {
+    if (externalRolling) setPickerOpen(false);
+  }, [externalRolling]);
+
+  const Shape = DIE_SHAPES[dieType];
+  const accent = locked ? theme.colors.border : theme.colors.primary;
+  const textColor = locked ? theme.colors.textSecondary : theme.colors.text;
+  const hasMulti = displayValue.includes(" ");
+  const fontSize = hasMulti ? "12" : "17";
+
+  return (
+    <DieContainer
+      ref={containerRef}
+      $locked={locked}
+      $editable={editable}
+      onClick={() => {
+        if (!externalRolling && editable && !locked && renderPicker) {
+          setPickerOpen((p) => !p);
+        }
+      }}
+    >
+      <DieLabelRow>
+        <LockIconWrapper
+          $isLocked={locked}
+          onClick={(e: React.MouseEvent) => { e.stopPropagation(); onToggleLock(); setPickerOpen(false); }}
+        >
+          <IconWrapper>
+            {locked ? <Icon icon={FaLock} size={10} /> : <Icon icon={FaUnlock} size={10} />}
+          </IconWrapper>
+        </LockIconWrapper>
+        <DieLabel>{label}</DieLabel>
+      </DieLabelRow>
+      <DieSvgWrapper $rolling={rolling} $accent={accent}>
+        <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <defs>
+            <linearGradient id={`dwg-${paramKey}`} gradientUnits="userSpaceOnUse" x1="0" y1="50" x2="100" y2="50">
+              <stop offset="0%" stopColor="transparent" />
+              <stop offset="40%" stopColor={theme.colors.primary} />
+              <stop offset="60%" stopColor={theme.colors.text} />
+              <stop offset="100%" stopColor="transparent" />
+            </linearGradient>
+            <mask id={`dwm-${paramKey}-${washKey}`}>
+              <rect x="-40" y="0" width="60" height="100" fill="white">
+                <animate attributeName="x" from="-40" to="100" dur="0.4s" fill="freeze" key={washKey} />
+              </rect>
+            </mask>
+          </defs>
+          {Shape && <Shape color={accent} />}
+          <DieTextSvg value={displayValue} die={dieType} fill={textColor} fontSize={fontSize} />
+          {!rolling && washKey > 0 && (
+            <g key={`w-${washKey}`} mask={`url(#dwm-${paramKey}-${washKey})`}>
+              <DieTextSvg value={displayValue} die={dieType} fill={`url(#dwg-${paramKey})`} fontSize={fontSize} />
+            </g>
+          )}
+        </svg>
+      </DieSvgWrapper>
+      {pickerOpen && renderPicker?.(() => setPickerOpen(false))}
+    </DieContainer>
+  );
+}
+
+// ── Circle of Fifths ──────────────────────────────────────────────────
 
 function CircleOfFifthsSelector({
   currentRoot,
@@ -917,6 +1189,8 @@ export default function InspirationGenerator({
   isRecentlyDragged,
   showTips: showTipsExternal,
   setShowTips: setShowTipsExternal,
+  diceMode: diceModeExternal,
+  setDiceMode: setDiceModeExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const { effectiveInstrumentTheme, instrumentVolume, setInstrumentVolume, instrumentThemeOverride, setInstrumentThemeOverride } = useSoundSettings();
 
@@ -928,14 +1202,17 @@ export default function InspirationGenerator({
     timeSignature: false,
   });
 
+  // Dice mode state (prefer external props, fallback to internal)
+  const [diceModeInternal, setDiceModeInternal] = useState<boolean>(() => localStorage.getItem('tilesDiceMode') === 'true');
+  const diceMode = diceModeExternal !== undefined ? diceModeExternal : diceModeInternal;
+  const setDiceMode = setDiceModeExternal || setDiceModeInternal;
+  const [allRolling, setAllRolling] = useState(false);
+
   // Add state for selected chord
   const [selectedChord, setSelectedChord] = useState<number | null>(null);
 
   // Add state for seventh chord mode
   const [isSeventhMode, setIsSeventhMode] = useState<boolean>(() => localStorage.getItem('tilesIsSeventhMode') === 'true');
-
-  // Add state for chord inversions
-  const [inversionIndex, setInversionIndex] = useState<number>(0);
 
   // Add state for audio playback
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -1068,6 +1345,11 @@ export default function InspirationGenerator({
   useEffect(() => {
     localStorage.setItem('tilesIsSeventhMode', String(isSeventhMode));
   }, [isSeventhMode]);
+
+  useEffect(() => {
+    // Close any open dropdown when dice mode changes
+    setOpenDropdown(null);
+  }, [diceMode]);
 
   // Click outside handler to close dropdowns
   useEffect(() => {
@@ -1247,6 +1529,11 @@ export default function InspirationGenerator({
   const maxBpm = 140;
   const minBpm = 75;
 
+  // BPM values for dice cycling animation
+  const bpmCycleOptions = useMemo(() =>
+    Array.from({ length: 14 }, (_, i) => String(75 + i * 5)),
+  []);
+
   
   const sounds = [
     "Clean Guitar Plucks",
@@ -1420,6 +1707,7 @@ export default function InspirationGenerator({
   };
 
   const rollDice = () => {
+    if (allRolling) return;
     console.log('Rolling dice...', { locked, currentValues: { rootEl, scaleEl, bpmEl, soundEl, timeSignatureEl } });
     setAnimate(false);
 
@@ -1473,22 +1761,34 @@ export default function InspirationGenerator({
       updates.timeSignatureEl = newTs;
     }
 
-    // Apply all updates at once if batch update function is available
-    if (onBatchUpdate && Object.keys(updates).length > 0) {
-      console.log('Batching updates:', updates);
-      onBatchUpdate(updates);
-    } else {
-      // Fallback to individual updates
-      if (updates.rootEl) setRootEl(updates.rootEl);
-      if (updates.scaleEl) setScaleEl(updates.scaleEl);
-      if (updates.tonesEl) setTonesEl(updates.tonesEl);
-      if (updates.tonesArrEl) setTonesArrEl(updates.tonesArrEl);
-      if (updates.soundEl) setSoundEl(updates.soundEl);
-      if (updates.bpmEl) setBpmEl(updates.bpmEl);
-      if (updates.timeSignatureEl) setTimeSignatureEl(updates.timeSignatureEl);
-    }
+    const applyUpdates = () => {
+      // Apply all updates at once if batch update function is available
+      if (onBatchUpdate && Object.keys(updates).length > 0) {
+        console.log('Batching updates:', updates);
+        onBatchUpdate(updates);
+      } else {
+        // Fallback to individual updates
+        if (updates.rootEl) setRootEl(updates.rootEl);
+        if (updates.scaleEl) setScaleEl(updates.scaleEl);
+        if (updates.tonesEl) setTonesEl(updates.tonesEl);
+        if (updates.tonesArrEl) setTonesArrEl(updates.tonesArrEl);
+        if (updates.soundEl) setSoundEl(updates.soundEl);
+        if (updates.bpmEl) setBpmEl(updates.bpmEl);
+        if (updates.timeSignatureEl) setTimeSignatureEl(updates.timeSignatureEl);
+      }
+      setAnimate(true);
+    };
 
-    setAnimate(true);
+    if (diceMode) {
+      // In dice mode: animate dice for 300ms, then apply values
+      setAllRolling(true);
+      setTimeout(() => {
+        setAllRolling(false);
+        applyUpdates();
+      }, 300);
+    } else {
+      applyUpdates();
+    }
   };
 
   const toggleLock = (param: keyof LockedState) =>
@@ -1516,7 +1816,6 @@ export default function InspirationGenerator({
 
     // Reset selected chord when root changes
     setSelectedChord(null);
-    setInversionIndex(0);
   };
 
   // Handler for selecting a scale from dropdown
@@ -1544,7 +1843,6 @@ export default function InspirationGenerator({
 
     // Reset selected chord and seventh mode when scale changes
     setSelectedChord(null);
-    setInversionIndex(0);
 
     // Only keep seventh mode if the new scale supports it
     const noteCount = scaleNoteCounts[newScale] || 7;
@@ -1564,46 +1862,6 @@ export default function InspirationGenerator({
     const noteCount = scaleNoteCounts[scaleEl] || 7;
     return noteCount >= 7;
   };
-
-  // Handle inversion cycling
-  const cycleInversion = (direction: 'next' | 'prev') => {
-    if (selectedChord === null) return;
-
-    const maxInversions = isSeventhMode && canUseSeventhChords() ? 4 : 3;
-
-    if (direction === 'next') {
-      setInversionIndex((prev) => (prev + 1) % maxInversions);
-    } else {
-      setInversionIndex((prev) => (prev - 1 + maxInversions) % maxInversions);
-    }
-  };
-
-  // Get the bass note for the current inversion
-  const getBassNote = (chordIndex: number, inversion: number): string => {
-    if (!tonesArrEl || tonesArrEl.length === 0) return '';
-
-    const noteCount = scaleNoteCounts[scaleEl] || 7;
-    let bassIndex = chordIndex;
-
-    // Calculate bass note based on inversion
-    if (inversion === 1) {
-      // First inversion - third in bass
-      bassIndex = (chordIndex + 2) % noteCount;
-    } else if (inversion === 2) {
-      // Second inversion - fifth in bass
-      bassIndex = (chordIndex + 4) % noteCount;
-    } else if (inversion === 3 && isSeventhMode) {
-      // Third inversion (seventh chords only) - seventh in bass
-      bassIndex = (chordIndex + 6) % 7;
-    }
-
-    return tonesArrEl[bassIndex] || '';
-  };
-
-  // Reset inversion when chord changes
-  useEffect(() => {
-    setInversionIndex(0);
-  }, [selectedChord]);
 
   // Function to get seventh chord quality suffix
   const getSeventhChordSuffix = (index: number, baseQuality: string | null): string => {
@@ -1676,14 +1934,6 @@ export default function InspirationGenerator({
         } else if (qualities[index] === 'aug') {
           // Augmented
           chordName = `${tonesArrEl[index]}maj7♯5`;
-        }
-      }
-
-      // Add inversion notation if this is the selected chord and we have an inversion
-      if (selectedChord === index && inversionIndex > 0) {
-        const bassNote = getBassNote(index, inversionIndex);
-        if (bassNote) {
-          chordName = `${chordName}/${bassNote}`;
         }
       }
 
@@ -1937,27 +2187,9 @@ export default function InspirationGenerator({
       const fifthIndex = (selectedChord + 4) % noteCount;
       const seventhIndex = isSeventhMode && noteCount >= 7 ? (selectedChord + 6) % 7 : -1;
 
-      // Build chord based on inversion
-      let noteOrder: number[] = [];
-
-      if (inversionIndex === 0) {
-        // Root position: root -> third -> fifth (-> seventh)
-        noteOrder = [rootIndex, thirdIndex, fifthIndex];
-        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
-      } else if (inversionIndex === 1) {
-        // First inversion: third -> fifth -> (seventh ->) root
-        noteOrder = [thirdIndex, fifthIndex];
-        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
-        noteOrder.push(rootIndex);
-      } else if (inversionIndex === 2) {
-        // Second inversion: fifth -> (seventh ->) root -> third
-        noteOrder = [fifthIndex];
-        if (seventhIndex !== -1) noteOrder.push(seventhIndex);
-        noteOrder.push(rootIndex, thirdIndex);
-      } else if (inversionIndex === 3 && seventhIndex !== -1) {
-        // Third inversion (sevenths only): seventh -> root -> third -> fifth
-        noteOrder = [seventhIndex, rootIndex, thirdIndex, fifthIndex];
-      }
+      // Root position: root -> third -> fifth (-> seventh)
+      const noteOrder = [rootIndex, thirdIndex, fifthIndex];
+      if (seventhIndex !== -1) noteOrder.push(seventhIndex);
 
       // Calculate octave adjustments to ensure ascending notes
       let prevChromatic = -1;
@@ -2026,7 +2258,7 @@ export default function InspirationGenerator({
     isPlayingRef.current = false;
     setIsPlaying(false);
     setPlayingNoteIndex(-1);
-  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, inversionIndex, bpmEl]);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, bpmEl]);
 
   // Play a single scale tone when its pill is clicked
   const handlePillClick = useCallback((index: number) => {
@@ -2057,27 +2289,36 @@ export default function InspirationGenerator({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
+
         <DiceButton
           whileHover={{ rotate: [0, -12, 10, -8, 5, 0], transition: { duration: 0.5, repeat: Infinity, repeatDelay: 0.3 } }}
           whileTap={{ scale: 0.9 }}
           onClick={rollDice}
-          animate={animate ? {
+          animate={(animate || allRolling) ? {
             x: [0, -3, 3, -4, 4, -2, 2, 0],
             rotate: [0, -15, 12, -18, 15, -8, 5, 0],
             scale: [1, 1.05, 1.08, 1.1, 1.08, 1.05, 1.02, 1],
           } : {}}
-          transition={animate ? { duration: 0.5, ease: "easeOut" } : {}}
+          transition={(animate || allRolling) ? { duration: allRolling ? 0.3 : 0.5, ease: "easeOut" } : {}}
         >
           <IconWrapper><Icon icon={FaDice} size={24} /></IconWrapper>
         </DiceButton>
 
         <StyledTable>
+          <colgroup>
+            <col style={{ width: '30px' }} />
+            <col style={{ width: '35px' }} />
+            <col style={{ width: '120px' }} />
+            <col />
+          </colgroup>
           <tbody>
+            {/* Table Mode - Parameter Rows */}
+            {!diceMode && (<>
             <TableRow>
               <SpacerCell />
               <TableHeader>
-                <LockIconWrapper 
-                  $isLocked={locked.root} 
+                <LockIconWrapper
+                  $isLocked={locked.root}
                   onClick={() => toggleLock("root")}
                 >
                   <IconWrapper>
@@ -2135,19 +2376,19 @@ export default function InspirationGenerator({
                 )}
               </ClickableValueCell>
             </TableRow>
-            
+
             {/* Separator after Root row */}
             <tr>
               <SeparatorCell colSpan={4}>
                 <Divider />
               </SeparatorCell>
             </tr>
-            
+
             <TableRow>
               <SpacerCell />
               <TableHeader>
-                <LockIconWrapper 
-                  $isLocked={locked.scale} 
+                <LockIconWrapper
+                  $isLocked={locked.scale}
                   onClick={() => toggleLock("scale")}
                 >
                   <IconWrapper>
@@ -2296,14 +2537,148 @@ export default function InspirationGenerator({
               <LabelCell>Sound</LabelCell>
               <ValueCell className={getValueCellClass(soundEl)}>{soundEl}</ValueCell>
             </TableRow>
-            
+
             {/* Separator after Sound row */}
             <tr>
               <SeparatorCell colSpan={4}>
                 <Divider />
               </SeparatorCell>
             </tr>
-            
+            </>)}
+
+            {/* Dice Mode - Parameter Dice */}
+            {diceMode && (<>
+              <tr>
+                <td colSpan={4} style={{ padding: '8px 0' }}>
+                  <DiceModeContainer>
+                      {/* Root - d12 (pentagon) */}
+                      <DieComponent
+                        dieType="d12" paramKey="root" label="Root" value={rootEl}
+                        locked={locked.root} onToggleLock={() => toggleLock('root')}
+                        externalRolling={allRolling && !locked.root}
+                        editable={true} options={notes as unknown as string[]}
+                        renderPicker={(onClose) => (
+                          <DiceRootPicker $viewMode={rootDropdownView} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                            <ViewToggle>
+                              <ViewToggleOption
+                                $isActive={rootDropdownView === 'grid'}
+                                onMouseDown={(e) => { e.preventDefault(); setRootDropdownView('grid'); }}
+                              >Grid</ViewToggleOption>
+                              <ViewToggleOption
+                                $isActive={rootDropdownView === 'circle'}
+                                onMouseDown={(e) => { e.preventDefault(); setRootDropdownView('circle'); }}
+                              >Circle of Fifths</ViewToggleOption>
+                            </ViewToggle>
+                            {rootDropdownView === 'grid' ? (
+                              notes.map((note) => (
+                                <DropdownOption
+                                  key={note}
+                                  $isSelected={rootEl === note}
+                                  onMouseDown={(e) => { e.preventDefault(); handleRootSelect(note); onClose(); }}
+                                >{note}</DropdownOption>
+                              ))
+                            ) : (
+                              <CircleOfFifthsSelector
+                                currentRoot={rootEl}
+                                onSelect={(note) => { handleRootSelect(note); onClose(); }}
+                              />
+                            )}
+                          </DiceRootPicker>
+                        )}
+                      />
+
+                      {/* Scale - d8 (diamond) */}
+                      <DieComponent
+                        dieType="d8" paramKey="scale" label="Scale" value={scaleEl}
+                        locked={locked.scale} onToggleLock={() => toggleLock('scale')}
+                        externalRolling={allRolling && !locked.scale}
+                        editable={true} options={scales as unknown as string[]}
+                        renderPicker={(onClose) => (
+                          <DiceScalePicker onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                            {scales.map((scale) => (
+                              <DropdownOption
+                                key={scale}
+                                $isSelected={scaleEl === scale}
+                                onMouseDown={(e) => { e.preventDefault(); handleScaleSelect(scale); onClose(); }}
+                              >{scale}</DropdownOption>
+                            ))}
+                          </DiceScalePicker>
+                        )}
+                      />
+                      {/* Time Signature - d4 (triangle) */}
+                      <DieComponent
+                        dieType="d4" paramKey="timeSig" label="Time Sig" value={timeSignatureEl}
+                        locked={locked.timeSignature} onToggleLock={() => toggleLock('timeSignature')}
+                        externalRolling={allRolling && !locked.timeSignature}
+                        editable={true} options={TIME_SIGNATURE_OPTIONS}
+                        renderPicker={(onClose) => (
+                          <DiceTimeSigPicker onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                            {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                              <DropdownOption
+                                key={ts}
+                                $isSelected={timeSignatureEl === ts}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  if (onBatchUpdate) {
+                                    onBatchUpdate({ timeSignatureEl: ts });
+                                  } else {
+                                    setTimeSignatureEl(ts);
+                                  }
+                                  onClose();
+                                }}
+                              >{ts}</DropdownOption>
+                            ))}
+                          </DiceTimeSigPicker>
+                        )}
+                      />
+
+                      {/* BPM - d20 (hexagon) */}
+                      <DieComponent
+                        dieType="d20" paramKey="bpm" label="BPM" value={bpmEl}
+                        locked={locked.bpm} onToggleLock={() => toggleLock('bpm')}
+                        externalRolling={allRolling && !locked.bpm}
+                        editable={true} options={bpmCycleOptions}
+                        renderPicker={(onClose) => (
+                          <DiceBpmPicker onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                              <BpmAdjustBtn onClick={() => adjustBpm(-1)} disabled={locked.bpm}>
+                                <Icon icon={FaMinus} size={10} />
+                              </BpmAdjustBtn>
+                              <BpmInput
+                                type="text" inputMode="numeric" value={bpmInput}
+                                onChange={handleBpmInputChange}
+                                onBlur={handleBpmInputBlur}
+                                onKeyDown={(e) => { handleBpmInputKeyDown(e); if (e.key === 'Enter') onClose(); }}
+                                onFocus={(e) => e.target.select()}
+                                disabled={locked.bpm}
+                                onClick={(e) => e.stopPropagation()}
+                                autoFocus
+                              />
+                              <BpmAdjustBtn onClick={() => adjustBpm(1)} disabled={locked.bpm}>
+                                <Icon icon={FaPlus} size={10} />
+                              </BpmAdjustBtn>
+                            </div>
+                          </DiceBpmPicker>
+                        )}
+                      />
+
+                      {/* Sound - d6 (rounded square) */}
+                      <DieComponent
+                        dieType="d6" paramKey="sound" label="Sound" value={soundEl}
+                        locked={locked.sound} onToggleLock={() => toggleLock('sound')}
+                        externalRolling={allRolling && !locked.sound}
+                        editable={false} options={sounds}
+                      />
+                  </DiceModeContainer>
+                </td>
+              </tr>
+              <tr>
+                <SeparatorCell colSpan={4}>
+                  <Divider />
+                </SeparatorCell>
+              </tr>
+            </>)}
+
             {/* Chord Degrees section integrated into the table - with seventh toggle in TableHeader */}
             <TableRow className="chord-scale-row">
               <SpacerCell />
@@ -2358,29 +2733,6 @@ export default function InspirationGenerator({
                   })}
                 </ChordDegreesContainer>
 
-                {/* Inversion Controls - always visible, dimmed when no chord selected */}
-                <InversionControls style={{ opacity: selectedChord !== null ? 1 : 0.3 }}>
-                  <InversionButton
-                    onClick={() => cycleInversion('prev')}
-                    disabled={selectedChord === null}
-                    title="Previous inversion"
-                  >
-                    ←
-                  </InversionButton>
-                  <InversionDisplay>
-                    {inversionIndex === 0 ? 'Root' :
-                     inversionIndex === 1 ? '1st Inv' :
-                     inversionIndex === 2 ? '2nd Inv' :
-                     inversionIndex === 3 ? '3rd Inv' : 'Root'}
-                  </InversionDisplay>
-                  <InversionButton
-                    onClick={() => cycleInversion('next')}
-                    disabled={selectedChord === null}
-                    title="Next inversion"
-                  >
-                    →
-                  </InversionButton>
-                </InversionControls>
               </ExtendedInfoCell>
             </TableRow>
             
@@ -2444,36 +2796,53 @@ export default function InspirationGenerator({
                     );
                   })}
                 </ScaleTonesContainer>
-                <VisualizerIcons>
-                  <VisualizerIconButton
+              </ExtendedInfoCell>
+            </TableRow>
+
+            {/* Separator after Scale Tones row */}
+            <tr>
+              <SeparatorCell colSpan={4}>
+                <Divider />
+              </SeparatorCell>
+            </tr>
+
+            {/* Visualizer toggle buttons row */}
+            <tr>
+              <td colSpan={4} style={{ padding: 0 }}>
+                <VisualizerButtonRow>
+                  <LabeledVisualizerButton
                     $isActive={showProgressions}
                     onClick={() => setShowProgressions(!showProgressions)}
                     title="Toggle chord progressions panel"
                   >
                     <Icon icon={MdQueueMusic} size={16} />
-                  </VisualizerIconButton>
-                  <VisualizerIconButton
+                    Progressions
+                  </LabeledVisualizerButton>
+                  <LabeledVisualizerButton
                     $isActive={showPiano}
                     onClick={() => setShowPiano(!showPiano)}
                     title="Toggle piano visualization"
                   >
                     <Icon icon={GiPianoKeys} size={16} />
-                  </VisualizerIconButton>
-                  <VisualizerIconButton
+                    Piano
+                  </LabeledVisualizerButton>
+                  <LabeledVisualizerButton
                     $isActive={showGuitar}
                     onClick={() => setShowGuitar(!showGuitar)}
                     title="Toggle guitar fretboard visualization"
                   >
                     <Icon icon={FaGuitar} size={14} />
-                  </VisualizerIconButton>
+                    Fretboard
+                  </LabeledVisualizerButton>
                   <div ref={soundDropdownRef} style={{ position: 'relative' }}>
-                    <VisualizerIconButton
+                    <LabeledVisualizerButton
                       $isActive={showSoundDropdown}
                       onClick={() => setShowSoundDropdown(!showSoundDropdown)}
                       title="Sound settings"
                     >
-                      <span style={{ display: 'inline-flex', width: 18, justifyContent: 'flex-start' }}><Icon icon={getInstrumentVolumeIcon()} size={14} /></span>
-                    </VisualizerIconButton>
+                      <Icon icon={getInstrumentVolumeIcon()} size={14} />
+                      Sound
+                    </LabeledVisualizerButton>
                     <SoundDropdownPanel
                       isOpen={showSoundDropdown}
                       themeOverride={instrumentThemeOverride}
@@ -2483,15 +2852,8 @@ export default function InspirationGenerator({
                       style={{ top: 'calc(100% + 8px)', right: 0 }}
                     />
                   </div>
-                </VisualizerIcons>
-              </ExtendedInfoCell>
-            </TableRow>
-            
-            {/* Separator after Scale Tones row */}
-            <tr>
-              <SeparatorCell colSpan={4}>
-                <Divider />
-              </SeparatorCell>
+                </VisualizerButtonRow>
+              </td>
             </tr>
           </tbody>
         </StyledTable>

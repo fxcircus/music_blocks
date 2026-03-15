@@ -6,12 +6,42 @@
  * and the existing block components.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
+import { FaDice, FaList } from 'react-icons/fa';
 import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCardDnd from '../components/common/ToolCardDnd';
 import TipsModal from '../components/common/TipsModal';
+import { Icon } from '../utils/IconHelper';
+
+/* Segmented toggle for dice/table mode */
+const ModeToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  padding: 2px;
+  margin-left: 8px;
+`;
+
+const ModeToggleBtn = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active, theme }) => $active ? theme.colors.primary + '22' : 'transparent'};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.textSecondary};
+
+  &:hover {
+    background: ${({ $active, theme }) => $active ? theme.colors.primary + '33' : theme.colors.border};
+  }
+`;
 
 // Special wrapper for Notes block to override centering from ToolCard
 const NotesWrapper = styled.div`
@@ -62,6 +92,12 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   const [animate, setAnimate] = useState(false);
   const [showArrangementHelp, setShowArrangementHelp] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [diceMode, setDiceMode] = useState<boolean>(() => localStorage.getItem('tilesDiceMode') === 'true');
+
+  const handleSetDiceMode = useCallback((val: boolean) => {
+    setDiceMode(val);
+    localStorage.setItem('tilesDiceMode', String(val));
+  }, []);
 
   // Get the component and type info for this block
   const BlockComponent = getBlockComponent(block.type);
@@ -136,6 +172,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           onBatchUpdate={(updates: Record<string, any>) => updateBlockState(updates)}
           showTips={showTips}
           setShowTips={setShowTips}
+          diceMode={diceMode}
+          setDiceMode={handleSetDiceMode}
         />
       );
       break;
@@ -329,6 +367,24 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         isRecentlyDragged={isRecentlyDragged}
         onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
         alignTop={block.type === 'inspirationGenerator'}
+        titleExtra={block.type === 'inspirationGenerator' ? (
+          <ModeToggleContainer>
+            <ModeToggleBtn
+              $active={!diceMode}
+              onClick={() => handleSetDiceMode(false)}
+              title="Table view"
+            >
+              <Icon icon={FaList} size={11} />
+            </ModeToggleBtn>
+            <ModeToggleBtn
+              $active={diceMode}
+              onClick={() => handleSetDiceMode(true)}
+              title="Dice view"
+            >
+              <Icon icon={FaDice} size={12} />
+            </ModeToggleBtn>
+          </ModeToggleContainer>
+        ) : undefined}
       >
         {blockContent}
       </ToolCardDnd>
