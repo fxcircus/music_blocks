@@ -49,9 +49,9 @@ const PageContainer = styled(Container)`
   }
 `;
 
-const TwoColumnGrid = styled.div`
+const TwoColumnGrid = styled.div<{ $singleBlock?: boolean }>`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: ${({ $singleBlock }) => $singleBlock ? '1fr' : '1fr 1fr'};
   gap: ${({ theme }) => theme.spacing.md};
 
   @media (max-width: 1024px) {
@@ -441,7 +441,7 @@ const CurrentProject: FC<LoaderProps> = () => {
                         items={visibleBlocks.map(block => block.instanceId)}
                         strategy={verticalListSortingStrategy}
                     >
-                        <TwoColumnGrid>
+                        <TwoColumnGrid $singleBlock={visibleBlocks.length === 1}>
                             {visibleBlocks.map((block) => (
                                 <SortableBlockItem
                                     key={block.instanceId}
