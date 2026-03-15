@@ -1,9 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
-import { FaDownload } from 'react-icons/fa';
+import { FaDownload, FaCog } from 'react-icons/fa';
 import { MdQueueMusic } from 'react-icons/md';
-import { GiPianoKeys } from 'react-icons/gi';
-import { FaCog } from 'react-icons/fa';
 import { Icon } from '../../utils/IconHelper';
 import { scaleNoteCounts } from '../../utils/musicTheory';
 import ChordProgressions from '../NotesVisualizer/ChordProgressions';
