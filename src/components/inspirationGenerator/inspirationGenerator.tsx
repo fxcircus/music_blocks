@@ -1205,6 +1205,7 @@ export default function InspirationGenerator({
   // Dice mode state (prefer external props, fallback to internal)
   const [diceModeInternal, setDiceModeInternal] = useState<boolean>(() => localStorage.getItem('tilesDiceMode') === 'true');
   const diceMode = diceModeExternal !== undefined ? diceModeExternal : diceModeInternal;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const setDiceMode = setDiceModeExternal || setDiceModeInternal;
   const [allRolling, setAllRolling] = useState(false);
 
