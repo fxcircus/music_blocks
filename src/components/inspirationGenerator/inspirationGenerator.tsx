@@ -1020,87 +1020,64 @@ interface DieShapeProps {
   paramKey: string;
 }
 
-function D4Shape({ color, themeStyle, paramKey }: DieShapeProps) {
-  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+// Helper: common stroke props from theme style
+function strokeProps(themeStyle: DiceThemeStyle) {
+  return {
+    strokeWidth: themeStyle.strokeWidth,
+    strokeLinejoin: themeStyle.strokeLinejoin as any,
+    strokeDasharray: themeStyle.strokeDasharray,
+  };
+}
+function fillVal(themeStyle: DiceThemeStyle, color: string) {
+  return themeStyle.fillOpacity > 0 ? color : 'none';
+}
+
+// ── Default Shapes (Light / Dark) ───────────────────────────────────
+
+function D4Shape({ color, themeStyle }: DieShapeProps) {
   return (
-    <polygon
-      points="50,8 92,82 8,82"
-      fill={fill}
-      fillOpacity={themeStyle.fillOpacity}
-      stroke={color}
-      strokeWidth={themeStyle.strokeWidth}
-      strokeLinejoin={themeStyle.strokeLinejoin}
-      strokeDasharray={themeStyle.strokeDasharray}
-    />
+    <polygon points="50,8 92,82 8,82" fill={fillVal(themeStyle, color)}
+      fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
   );
 }
 
-function D6Shape({ color, themeStyle, paramKey }: DieShapeProps) {
-  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+function D6Shape({ color, themeStyle }: DieShapeProps) {
   return (
-    <rect
-      x="14" y="14" width="72" height="72"
-      rx={themeStyle.d6Rx}
-      fill={fill}
-      fillOpacity={themeStyle.fillOpacity}
-      stroke={color}
-      strokeWidth={themeStyle.strokeWidth}
-      strokeDasharray={themeStyle.strokeDasharray}
-    />
+    <rect x="14" y="14" width="72" height="72" rx={themeStyle.d6Rx}
+      fill={fillVal(themeStyle, color)} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} strokeWidth={themeStyle.strokeWidth}
+      strokeDasharray={themeStyle.strokeDasharray} />
   );
 }
 
-function D8Shape({ color, themeStyle, paramKey }: DieShapeProps) {
-  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+function D8Shape({ color, themeStyle }: DieShapeProps) {
   return (
-    <polygon
-      points="50,6 94,50 50,94 6,50"
-      fill={fill}
-      fillOpacity={themeStyle.fillOpacity}
-      stroke={color}
-      strokeWidth={themeStyle.strokeWidth}
-      strokeLinejoin={themeStyle.strokeLinejoin}
-      strokeDasharray={themeStyle.strokeDasharray}
-    />
+    <polygon points="50,6 94,50 50,94 6,50" fill={fillVal(themeStyle, color)}
+      fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
   );
 }
 
-function D12Shape({ color, themeStyle, paramKey }: DieShapeProps) {
+function D12Shape({ color, themeStyle }: DieShapeProps) {
   const cx = 50, cy = 50, r = 42;
   const pts = Array.from({ length: 5 }, (_, i) => {
     const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
     return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
   }).join(" ");
-  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
   return (
-    <polygon
-      points={pts}
-      fill={fill}
-      fillOpacity={themeStyle.fillOpacity}
-      stroke={color}
-      strokeWidth={themeStyle.strokeWidth}
-      strokeLinejoin={themeStyle.strokeLinejoin}
-      strokeDasharray={themeStyle.strokeDasharray}
-    />
+    <polygon points={pts} fill={fillVal(themeStyle, color)}
+      fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
   );
 }
 
-function D20Shape({ color, themeStyle, paramKey }: DieShapeProps) {
+function D20Shape({ color, themeStyle }: DieShapeProps) {
   const cx = 50, cy = 50, r = 44;
-  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
   return (
     <>
       <polygon points={Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
         return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      }).join(" ")}
-        fill={fill}
-        fillOpacity={themeStyle.fillOpacity}
-        stroke={color}
-        strokeWidth={themeStyle.strokeWidth}
-        strokeLinejoin={themeStyle.strokeLinejoin}
-        strokeDasharray={themeStyle.strokeDasharray}
-      />
+      }).join(" ")} fill={fillVal(themeStyle, color)}
+        fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
       {Array.from({ length: 6 }, (_, i) => {
         const a1 = (Math.PI * 2 * i) / 6 - Math.PI / 2;
         const a2 = (Math.PI * 2 * ((i + 1) % 6)) / 6 - Math.PI / 2;
@@ -1112,14 +1089,334 @@ function D20Shape({ color, themeStyle, paramKey }: DieShapeProps) {
   );
 }
 
-const DIE_SHAPES: Record<string, React.FC<DieShapeProps>> = {
+// ── Vintage Shapes — Fender Tweed Amp / Vacuum Tubes ────────────────
+
+// D4: Vacuum tube — arched top rectangle (tombstone shape)
+function VintageD4Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <path
+      d="M 26,86 L 26,38 A 24,24 0 0 1 74,38 L 74,86 Z"
+      fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} {...strokeProps(themeStyle)}
+    />
+  );
+}
+
+// D6: Amp knob dial — circle with inner ring and pointer notch
+function VintageD6Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <circle cx="50" cy="50" r="40" fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} strokeWidth={themeStyle.strokeWidth} strokeDasharray={themeStyle.strokeDasharray} />
+      <circle cx="50" cy="50" r="28" fill="none"
+        stroke={color} strokeWidth={themeStyle.strokeWidth * 0.5} opacity="0.25"
+        strokeDasharray={themeStyle.strokeDasharray} />
+      <line x1="50" y1="10" x2="50" y2="20" stroke={color}
+        strokeWidth={themeStyle.strokeWidth} opacity="0.5" />
+    </>
+  );
+}
+
+// D8: Ellipse — speaker cone / vintage nameplate shape
+function VintageD8Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <ellipse cx="50" cy="50" rx="42" ry="34" fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} strokeWidth={themeStyle.strokeWidth} strokeDasharray={themeStyle.strokeDasharray} />
+  );
+}
+
+// D12: Shield / heraldic crest — flat top, sides taper to a point
+function VintageD12Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <path
+      d="M 14,12 L 86,12 L 86,52 Q 86,72 50,92 Q 14,72 14,52 Z"
+      fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} {...strokeProps(themeStyle)}
+    />
+  );
+}
+
+// D20: Octagon — vintage selector dial (8 positions)
+function VintageD20Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <polygon points="30,6 70,6 94,30 94,70 70,94 30,94 6,70 6,30"
+        fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} {...strokeProps(themeStyle)} />
+      <circle cx="50" cy="50" r="2" fill={color} opacity="0.3" />
+    </>
+  );
+}
+
+// ── Indie Shapes — TASCAM 424 / Cassette Deck ──────────────────────
+
+// D4: Fader slot — tall narrow rounded rectangle
+function IndieD4Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <rect x="30" y="8" width="40" height="84" rx="3" fill={f}
+        fillOpacity={themeStyle.fillOpacity} stroke={color}
+        strokeWidth={themeStyle.strokeWidth} strokeDasharray={themeStyle.strokeDasharray} />
+      <line x1="50" y1="16" x2="50" y2="84" stroke={color}
+        strokeWidth="0.5" opacity="0.15" strokeDasharray={themeStyle.strokeDasharray} />
+    </>
+  );
+}
+
+// D6: Cassette window — wide landscape rectangle with tape hub hints
+function IndieD6Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <rect x="8" y="22" width="84" height="56" rx="5" fill={f}
+        fillOpacity={themeStyle.fillOpacity} stroke={color}
+        strokeWidth={themeStyle.strokeWidth} strokeDasharray={themeStyle.strokeDasharray} />
+      <circle cx="32" cy="50" r="8" fill="none" stroke={color}
+        strokeWidth="0.8" opacity="0.15" />
+      <circle cx="68" cy="50" r="8" fill="none" stroke={color}
+        strokeWidth="0.8" opacity="0.15" />
+    </>
+  );
+}
+
+// D8: Tape reel — circle with crosshair
+function IndieD8Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <circle cx="50" cy="50" r="40" fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} strokeWidth={themeStyle.strokeWidth}
+        strokeDasharray={themeStyle.strokeDasharray} />
+      <line x1="50" y1="14" x2="50" y2="86" stroke={color} strokeWidth="0.6" opacity="0.12" />
+      <line x1="14" y1="50" x2="86" y2="50" stroke={color} strokeWidth="0.6" opacity="0.12" />
+      <circle cx="50" cy="50" r="4" fill="none" stroke={color} strokeWidth="0.8" opacity="0.2" />
+    </>
+  );
+}
+
+// D12: VU meter face — trapezoid (wider top, narrower bottom)
+function IndieD12Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <polygon points="8,16 92,16 78,84 22,84" fill={f}
+        fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
+      <path d="M 30,30 A 30,30 0 0 1 70,30" fill="none" stroke={color}
+        strokeWidth="0.6" opacity="0.12" />
+    </>
+  );
+}
+
+// D20: Squircle — superellipse (heavily rounded square, like a deck transport button)
+function IndieD20Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <rect x="8" y="8" width="84" height="84" rx="26" fill={f}
+      fillOpacity={themeStyle.fillOpacity} stroke={color}
+      strokeWidth={themeStyle.strokeWidth} strokeDasharray={themeStyle.strokeDasharray} />
+  );
+}
+
+// ── Disco Shapes — Mirror Ball / 70s Nightclub ─────────────────────
+
+// D4: 4-pointed starburst
+function DiscoD4Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  // 4 long rays + 4 short inner points
+  return (
+    <polygon points="50,4 60,38 96,50 60,62 50,96 40,62 4,50 40,38"
+      fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} {...strokeProps(themeStyle)} />
+  );
+}
+
+// D6: Vinyl record — circle with concentric rings and center label
+function DiscoD6Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <circle cx="50" cy="50" r="42" fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} strokeWidth={themeStyle.strokeWidth}
+        strokeDasharray={themeStyle.strokeDasharray} />
+      <circle cx="50" cy="50" r="28" fill="none" stroke={color}
+        strokeWidth="0.6" opacity="0.2" />
+      <circle cx="50" cy="50" r="6" fill={color} opacity="0.15" />
+    </>
+  );
+}
+
+// D8: 8-pointed star — alternating long/short vertices
+function DiscoD8Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  const cx = 50, cy = 50, rOuter = 44, rInner = 24;
+  const pts = Array.from({ length: 16 }, (_, i) => {
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const a = (Math.PI * 2 * i) / 16 - Math.PI / 2;
+    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+  }).join(" ");
+  return (
+    <polygon points={pts} fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} {...strokeProps(themeStyle)} />
+  );
+}
+
+// D12: Flower / daisy — 6 rounded petals using alternating radii (12-gon)
+function DiscoD12Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  const cx = 50, cy = 50, rOuter = 42, rInner = 30;
+  const pts = Array.from({ length: 12 }, (_, i) => {
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const a = (Math.PI * 2 * i) / 12 - Math.PI / 2;
+    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+  }).join(" ");
+  return (
+    <polygon points={pts} fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} {...strokeProps(themeStyle)} />
+  );
+}
+
+// D20: Sunburst — circle with radiating tick lines
+function DiscoD20Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  const cx = 50, cy = 50;
+  return (
+    <>
+      <circle cx={cx} cy={cy} r="36" fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} strokeWidth={themeStyle.strokeWidth}
+        strokeDasharray={themeStyle.strokeDasharray} />
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (Math.PI * 2 * i) / 12;
+        const x1 = cx + 38 * Math.cos(a), y1 = cy + 38 * Math.sin(a);
+        const x2 = cx + 46 * Math.cos(a), y2 = cy + 46 * Math.sin(a);
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+          stroke={color} strokeWidth={themeStyle.strokeWidth * 0.6} opacity="0.5" />;
+      })}
+    </>
+  );
+}
+
+// ── Hip Hop Shapes — TR-808 / MPC / Drum Machine ───────────────────
+
+// D4: Narrow sharp rectangle — step sequencer button
+function HiphopD4Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <rect x="28" y="10" width="44" height="80" rx="0" fill={f}
+      fillOpacity={themeStyle.fillOpacity} stroke={color}
+      strokeWidth={themeStyle.strokeWidth} strokeLinejoin="miter" />
+  );
+}
+
+// D6: Perfect square — MPC drum pad
+function HiphopD6Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <rect x="14" y="14" width="72" height="72" rx="0" fill={f}
+        fillOpacity={themeStyle.fillOpacity} stroke={color}
+        strokeWidth={themeStyle.strokeWidth} strokeLinejoin="miter" />
+      <rect x="18" y="18" width="64" height="64" rx="0" fill="none"
+        stroke={color} strokeWidth="0.8" opacity="0.12" />
+    </>
+  );
+}
+
+// D8: Octagon — industrial stop-sign shape
+function HiphopD8Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <polygon points="30,6 70,6 94,30 94,70 70,94 30,94 6,70 6,30"
+      fill={f} fillOpacity={themeStyle.fillOpacity}
+      stroke={color} strokeWidth={themeStyle.strokeWidth} strokeLinejoin="miter" />
+  );
+}
+
+// D12: LCD display — wide rectangle with inset border
+function HiphopD12Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <rect x="6" y="20" width="88" height="60" rx="2" fill={f}
+        fillOpacity={themeStyle.fillOpacity} stroke={color}
+        strokeWidth={themeStyle.strokeWidth} strokeLinejoin="miter" />
+      <rect x="10" y="24" width="80" height="52" rx="1" fill="none"
+        stroke={color} strokeWidth="0.6" opacity="0.15" />
+      <line x1="10" y1="50" x2="90" y2="50" stroke={color}
+        strokeWidth="0.4" opacity="0.08" />
+    </>
+  );
+}
+
+// D20: Flat-top hexagon (rotated 90°) — speaker grille / industrial hardware
+function HiphopD20Shape({ color, themeStyle }: DieShapeProps) {
+  const f = fillVal(themeStyle, color);
+  return (
+    <>
+      <polygon points="26,6 74,6 96,50 74,94 26,94 4,50"
+        fill={f} fillOpacity={themeStyle.fillOpacity}
+        stroke={color} strokeWidth={themeStyle.strokeWidth} strokeLinejoin="miter" />
+      {/* Tick marks at edge midpoints */}
+      <g stroke={color} strokeWidth="0.8" opacity="0.2">
+        <line x1="50" y1="6" x2="50" y2="10" />
+        <line x1="50" y1="90" x2="50" y2="94" />
+        <line x1="11" y1="28" x2="14" y2="30" />
+        <line x1="86" y1="30" x2="89" y2="28" />
+        <line x1="11" y1="72" x2="14" y2="70" />
+        <line x1="86" y1="70" x2="89" y2="72" />
+      </g>
+    </>
+  );
+}
+
+// ── Theme → Shape Map ───────────────────────────────────────────────
+
+type DieShapeSet = Record<string, React.FC<DieShapeProps>>;
+
+const DEFAULT_SHAPES: DieShapeSet = {
   d4: D4Shape, d6: D6Shape, d8: D8Shape, d12: D12Shape, d20: D20Shape,
 };
 
-function DieTextSvg({ value, die, fill, fontSize }: {
-  value: string; die: string; fill: string; fontSize: string;
+const THEMED_DIE_SHAPES: Record<ThemeName, DieShapeSet> = {
+  light: DEFAULT_SHAPES,
+  dark: DEFAULT_SHAPES,
+  vintage: {
+    d4: VintageD4Shape, d6: VintageD6Shape, d8: VintageD8Shape,
+    d12: VintageD12Shape, d20: VintageD20Shape,
+  },
+  indie: {
+    d4: IndieD4Shape, d6: IndieD6Shape, d8: IndieD8Shape,
+    d12: IndieD12Shape, d20: IndieD20Shape,
+  },
+  disco: {
+    d4: DiscoD4Shape, d6: DiscoD6Shape, d8: DiscoD8Shape,
+    d12: DiscoD12Shape, d20: DiscoD20Shape,
+  },
+  hiphop: {
+    d4: HiphopD4Shape, d6: HiphopD6Shape, d8: HiphopD8Shape,
+    d12: HiphopD12Shape, d20: HiphopD20Shape,
+  },
+};
+
+// Per-theme text Y center overrides (default shapes use d4:62, others:53)
+const DIE_TEXT_Y: Record<ThemeName, Record<string, number>> = {
+  light:   { d4: 62, d6: 53, d8: 53, d12: 53, d20: 53 },
+  dark:    { d4: 62, d6: 53, d8: 53, d12: 53, d20: 53 },
+  vintage: { d4: 55, d6: 53, d8: 53, d12: 46, d20: 53 },
+  indie:   { d4: 53, d6: 53, d8: 53, d12: 48, d20: 53 },
+  disco:   { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
+  hiphop:  { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
+};
+
+function DieTextSvg({ value, die, fill, fontSize, textCenterY }: {
+  value: string; die: string; fill: string; fontSize: string; textCenterY?: number;
 }) {
-  const cy = die === "d4" ? 62 : 53;
+  const cy = textCenterY ?? (die === "d4" ? 62 : 53);
   const words = value.split(" ");
   if (words.length > 1) {
     const lh = Math.min(parseInt(fontSize) + 2, 14);
@@ -1204,7 +1501,9 @@ function DieComponent({
     if (externalRolling) setPickerOpen(false);
   }, [externalRolling]);
 
-  const Shape = DIE_SHAPES[dieType];
+  const shapeSet = THEMED_DIE_SHAPES[themeName] || DEFAULT_SHAPES;
+  const Shape = shapeSet[dieType];
+  const textCenterY = DIE_TEXT_Y[themeName]?.[dieType];
   const accent = locked ? theme.colors.border : theme.colors.primary;
   const textColor = locked ? theme.colors.textSecondary : theme.colors.text;
   const hasMulti = displayValue.includes(" ");
@@ -1261,10 +1560,10 @@ function DieComponent({
           </defs>
           {themeStyle.decorations?.(accent)}
           {Shape && <Shape color={strokeColor} themeStyle={themeStyle} paramKey={paramKey} />}
-          <DieTextSvg value={displayText} die={dieType} fill={textColor} fontSize={fontSize} />
+          <DieTextSvg value={displayText} die={dieType} fill={textColor} fontSize={fontSize} textCenterY={textCenterY} />
           {!rolling && washKey > 0 && (
             <g key={`w-${washKey}`} mask={`url(#dwm-${paramKey}-${washKey})`}>
-              <DieTextSvg value={displayText} die={dieType} fill={`url(#dwg-${paramKey})`} fontSize={fontSize} />
+              <DieTextSvg value={displayText} die={dieType} fill={`url(#dwg-${paramKey})`} fontSize={fontSize} textCenterY={textCenterY} />
             </g>
           )}
         </svg>
