@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled, { useTheme, keyframes, css } from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaMusic, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
+import { FaDice, FaLock, FaUnlock, FaPlay, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
 import { Card } from '../common/StyledComponents';
@@ -190,6 +190,8 @@ const LabelCell = styled.td`
   text-align: left;
   white-space: nowrap;
   padding-left: ${({ theme }) => theme.spacing.xs};
+  cursor: pointer;
+  user-select: none;
 
   @media (max-width: 768px) {
     width: 80px;
@@ -820,21 +822,18 @@ const DieLabel = styled.span`
   letter-spacing: 1.2px;
   line-height: 1;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
 `;
 
 const DieSvgWrapper = styled.div<{ $rolling?: boolean; $accent?: string }>`
-  width: 105px;
-  height: 105px;
+  width: 17%;
+  aspect-ratio: 1;
   flex-shrink: 0;
   ${({ $rolling }) => $rolling && diceShakeAnimation}
   filter: ${({ $rolling, $accent }) =>
     $rolling ? `drop-shadow(0 0 16px ${$accent}bb)` : `drop-shadow(0 0 4px ${$accent}33)`};
   transition: filter 0.3s;
-
-  @media (max-width: 480px) {
-    width: 76px;
-    height: 76px;
-  }
 `;
 
 const DicePickerDropdown = styled.div`
@@ -1042,7 +1041,7 @@ function DieComponent({
             {locked ? <Icon icon={FaLock} size={10} /> : <Icon icon={FaUnlock} size={10} />}
           </IconWrapper>
         </LockIconWrapper>
-        <DieLabel>{label}</DieLabel>
+        <DieLabel onClick={(e: React.MouseEvent) => { e.stopPropagation(); onToggleLock(); setPickerOpen(false); }}>{label}</DieLabel>
       </DieLabelRow>
       <DieSvgWrapper $rolling={rolling} $accent={accent}>
         <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: 'visible' }}>
@@ -2306,7 +2305,7 @@ export default function InspirationGenerator({
                   </IconWrapper>
                 </LockIconWrapper>
               </TableHeader>
-              <LabelCell>Root</LabelCell>
+              <LabelCell onClick={() => toggleLock('root')}>Root</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.root}
                 onClick={() => {
@@ -2376,7 +2375,7 @@ export default function InspirationGenerator({
                   </IconWrapper>
                 </LockIconWrapper>
               </TableHeader>
-              <LabelCell>Scale</LabelCell>
+              <LabelCell onClick={() => toggleLock('scale')}>Scale</LabelCell>
               <ClickableValueCell
                 $isLocked={locked.scale}
                 onClick={() => {
@@ -2422,7 +2421,7 @@ export default function InspirationGenerator({
                   </IconWrapper>
                 </LockIconWrapper>
               </TableHeader>
-              <LabelCell>Time Signature</LabelCell>
+              <LabelCell onClick={() => toggleLock('timeSignature')}>Time Signature</LabelCell>
               <ClickableValueCell
                 ref={openDropdown === 'timeSignature' ? dropdownRef as any : undefined}
                 $isLocked={locked.timeSignature}
@@ -2476,7 +2475,7 @@ export default function InspirationGenerator({
                   </IconWrapper>
                 </LockIconWrapper>
               </TableHeader>
-              <LabelCell>BPM</LabelCell>
+              <LabelCell onClick={() => toggleLock('bpm')}>BPM</LabelCell>
               <BpmInputCell>
                 <BpmAdjustBtn onClick={() => adjustBpm(-1)} title={locked.bpm ? "Unlock row to edit" : "Decrease BPM"} disabled={locked.bpm}>
                   <Icon icon={FaMinus} size={10} />
@@ -2514,7 +2513,7 @@ export default function InspirationGenerator({
                   </IconWrapper>
                 </LockIconWrapper>
               </TableHeader>
-              <LabelCell>Sound</LabelCell>
+              <LabelCell onClick={() => toggleLock('sound')}>Sound</LabelCell>
               <ValueCell className={getValueCellClass(soundEl)}>{soundEl}</ValueCell>
             </TableRow>
 
@@ -2727,7 +2726,7 @@ export default function InspirationGenerator({
                   onClick={playSequence}
                   title={isPlaying ? "Stop playback" : "Play scale/chord"}
                 >
-                  <Icon icon={isPlaying ? FaStop : FaMusic} size={14} />
+                  <Icon icon={isPlaying ? FaStop : FaPlay} size={14} />
                 </PlayButton>
               </TableHeader>
               <LabelCell>
