@@ -456,6 +456,7 @@ const ChordPill = styled.button<{ $isActive: boolean; $isPlaying: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
   min-width: 32px;
   height: 26px;
   padding: 0 6px;
