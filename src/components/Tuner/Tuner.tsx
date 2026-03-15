@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaMicrophone, FaMicrophoneSlash, FaCog } from 'react-icons/fa';
+import { FaCog } from 'react-icons/fa';
 import ToolCardDnd from '../common/ToolCardDnd';
 import { Icon } from '../../utils/IconHelper';
 import { GiGuitarHead } from 'react-icons/gi';
+
+// Inline tuning fork SVG — no library has one
+const TuningForkIcon: React.FC<{ size?: number; color?: string }> = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 3v7a4 4 0 0 0 8 0V3" />
+    <line x1="12" y1="14" x2="12" y2="22" />
+  </svg>
+);
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -109,8 +117,8 @@ const TunerContainer = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.xs} 0;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const MeterContainer = styled.div`
@@ -135,21 +143,23 @@ const NoteDisplay = styled.div`
 const NoteLetter = styled.span<{ $active: boolean }>`
   font-size: 3rem;
   font-weight: 700;
-  color: ${({ theme, $active }) => $active ? theme.colors.text : theme.colors.border};
-  transition: color 0.15s ease;
+  color: ${({ theme, $active }) => $active ? theme.colors.text : theme.colors.textSecondary};
+  opacity: ${({ $active }) => $active ? 1 : 0.4};
+  transition: all 0.15s ease;
   line-height: 1;
 `;
 
 const NoteOctave = styled.span<{ $active: boolean }>`
   font-size: 1.2rem;
   font-weight: 600;
-  color: ${({ theme, $active }) => $active ? theme.colors.textSecondary : theme.colors.border};
-  transition: color 0.15s ease;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  opacity: ${({ $active }) => $active ? 1 : 0.4};
+  transition: all 0.15s ease;
 `;
 
 const FrequencyDisplay = styled.div<{ $active: boolean }>`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme, $active }) => $active ? theme.colors.textSecondary : theme.colors.border};
+  color: ${({ theme }) => theme.colors.textSecondary};
   font-variant-numeric: tabular-nums;
   transition: color 0.15s ease;
   text-align: center;
@@ -159,51 +169,43 @@ const CentsDisplay = styled.div<{ $active: boolean; $inTune: boolean }>`
   font-size: ${({ theme }) => theme.fontSizes.xs};
   font-weight: 600;
   color: ${({ theme, $active, $inTune }) =>
-    !$active ? theme.colors.border :
+    !$active ? theme.colors.textSecondary :
     $inTune ? theme.colors.success :
     theme.colors.textSecondary};
+  opacity: ${({ $active }) => $active ? 1 : 0.4};
   font-variant-numeric: tabular-nums;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
   text-align: center;
   letter-spacing: 0.5px;
 `;
 
-const ListenButton = styled(motion.button)<{ $listening: boolean }>`
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+`;
+
+const TuneIconBtn = styled(motion.button)<{ $listening: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 24px;
+  width: 36px;
+  height: 36px;
   border: 2px solid ${({ theme, $listening }) =>
-    $listening ? theme.colors.primary : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
+    $listening ? theme.colors.primary : theme.colors.textSecondary};
+  border-radius: 50%;
   background: ${({ theme, $listening }) =>
-    $listening ? `${theme.colors.primary}15` : 'transparent'};
+    $listening ? `${theme.colors.primary}20` : 'transparent'};
   color: ${({ theme, $listening }) =>
     $listening ? theme.colors.primary : theme.colors.textSecondary};
   cursor: pointer;
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: 600;
   transition: all 0.2s ease;
+  animation: ${({ $listening }) => $listening ? pulse : 'none'} 2s ease-in-out infinite;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => `${theme.colors.primary}11`};
+    background: ${({ theme }) => `${theme.colors.primary}15`};
   }
-`;
-
-const pulse = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-`;
-
-const ListeningDot = styled.span`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.primary};
-  animation: ${pulse} 1.5s ease-in-out infinite;
 `;
 
 /* Settings dropdown — matches the Flow block pattern */
@@ -240,25 +242,31 @@ const SettingsDropdown = styled(motion.div)`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
   box-shadow: ${({ theme }) => theme.shadows.large};
-  min-width: 220px;
+  min-width: 240px;
   overflow: visible;
   padding: ${({ theme }) => theme.spacing.sm};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const SettingsHeader = styled.div`
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xs}`};
   font-size: ${({ theme }) => theme.fontSizes.xs};
   font-weight: 600;
   color: ${({ theme }) => theme.colors.textSecondary};
   text-transform: uppercase;
   letter-spacing: 0.8px;
   text-align: left;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  padding-bottom: ${({ theme }) => theme.spacing.xs};
+  margin-bottom: 2px;
 `;
 
 const DeviceList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   max-height: 200px;
   overflow-y: auto;
 `;
@@ -266,30 +274,34 @@ const DeviceList = styled.div`
 const DeviceItem = styled.button<{ $active: boolean }>`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing.xs};
   width: 100%;
-  padding: 6px ${({ theme }) => theme.spacing.sm};
-  border: none;
+  padding: 8px ${({ theme }) => theme.spacing.sm};
+  border: 1.5px solid ${({ $active, theme }) =>
+    $active ? theme.colors.primary : theme.colors.border + '80'};
   border-radius: ${({ theme }) => theme.borderRadius.small};
   background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ $active }) => $active ? 600 : 400};
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background: ${({ theme }) => `${theme.colors.primary}15`};
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => `${theme.colors.primary}11`};
     color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 const DeviceDot = styled.span<{ $active: boolean }>`
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.border};
   flex-shrink: 0;
+  transition: background ${({ theme }) => theme.transitions.fast};
 `;
 
 const DeviceLabel = styled.span`
@@ -352,25 +364,23 @@ const Tuner: React.FC<TunerProps> = ({
     }
   }, [selectedDeviceId]);
 
-  // Request mic permission and enumerate on mount
+  // Listen for device changes (plug/unplug) — but don't request permission on mount
   useEffect(() => {
-    // We need a brief getUserMedia call to get labeled device names
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        // Stop immediately — we just needed permission
-        stream.getTracks().forEach(t => t.stop());
-        enumerateDevices();
-      })
-      .catch(() => {
-        // Permission denied - still try to enumerate (labels may be empty)
-        enumerateDevices();
-      });
-
-    // Listen for device changes (plug/unplug)
     navigator.mediaDevices.addEventListener('devicechange', enumerateDevices);
     return () => {
       navigator.mediaDevices.removeEventListener('devicechange', enumerateDevices);
     };
+  }, [enumerateDevices]);
+
+  // Request mic permission + enumerate devices (called lazily, not on mount)
+  const requestPermissionAndEnumerate = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+      await enumerateDevices();
+    } catch {
+      await enumerateDevices();
+    }
   }, [enumerateDevices]);
 
   // Close settings on outside click
@@ -498,7 +508,7 @@ const Tuner: React.FC<TunerProps> = ({
 
   // Color of the needle based on tuning accuracy
   const getNeedleColor = () => {
-    if (!active) return theme.colors.border;
+    if (!active) return theme.colors.textSecondary;
     if (Math.abs(detectedCents) <= 5) return theme.colors.success || '#4BB543';
     if (Math.abs(detectedCents) <= 15) return theme.colors.warning || '#ffab00';
     return theme.colors.error || '#ff5252';
@@ -542,7 +552,7 @@ const Tuner: React.FC<TunerProps> = ({
           stroke={tickColor}
           strokeWidth={isMajor ? 2.5 : 1.5}
           strokeLinecap="round"
-          opacity={isMajor ? 1 : 0.5}
+          opacity={isMajor ? 1 : 0.7}
         />
       );
 
@@ -597,8 +607,8 @@ const Tuner: React.FC<TunerProps> = ({
         />
 
         {/* Flat / Sharp labels */}
-        <text x={18} y={130} fill={theme.colors.textSecondary} fontSize="11" fontWeight="600" opacity={0.5}>&#9837;</text>
-        <text x={218} y={130} fill={theme.colors.textSecondary} fontSize="11" fontWeight="600" opacity={0.5}>&#9839;</text>
+        <text x={18} y={130} fill={theme.colors.textSecondary} fontSize="11" fontWeight="600" opacity={0.7}>&#9837;</text>
+        <text x={218} y={130} fill={theme.colors.textSecondary} fontSize="11" fontWeight="600" opacity={0.7}>&#9839;</text>
       </MeterSvg>
     );
   };
@@ -617,7 +627,10 @@ const Tuner: React.FC<TunerProps> = ({
         <SettingsWrapper ref={settingsRef}>
           <SettingsIconBtn
             $active={showSettings}
-            onClick={() => setShowSettings(!showSettings)}
+            onClick={() => {
+              if (!showSettings) requestPermissionAndEnumerate();
+              setShowSettings(!showSettings);
+            }}
             title="Tuner settings"
           >
             <Icon icon={FaCog} size={16} />
@@ -659,6 +672,16 @@ const Tuner: React.FC<TunerProps> = ({
       }
     >
       <TunerContainer>
+        {/* Tune toggle */}
+        <TuneIconBtn
+          $listening={isListening}
+          onClick={toggleListening}
+          whileTap={{ scale: 0.9 }}
+          title={isListening ? 'Stop tuning' : 'Start tuning'}
+        >
+          <TuningForkIcon size={18} />
+        </TuneIconBtn>
+
         {/* Meter arc */}
         <MeterContainer>
           {renderMeter()}
@@ -677,9 +700,11 @@ const Tuner: React.FC<TunerProps> = ({
         </NoteDisplay>
 
         {/* Frequency */}
-        <FrequencyDisplay $active={active}>
-          {detectedFrequency !== null ? `${detectedFrequency} Hz` : `${A4} Hz ref`}
-        </FrequencyDisplay>
+        {detectedFrequency !== null && (
+          <FrequencyDisplay $active={active}>
+            {detectedFrequency} Hz
+          </FrequencyDisplay>
+        )}
 
         {/* Cents */}
         <CentsDisplay $active={active} $inTune={inTune}>
@@ -689,25 +714,6 @@ const Tuner: React.FC<TunerProps> = ({
               : `${detectedCents > 0 ? '+' : ''}${detectedCents} cents`
             : '\u00A0'}
         </CentsDisplay>
-
-        {/* Listen toggle */}
-        <ListenButton
-          $listening={isListening}
-          onClick={toggleListening}
-          whileTap={{ scale: 0.97 }}
-        >
-          {isListening ? (
-            <>
-              <ListeningDot />
-              <span>Listening</span>
-            </>
-          ) : (
-            <>
-              <Icon icon={FaMicrophone} size={14} />
-              <span>Start</span>
-            </>
-          )}
-        </ListenButton>
       </TunerContainer>
     </ToolCardDnd>
   );
