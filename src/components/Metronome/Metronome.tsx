@@ -44,6 +44,7 @@ interface LoaderProps {
     canRemove?: boolean;
     dragHandleProps?: any;
     isRecentlyDragged?: boolean;
+    onBpmChange?: (bpm: number) => void;
 }
 
 // Blocks mode helpers
@@ -608,13 +609,13 @@ const PillTsButton = styled.button`
 
 // Pendulum mode wrapper
 const PendulumArea = styled.div`
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   animation: ${modeFade} 0.25s ease-out;
-  padding-top: 8px;
 `;
 
 const TsDropdownWrapper = styled.div`
@@ -670,7 +671,10 @@ const BeatsRow = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 16px;
+  position: absolute;
+  bottom: 42px;
+  left: 0;
+  right: 0;
 `;
 
 
@@ -1028,14 +1032,15 @@ const Metronome: FC<LoaderProps> = ({
     onRemove,
     canRemove,
     dragHandleProps,
-    isRecentlyDragged
+    isRecentlyDragged,
+    onBpmChange
 }) => {
     const theme = useTheme();
     const { themeName } = useAppTheme();
     const { effectiveMetronomeTheme, metronomeVolume, setMetronomeVolume, metronomeThemeOverride, setMetronomeThemeOverride } = useSoundSettings();
     // State
     const [metronomeMode, setMetronomeMode] = useState<'blocks' | 'pendulum'>(() =>
-      (localStorage.getItem('metronomeMode') as 'blocks' | 'pendulum') || 'blocks'
+      (localStorage.getItem('metronomeMode') as 'blocks' | 'pendulum') || 'pendulum'
     );
     const [metronomePlaying, setMetronomePlaying] = useState(false);
     const [muteSound] = useState(false);
@@ -1250,18 +1255,19 @@ const Metronome: FC<LoaderProps> = ({
         const newBpm = Math.min(bpm + 1, 300);
         if (newBpm !== bpm) {
             debugLog(`Increase BPM: ${bpm} → ${newBpm}`);
-            
+
             // Set flag to ignore external updates temporarily
             ignoreExternalUpdatesRef.current = true;
-            
+
             // Update local state
             setBpm(newBpm);
-            
+            onBpmChange?.(newBpm);
+
             // Clear any previous timeout
             if (ignoreTimeoutRef.current) {
                 clearTimeout(ignoreTimeoutRef.current);
             }
-            
+
             // Reset the ignore flag after a delay
             ignoreTimeoutRef.current = setTimeout(() => {
                 ignoreExternalUpdatesRef.current = false;
@@ -1270,23 +1276,24 @@ const Metronome: FC<LoaderProps> = ({
             }, 500);
         }
     };
-    
+
     const handleDecreaseBpm = () => {
         const newBpm = Math.max(bpm - 1, 40);
         if (newBpm !== bpm) {
             debugLog(`Decrease BPM: ${bpm} → ${newBpm}`);
-            
+
             // Set flag to ignore external updates temporarily
             ignoreExternalUpdatesRef.current = true;
-            
+
             // Update local state
             setBpm(newBpm);
-            
+            onBpmChange?.(newBpm);
+
             // Clear any previous timeout
             if (ignoreTimeoutRef.current) {
                 clearTimeout(ignoreTimeoutRef.current);
             }
-            
+
             // Reset the ignore flag after a delay
             ignoreTimeoutRef.current = setTimeout(() => {
                 ignoreExternalUpdatesRef.current = false;
@@ -1307,6 +1314,7 @@ const Metronome: FC<LoaderProps> = ({
             debugLog(`Manual BPM input: ${bpm} → ${clamped}`);
             ignoreExternalUpdatesRef.current = true;
             setBpm(clamped);
+            onBpmChange?.(clamped);
             if (ignoreTimeoutRef.current) {
                 clearTimeout(ignoreTimeoutRef.current);
             }
@@ -1375,9 +1383,10 @@ const Metronome: FC<LoaderProps> = ({
 
             debugLog(`Tap tempo: ${clampedBpm} BPM (from ${currentTaps.length} taps)`);
 
-            // Update local BPM only — do NOT sync back to Generator
+            // Update local BPM and sync back to Generator
             ignoreExternalUpdatesRef.current = true;
             setBpm(clampedBpm);
+            onBpmChange?.(clampedBpm);
 
             // Auto-start playback once a tempo is established (2+ taps)
             if (tapAutoPlay && !metronomePlaying) {
@@ -1510,9 +1519,14 @@ const Metronome: FC<LoaderProps> = ({
                                                 title="Pendulum view"
                                             >
                                                 <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
-                                                    <line x1="9" y1="2" x2="5" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                    <circle cx="9" cy="2" r="2" fill="currentColor"/>
-                                                    <rect x="2" y="13" width="14" height="3" rx="1.5" fill="currentColor"/>
+                                                    {/* Metronome triangular body */}
+                                                    <path d="M5 16 L9 2 L13 16 Z" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+                                                    {/* Pendulum arm swinging left */}
+                                                    <line x1="9" y1="14" x2="5.5" y2="3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                                                    {/* Pendulum weight */}
+                                                    <circle cx="5.5" cy="3" r="1.8" fill="currentColor"/>
+                                                    {/* Pivot point at base */}
+                                                    <circle cx="9" cy="14" r="1" fill="currentColor"/>
                                                 </svg>
                                             </MetronomeToggleBtn>
                                         </MetronomeToggleContainer>
@@ -1651,20 +1665,6 @@ const Metronome: FC<LoaderProps> = ({
                 {/* Pendulum mode */}
                 {!blocksMode && (
                     <PendulumArea>
-                        {/* Beat dots — above the pendulum */}
-                        <BeatsRow>
-                            {beats.map((beat) => (
-                                <BeatIndicator
-                                    key={beat}
-                                    animate={{
-                                        scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
-                                        backgroundColor: currentBeat === beat && metronomePlaying ?
-                                            [theme.colors.primary, theme.colors.accent, theme.colors.primary] : theme.colors.primary
-                                    }}
-                                    transition={{ duration: 0.2 }}
-                                />
-                            ))}
-                        </BeatsRow>
                         <MetronomePendulum
                             key={`pendulum-${bpm}-${metronomePlaying}`}
                             animate={{
@@ -1683,6 +1683,20 @@ const Metronome: FC<LoaderProps> = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         />
+                        {/* Beat dots — under the metronome base */}
+                        <BeatsRow>
+                            {beats.map((beat) => (
+                                <BeatIndicator
+                                    key={beat}
+                                    animate={{
+                                        scale: currentBeat === beat && metronomePlaying ? [1, 1.5, 1] : 1,
+                                        backgroundColor: currentBeat === beat && metronomePlaying ?
+                                            [theme.colors.primary, theme.colors.accent, theme.colors.primary] : theme.colors.primary
+                                    }}
+                                    transition={{ duration: 0.2 }}
+                                />
+                            ))}
+                        </BeatsRow>
                     </PendulumArea>
                 )}
 
