@@ -9,7 +9,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaDice, FaList, FaCog, FaCheck, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp } from 'react-icons/fa';
+import { FaDice, FaList, FaCog, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp, FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
 import { BlockInstance } from './types';
 import { getBlockComponent, getBlockType } from './blockRegistry';
 import ToolCardDnd from '../components/common/ToolCardDnd';
@@ -179,22 +179,24 @@ const VolumePercent = styled.span`
 `;
 
 const ByThemeButton = styled.button<{ $active: boolean }>`
-  width: 100%;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  padding: 4px ${({ theme }) => theme.spacing.sm};
-  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
+  padding: 6px ${({ theme }) => theme.spacing.sm};
+  margin: ${({ theme }) => `0 ${theme.spacing.sm}`};
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
-  border: none;
+  border: 1.5px solid ${({ $active, theme }) =>
+    $active ? theme.colors.primary : theme.colors.border + '80'};
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ $active }) => $active ? 700 : 500};
-  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
+  transition: all ${({ theme }) => theme.transitions.fast};
   text-align: left;
   border-radius: ${({ theme }) => theme.borderRadius.small};
 
   &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => `${theme.colors.primary}11`};
     color: ${({ theme }) => theme.colors.primary};
   }
@@ -205,7 +207,7 @@ const IconGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
-  margin-top: 2px;
+  margin-top: 6px;
 `;
 
 const IconButton = styled.button<{ $active: boolean; $isByThemeHint: boolean }>`
@@ -669,12 +671,10 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
                     $active={instrumentThemeOverride === 'byTheme'}
                     onClick={() => setInstrumentThemeOverride('byTheme')}
                   >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <Icon icon={instrumentThemeOverride === 'byTheme' ? FaRegCheckSquare : FaRegSquare} size={14} />
+                    </span>
                     <span style={{ flex: 1 }}>By Theme</span>
-                    {instrumentThemeOverride === 'byTheme' && (
-                      <span style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                        <Icon icon={FaCheck} size={10} />
-                      </span>
-                    )}
                   </ByThemeButton>
                   <IconGrid>
                     {THEME_ORDER.map((t) => {
