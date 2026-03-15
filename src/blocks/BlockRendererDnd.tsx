@@ -475,6 +475,11 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           canRemove={canRemove}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          onBpmChange={(newBpm: number) => {
+            if (onUpdateGeneratorState) {
+              onUpdateGeneratorState({ bpmEl: String(newBpm) });
+            }
+          }}
         />
       );
       break;
