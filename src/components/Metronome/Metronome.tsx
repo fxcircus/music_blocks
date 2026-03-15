@@ -505,6 +505,7 @@ const BeatsRow = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
+  margin-bottom: 16px;
 `;
 
 
