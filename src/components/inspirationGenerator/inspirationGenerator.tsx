@@ -901,9 +901,13 @@ interface DiceThemeStyle {
   strokeLinejoin: 'round' | 'miter' | 'bevel';
   strokeDasharray?: string;
   fillOpacity: number;
+  fillColor?: string;
+  fillGradientId?: string;
+  textOnFillColor?: string;
+  textGlow?: boolean;
   d6Rx: number;
   filters?: (id: string, color: string) => React.ReactNode;
-  decorations?: (color: string) => React.ReactNode;
+  decorations?: (color: string, id: string) => React.ReactNode;
   textExtra?: (value: string) => { prefix: string; suffix: string };
 }
 
@@ -911,62 +915,88 @@ const DICE_THEME_STYLES: Record<ThemeName, DiceThemeStyle> = {
   light: {
     strokeWidth: 2.5,
     strokeLinejoin: 'round',
-    fillOpacity: 0,
+    fillOpacity: 1,
+    fillColor: '#6c63ff',
+    textOnFillColor: '#ffffff',
+    textGlow: true,
     d6Rx: 8,
   },
   dark: {
     strokeWidth: 2,
     strokeLinejoin: 'round',
-    fillOpacity: 0,
+    fillOpacity: 1,
+    fillColor: '#6c63ff',
+    fillGradientId: 'dice-fill',
+    textOnFillColor: '#ffffff',
+    textGlow: true,
     d6Rx: 8,
     filters: (id, color) => (
-      <filter id={`neon-glow-${id}`} x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
+      <>
+        <radialGradient id={`dice-fill-${id}`} cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="#7c73ff" />
+          <stop offset="100%" stopColor="#6c63ff" stopOpacity="0.8" />
+        </radialGradient>
+        <filter id={`neon-glow-${id}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </>
     ),
   },
   vintage: {
     strokeWidth: 3,
     strokeLinejoin: 'round',
-    fillOpacity: 0.06,
+    fillOpacity: 1,
+    fillColor: '#c47840',
+    fillGradientId: 'dice-fill',
+    textOnFillColor: '#1e1008',
     d6Rx: 8,
     filters: (id, color) => (
       <>
-        <radialGradient id={`vintage-fill-${id}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={color} stopOpacity="0.08" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        <radialGradient id={`dice-fill-${id}`} cx="50%" cy="40%" r="65%">
+          <stop offset="0%" stopColor="#e8a040" />
+          <stop offset="100%" stopColor="#c47840" stopOpacity="0.85" />
         </radialGradient>
-        <filter id={`vintage-grain-${id}`} x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise" />
-          <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
-          <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" />
-        </filter>
+        <linearGradient id={`dice-inset-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="black" stopOpacity="0.2" />
+          <stop offset="50%" stopColor="black" stopOpacity="0" />
+        </linearGradient>
+      </>
+    ),
+    decorations: (color, id) => (
+      <>
+        <rect x="14" y="14" width="72" height="72" rx={8}
+          fill={`url(#dice-inset-${id})`} />
+        <rect x="17" y="17" width="66" height="66" rx={6} fill="none"
+          stroke={color} strokeWidth="1" opacity="0.2" />
       </>
     ),
   },
   indie: {
     strokeWidth: 2,
     strokeLinejoin: 'round',
-    strokeDasharray: '4 3',
-    fillOpacity: 0,
+    fillOpacity: 1,
+    fillColor: '#4db8a0',
+    textOnFillColor: '#1a2830',
     d6Rx: 8,
-    decorations: (color) => (
-      <g opacity="0.05" stroke={color} strokeWidth="0.5">
-        {Array.from({ length: 5 }, (_, i) => (
-          <React.Fragment key={`grid-${i}`}>
-            <line x1={i * 20 + 10} y1="0" x2={i * 20 + 10} y2="100" />
-            <line x1="0" y1={i * 20 + 10} x2="100" y2={i * 20 + 10} />
-          </React.Fragment>
-        ))}
-      </g>
+    filters: (id, color) => (
+      <pattern id={`dice-scanlines-${id}`} width="100" height="3" patternUnits="userSpaceOnUse">
+        <rect width="100" height="2" fill="transparent" />
+        <rect y="2" width="100" height="1" fill="black" opacity="0.06" />
+      </pattern>
     ),
-    textExtra: (value) => ({ prefix: '[', suffix: ']' }),
+    decorations: (color, id) => (
+      <rect x="15" y="15" width="70" height="70" rx={7}
+        fill={`url(#dice-scanlines-${id})`} />
+    ),
   },
   disco: {
     strokeWidth: 2.5,
     strokeLinejoin: 'round',
-    fillOpacity: 0.12,
+    fillOpacity: 1,
+    fillColor: '#ff2d9b',
+    fillGradientId: 'dice-fill',
+    textOnFillColor: '#ffffff',
     d6Rx: 8,
     filters: (id, color) => (
       <>
@@ -975,14 +1005,14 @@ const DICE_THEME_STYLES: Record<ThemeName, DiceThemeStyle> = {
           <stop offset="50%" stopColor="#00e8c6" />
           <stop offset="100%" stopColor="#ff2d9b" />
         </linearGradient>
-        <linearGradient id={`disco-fill-${id}`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ff2d9b" stopOpacity="0.1" />
-          <stop offset="50%" stopColor="#00e8c6" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#ff2d9b" stopOpacity="0.1" />
+        <linearGradient id={`dice-fill-${id}`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ff2d9b" />
+          <stop offset="50%" stopColor="#9b2dff" />
+          <stop offset="100%" stopColor="#00e8c6" />
         </linearGradient>
       </>
     ),
-    decorations: (color) => (
+    decorations: (color, id) => (
       <g>
         <circle cx="30" cy="25" r="1.5" fill={color} opacity="0">
           <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite" begin="0s" />
@@ -999,15 +1029,23 @@ const DICE_THEME_STYLES: Record<ThemeName, DiceThemeStyle> = {
   hiphop: {
     strokeWidth: 2.5,
     strokeLinejoin: 'miter',
-    fillOpacity: 0.05,
+    fillOpacity: 1,
+    fillColor: '#e68a33',
+    textOnFillColor: '#1a1a1a',
     d6Rx: 0,
-    decorations: (color) => (
-      <g stroke={color} strokeWidth="1" opacity="0.15">
-        <line x1="50" y1="10" x2="50" y2="13" />
-        <line x1="50" y1="87" x2="50" y2="90" />
-        <line x1="10" y1="50" x2="13" y2="50" />
-        <line x1="87" y1="50" x2="90" y2="50" />
-      </g>
+    filters: (id, color) => (
+      <linearGradient id={`dice-inset-${id}`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="black" stopOpacity="0.12" />
+        <stop offset="30%" stopColor="black" stopOpacity="0" />
+      </linearGradient>
+    ),
+    decorations: (color, id) => (
+      <>
+        <rect x="14" y="14" width="72" height="72" rx={0}
+          fill={`url(#dice-inset-${id})`} />
+        <rect x="17" y="17" width="66" height="66" rx={0} fill="none"
+          stroke={color} strokeWidth="0.8" opacity="0.15" />
+      </>
     ),
   },
 };
@@ -1029,14 +1067,15 @@ function strokeProps(themeStyle: DiceThemeStyle) {
   };
 }
 function fillVal(themeStyle: DiceThemeStyle, color: string) {
-  return themeStyle.fillOpacity > 0 ? color : 'none';
+  return themeStyle.fillOpacity > 0 ? (themeStyle.fillColor || color) : 'none';
 }
 
 // ── Default Shapes (Light / Dark) ───────────────────────────────────
 
+// D4: Crystal/kite shape — elongated diamond with wider top half (crystal d4 style)
 function D4Shape({ color, themeStyle }: DieShapeProps) {
   return (
-    <polygon points="50,8 92,82 8,82" fill={fillVal(themeStyle, color)}
+    <polygon points="50,4 94,38 50,96 6,38" fill={fillVal(themeStyle, color)}
       fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
   );
 }
@@ -1086,6 +1125,18 @@ function D20Shape({ color, themeStyle }: DieShapeProps) {
         return <line key={i} x1={mx} y1={my} x2={cx} y2={cy} stroke={color} strokeWidth="1.2" opacity="0.35" />;
       })}
     </>
+  );
+}
+
+// D20 shape without inner lines (for filled themes)
+function D20ShapeClean({ color, themeStyle }: DieShapeProps) {
+  const cx = 50, cy = 50, r = 44;
+  return (
+    <polygon points={Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+      return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+    }).join(" ")} fill={fillVal(themeStyle, color)}
+      fillOpacity={themeStyle.fillOpacity} stroke={color} {...strokeProps(themeStyle)} />
   );
 }
 
@@ -1382,33 +1433,33 @@ const DEFAULT_SHAPES: DieShapeSet = {
   d4: D4Shape, d6: D6Shape, d8: D8Shape, d12: D12Shape, d20: D20Shape,
 };
 
+const DEFAULT_SHAPES_CLEAN: DieShapeSet = {
+  d4: D4Shape, d6: D6Shape, d8: D8Shape, d12: D12Shape, d20: D20ShapeClean,
+};
+
+const SQUARE_SHAPES: DieShapeSet = {
+  d4: D6Shape, d6: D6Shape, d8: D6Shape, d12: D6Shape, d20: D6Shape,
+};
+
+const STAR_SHAPES: DieShapeSet = {
+  d4: DiscoD8Shape, d6: DiscoD8Shape, d8: DiscoD8Shape, d12: DiscoD8Shape, d20: DiscoD8Shape,
+};
+
 const THEMED_DIE_SHAPES: Record<ThemeName, DieShapeSet> = {
-  light: DEFAULT_SHAPES,
-  dark: DEFAULT_SHAPES,
-  vintage: {
-    d4: VintageD4Shape, d6: VintageD6Shape, d8: VintageD8Shape,
-    d12: VintageD12Shape, d20: VintageD20Shape,
-  },
-  indie: {
-    d4: IndieD4Shape, d6: IndieD6Shape, d8: IndieD8Shape,
-    d12: IndieD12Shape, d20: IndieD20Shape,
-  },
-  disco: {
-    d4: DiscoD4Shape, d6: DiscoD6Shape, d8: DiscoD8Shape,
-    d12: DiscoD12Shape, d20: DiscoD20Shape,
-  },
-  hiphop: {
-    d4: HiphopD4Shape, d6: HiphopD6Shape, d8: HiphopD8Shape,
-    d12: HiphopD12Shape, d20: HiphopD20Shape,
-  },
+  light: DEFAULT_SHAPES_CLEAN,
+  dark: DEFAULT_SHAPES_CLEAN,
+  vintage: SQUARE_SHAPES,
+  indie: SQUARE_SHAPES,
+  disco: STAR_SHAPES,
+  hiphop: SQUARE_SHAPES,
 };
 
 // Per-theme text Y center overrides (default shapes use d4:62, others:53)
 const DIE_TEXT_Y: Record<ThemeName, Record<string, number>> = {
-  light:   { d4: 62, d6: 53, d8: 53, d12: 53, d20: 53 },
-  dark:    { d4: 62, d6: 53, d8: 53, d12: 53, d20: 53 },
-  vintage: { d4: 55, d6: 53, d8: 53, d12: 46, d20: 53 },
-  indie:   { d4: 53, d6: 53, d8: 53, d12: 48, d20: 53 },
+  light:   { d4: 46, d6: 53, d8: 53, d12: 53, d20: 53 },
+  dark:    { d4: 46, d6: 53, d8: 53, d12: 53, d20: 53 },
+  vintage: { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
+  indie:   { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
   disco:   { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
   hiphop:  { d4: 53, d6: 53, d8: 53, d12: 53, d20: 53 },
 };
@@ -1416,7 +1467,7 @@ const DIE_TEXT_Y: Record<ThemeName, Record<string, number>> = {
 function DieTextSvg({ value, die, fill, fontSize, textCenterY }: {
   value: string; die: string; fill: string; fontSize: string; textCenterY?: number;
 }) {
-  const cy = textCenterY ?? (die === "d4" ? 62 : 53);
+  const cy = textCenterY ?? (die === "d4" ? 46 : 53);
   const words = value.split(" ");
   if (words.length > 1) {
     const lh = Math.min(parseInt(fontSize) + 2, 14);
@@ -1504,10 +1555,22 @@ function DieComponent({
   const shapeSet = THEMED_DIE_SHAPES[themeName] || DEFAULT_SHAPES;
   const Shape = shapeSet[dieType];
   const textCenterY = DIE_TEXT_Y[themeName]?.[dieType];
-  const accent = locked ? theme.colors.border : theme.colors.primary;
-  const textColor = locked ? theme.colors.textSecondary : theme.colors.text;
+  const unlockColor = themeStyle.fillColor || theme.colors.primary;
+  const accent = locked ? theme.colors.border : unlockColor;
+  const textColor = locked
+    ? theme.colors.textSecondary
+    : (themeStyle.textOnFillColor || theme.colors.text);
   const hasMulti = displayValue.includes(" ");
   const fontSize = hasMulti ? "12" : "17";
+
+  // When locked, disable fill so dice appear as outlines
+  // When unlocked with gradient, override fillColor to reference the SVG gradient
+  const effectiveFillColor = !locked && themeStyle.fillGradientId
+    ? `url(#${themeStyle.fillGradientId}-${paramKey})`
+    : themeStyle.fillColor;
+  const effectiveThemeStyle = locked
+    ? { ...themeStyle, fillOpacity: 0 }
+    : { ...themeStyle, fillColor: effectiveFillColor };
 
   // Build display text with optional theme-specific prefix/suffix
   const textExtra = themeStyle.textExtra?.(displayValue);
@@ -1557,9 +1620,19 @@ function DieComponent({
               </rect>
             </mask>
             {themeStyle.filters?.(paramKey, accent)}
+            {themeStyle.textGlow && !locked && (
+              <filter id={`text-glow-${paramKey}`} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+              </filter>
+            )}
           </defs>
-          {themeStyle.decorations?.(accent)}
-          {Shape && <Shape color={strokeColor} themeStyle={themeStyle} paramKey={paramKey} />}
+          {Shape && <Shape color={strokeColor} themeStyle={effectiveThemeStyle} paramKey={paramKey} />}
+          {!locked && themeStyle.decorations?.(accent, paramKey)}
+          {themeStyle.textGlow && !locked && (
+            <g filter={`url(#text-glow-${paramKey})`} opacity="0.7">
+              <DieTextSvg value={displayText} die={dieType} fill={textColor} fontSize={fontSize} textCenterY={textCenterY} />
+            </g>
+          )}
           <DieTextSvg value={displayText} die={dieType} fill={textColor} fontSize={fontSize} textCenterY={textCenterY} />
           {!rolling && washKey > 0 && (
             <g key={`w-${washKey}`} mask={`url(#dwm-${paramKey}-${washKey})`}>
@@ -3066,9 +3139,9 @@ export default function InspirationGenerator({
                         )}
                       />
 
-                      {/* Scale - d8 (diamond) */}
+                      {/* Scale - d20 (hexagon) */}
                       <DieComponent
-                        dieType="d8" paramKey="scale" label="Scale" value={scaleEl}
+                        dieType="d20" paramKey="scale" label="Scale" value={scaleEl}
                         locked={locked.scale} onToggleLock={() => toggleLock('scale')}
                         externalRolling={allRolling && !locked.scale}
                         editable={true} options={scales as unknown as string[]}
@@ -3111,9 +3184,9 @@ export default function InspirationGenerator({
                         )}
                       />
 
-                      {/* BPM - d20 (hexagon) */}
+                      {/* BPM - d8 (diamond) */}
                       <DieComponent
-                        dieType="d20" paramKey="bpm" label="BPM" value={bpmEl}
+                        dieType="d8" paramKey="bpm" label="BPM" value={bpmEl}
                         locked={locked.bpm} onToggleLock={() => toggleLock('bpm')}
                         externalRolling={allRolling && !locked.bpm}
                         editable={true} options={bpmCycleOptions}
