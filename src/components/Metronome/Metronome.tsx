@@ -4,7 +4,7 @@ import { ThemeName, useTheme as useAppTheme, THEME_ORDER, THEME_LABELS, lightThe
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { keyframes } from 'styled-components';
-import { FaPlay, FaPause, FaPlus, FaMinus, FaBug, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp, FaCog, FaCheck } from 'react-icons/fa';
+import { FaPlay, FaPause, FaPlus, FaMinus, FaBug, FaVolumeMute, FaVolumeOff, FaVolumeDown, FaVolumeUp, FaCog, FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
 import { GiMetronome } from 'react-icons/gi';
 import { Icon } from '../../utils/IconHelper';
 import ThemeIcon from '../Nav/ThemeIcons';
@@ -217,22 +217,24 @@ const SVolPercent = styled.span`
 `;
 
 const ByThemeButton = styled.button<{ $active: boolean }>`
-  width: 100%;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  padding: 4px ${({ theme }) => theme.spacing.sm};
-  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}18` : 'transparent'};
+  padding: 6px ${({ theme }) => theme.spacing.sm};
+  margin: ${({ theme }) => `0 ${theme.spacing.sm}`};
+  background: ${({ $active, theme }) => $active ? `${theme.colors.primary}22` : 'transparent'};
   color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
-  border: none;
+  border: 1.5px solid ${({ $active, theme }) =>
+    $active ? theme.colors.primary : theme.colors.border + '80'};
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ $active }) => $active ? 700 : 500};
-  transition: background-color ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
+  transition: all ${({ theme }) => theme.transitions.fast};
   text-align: left;
   border-radius: ${({ theme }) => theme.borderRadius.small};
 
   &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => `${theme.colors.primary}11`};
     color: ${({ theme }) => theme.colors.primary};
   }
@@ -243,7 +245,7 @@ const SIconGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
-  margin-top: 2px;
+  margin-top: 6px;
 `;
 
 const SIconButton = styled.button<{ $active: boolean; $isByThemeHint: boolean }>`
@@ -1380,12 +1382,10 @@ const Metronome: FC<LoaderProps> = ({
                                         $active={metronomeThemeOverride === 'byTheme'}
                                         onClick={() => setMetronomeThemeOverride('byTheme')}
                                     >
+                                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Icon icon={metronomeThemeOverride === 'byTheme' ? FaRegCheckSquare : FaRegSquare} size={14} />
+                                        </span>
                                         <span style={{ flex: 1 }}>By Theme</span>
-                                        {metronomeThemeOverride === 'byTheme' && (
-                                            <span style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                                                <Icon icon={FaCheck} size={10} />
-                                            </span>
-                                        )}
                                     </ByThemeButton>
                                     <SIconGrid>
                                         {THEME_ORDER.map((t) => {
