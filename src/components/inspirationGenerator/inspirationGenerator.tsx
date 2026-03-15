@@ -872,6 +872,8 @@ const DiceRootPicker = styled(DicePickerDropdown)<{ $viewMode?: 'grid' | 'circle
     $viewMode === 'circle' ? '1fr' : 'repeat(3, 1fr)'};
   width: ${({ $viewMode }) =>
     $viewMode === 'circle' ? '300px' : '280px'};
+  left: 0;
+  transform: none;
 `;
 
 const DiceScalePicker = styled(DicePickerDropdown)`
