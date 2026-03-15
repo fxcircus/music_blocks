@@ -3,6 +3,7 @@ import styled, { keyframes, useTheme } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCog } from 'react-icons/fa';
 import ToolCardDnd from '../common/ToolCardDnd';
+import TipsModal from '../common/TipsModal';
 import { Icon } from '../../utils/IconHelper';
 import { GiGuitarHead } from 'react-icons/gi';
 
@@ -334,7 +335,8 @@ const Tuner: React.FC<TunerProps> = ({
   const [detectedCents, setDetectedCents] = useState(0);
   const [detectedFrequency, setDetectedFrequency] = useState<number | null>(null);
 
-  // Settings state
+  // Tips & settings state
+  const [showTips, setShowTips] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
@@ -623,6 +625,7 @@ const Tuner: React.FC<TunerProps> = ({
       canRemove={canRemove}
       dragHandleProps={dragHandleProps}
       isRecentlyDragged={isRecentlyDragged}
+      onShowHelp={() => setShowTips(true)}
       additionalControls={
         <SettingsWrapper ref={settingsRef}>
           <SettingsIconBtn
@@ -715,6 +718,28 @@ const Tuner: React.FC<TunerProps> = ({
             : '\u00A0'}
         </CentsDisplay>
       </TunerContainer>
+
+      <TipsModal
+        isOpen={showTips}
+        onClose={() => setShowTips(false)}
+        title="How to Use the Tuner"
+        content={
+          <>
+            <p>
+              Click the tuning fork button to start listening. The tuner will detect the pitch from your microphone and show how close you are to the nearest note.
+            </p>
+            <p>
+              You can select a specific audio input device from the settings menu (gear icon). The first time you use the tuner, your browser will prompt you to allow microphone access.
+            </p>
+            <p>
+              The meter shows how many cents sharp or flat you are. When the needle is centered and green, you're in tune. Orange means you're close, and red means you're further off.
+            </p>
+            <p>
+              The tuner uses a 440 Hz reference pitch (A4 = 440 Hz), which is the standard tuning reference used by most instruments and orchestras.
+            </p>
+          </>
+        }
+      />
     </ToolCardDnd>
   );
 };

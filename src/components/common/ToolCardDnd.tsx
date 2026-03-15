@@ -130,13 +130,13 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
       {/* Control buttons for help and remove */}
       {(onRemove || additionalControls || onShowHelp) && (
         <ControlButtons>
+          {additionalControls}
           {onShowHelp && (
             <HelpButton
               onClick={onShowHelp}
               className="tool-card-help"
             />
           )}
-          {additionalControls}
           {onRemove && (
             <ControlButton
               onClick={handleRemoveClick}
