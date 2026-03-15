@@ -178,7 +178,7 @@ const FlowToggleContainer = styled.div`
   align-items: center;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   padding: 2px;
 `;
 
@@ -188,7 +188,7 @@ const FlowToggleBtn = styled.button<{ $active: boolean }>`
   justify-content: center;
   padding: 4px 8px;
   border: none;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   transition: all 0.2s ease;
   background: ${({ $active, theme }) => $active ? theme.colors.primary + '22' : 'transparent'};
@@ -269,7 +269,7 @@ const VolumeSlider = styled.input`
   -webkit-appearance: none;
   appearance: none;
   background: ${({ theme }) => theme.colors.border};
-  border-radius: 2px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   outline: none;
   cursor: pointer;
 

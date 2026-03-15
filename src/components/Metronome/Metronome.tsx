@@ -59,11 +59,144 @@ function getRowCount(totalBeats: number): number {
   return getRows(totalBeats).length;
 }
 
-const blockPulse = keyframes`
+// ── Per-Theme Metronome Block Pulse Animations ──────────────────────
+
+const blockPulseDefault = keyframes`
   0% { transform: scale(1); }
   40% { transform: scale(1.12); }
   100% { transform: scale(1); }
 `;
+
+const blockPulseDark = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(108,99,255,0); }
+  40% { transform: scale(1.12); box-shadow: 0 0 12px rgba(108,99,255,0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(108,99,255,0); }
+`;
+
+const blockPulseVintage = keyframes`
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.3); }
+  100% { transform: scale(1); filter: brightness(1); }
+`;
+
+const blockPulseIndie = keyframes`
+  0% { filter: brightness(1); }
+  30% { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+`;
+
+const blockPulseDisco = keyframes`
+  0% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+`;
+
+const blockPulseHiphop = keyframes`
+  0% { transform: scale(1); }
+  40% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+`;
+
+const BLOCK_PULSE_MAP: Record<ThemeName, ReturnType<typeof keyframes>> = {
+  light: blockPulseDefault,
+  dark: blockPulseDark,
+  vintage: blockPulseVintage,
+  indie: blockPulseIndie,
+  disco: blockPulseDisco,
+  hiphop: blockPulseHiphop,
+};
+
+const BLOCK_PULSE_DURATION: Record<ThemeName, string> = {
+  light: '0.15s',
+  dark: '0.15s',
+  vintage: '0.25s',
+  indie: '0.1s',
+  disco: '0.2s',
+  hiphop: '0.1s',
+};
+
+// ── Per-Theme Metronome Block Visual Config ─────────────────────────
+
+interface MetronomeBlockTheme {
+  borderWidth: string;
+  inactiveBackground: (colors: any) => string;
+  activeBackground: (colors: any) => string;
+  inactiveBorderColor: (colors: any) => string;
+  activeBorderColor: (colors: any) => string;
+  boxShadowActive?: (colors: any) => string;
+  boxShadowInactive?: string;
+  extraCss?: (colors: any) => string;
+  numberColor?: (colors: any) => string;
+  numberActiveColor?: string;
+  numberExtraCss?: string;
+}
+
+const METRONOME_BLOCK_THEMES: Record<ThemeName, MetronomeBlockTheme> = {
+  light: {
+    borderWidth: '2px',
+    inactiveBackground: (c) => c.background,
+    activeBackground: (c) => c.primary,
+    inactiveBorderColor: (c) => c.border,
+    activeBorderColor: (c) => c.primary,
+  },
+  dark: {
+    borderWidth: '1px',
+    inactiveBackground: (c) => `${c.background}08`,
+    activeBackground: (c) => `radial-gradient(circle at center, ${c.primary}, ${c.primary}cc)`,
+    inactiveBorderColor: (c) => c.border,
+    activeBorderColor: (c) => c.primary,
+    boxShadowActive: (c) => `0 0 12px ${c.primary}66`,
+    numberExtraCss: 'text-shadow: 0 0 6px currentColor;',
+  },
+  vintage: {
+    borderWidth: '3px',
+    inactiveBackground: () => '#2a2014',
+    activeBackground: () => 'radial-gradient(circle at center, #e8a040, #c47840cc)',
+    inactiveBorderColor: (c) => c.border,
+    activeBorderColor: (c) => c.primary,
+    boxShadowInactive: 'inset 0 1px 3px rgba(0,0,0,0.3)',
+    boxShadowActive: () => 'inset 0 1px 3px rgba(0,0,0,0.2), 0 0 8px rgba(196,120,64,0.3)',
+    numberActiveColor: '#1e1008',
+  },
+  indie: {
+    borderWidth: '1px',
+    inactiveBackground: () => '#2a3d50',
+    activeBackground: (c) => c.accent,
+    inactiveBorderColor: (c) => c.border,
+    activeBorderColor: (c) => c.accent,
+    numberColor: (c) => c.textSecondary,
+    numberActiveColor: '#1a2830',
+    numberExtraCss: 'font-family: "VT323", monospace;',
+    extraCss: () => `
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 3px
+      );
+    `,
+  },
+  disco: {
+    borderWidth: '1px',
+    inactiveBackground: () => 'linear-gradient(135deg, #1e0c2a, #2a1238)',
+    activeBackground: () => 'linear-gradient(135deg, #ff2d9b, #9b2dff, #00e8c6)',
+    inactiveBorderColor: () => '#4a2060',
+    activeBorderColor: (c) => c.primary,
+    boxShadowActive: (c) => `0 0 16px ${c.primary}55`,
+    numberActiveColor: '#ffffff',
+  },
+  hiphop: {
+    borderWidth: '2px',
+    inactiveBackground: () => '#1a1a1a',
+    activeBackground: (c) => c.primary,
+    inactiveBorderColor: (c) => c.border,
+    activeBorderColor: (c) => c.primary,
+    boxShadowInactive: 'inset 0 1px 2px rgba(0,0,0,0.4)',
+    boxShadowActive: () => 'inset 0 2px 4px rgba(0,0,0,0.4)',
+    numberActiveColor: '#1a1a1a',
+  },
+};
 
 const modeFade = keyframes`
   0% { opacity: 0; transform: translateY(4px); }
@@ -76,7 +209,7 @@ const MetronomeToggleContainer = styled.div`
   align-items: center;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   padding: 2px;
 `;
 
@@ -86,7 +219,7 @@ const MetronomeToggleBtn = styled.button<{ $active: boolean }>`
   justify-content: center;
   padding: 4px 8px;
   border: none;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   transition: all 0.2s ease;
   background: ${({ $active, theme }) => $active ? theme.colors.primary + '22' : 'transparent'};
@@ -171,7 +304,7 @@ const SVolIcon = styled.button`
   cursor: pointer;
   color: ${({ theme }) => theme.colors.textSecondary};
   padding: 2px;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   transition: color 0.15s;
   flex-shrink: 0;
 
@@ -186,7 +319,7 @@ const SVolSlider = styled.input`
   -webkit-appearance: none;
   appearance: none;
   background: ${({ theme }) => theme.colors.border};
-  border-radius: 2px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   outline: none;
   cursor: pointer;
 
@@ -339,34 +472,62 @@ const BlockRow = styled.div`
   max-height: 120px;
 `;
 
-const StyledBeatBlock = styled.div<{ $isActive: boolean; $isPlaying: boolean }>`
+const StyledBeatBlock = styled.div<{ $isActive: boolean; $isPlaying: boolean; $themeName: ThemeName }>`
   aspect-ratio: 1;
   height: 100%;
   max-height: 100%;
-  border-radius: 8px;
-  border: 2px solid ${({ $isActive, $isPlaying, theme }) =>
-    $isActive && $isPlaying ? theme.colors.primary : theme.colors.border};
-  background: ${({ $isActive, $isPlaying, theme }) =>
-    $isActive && $isPlaying ? theme.colors.primary : theme.colors.background};
+  position: relative;
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  border: ${({ $themeName }) => METRONOME_BLOCK_THEMES[$themeName].borderWidth} solid
+    ${({ $isActive, $isPlaying, $themeName, theme }) => {
+      const bt = METRONOME_BLOCK_THEMES[$themeName];
+      return $isActive && $isPlaying
+        ? bt.activeBorderColor(theme.colors)
+        : bt.inactiveBorderColor(theme.colors);
+    }};
+  background: ${({ $isActive, $isPlaying, $themeName, theme }) => {
+    const bt = METRONOME_BLOCK_THEMES[$themeName];
+    return $isActive && $isPlaying
+      ? bt.activeBackground(theme.colors)
+      : bt.inactiveBackground(theme.colors);
+  }};
   transition: ${({ $isActive, $isPlaying }) =>
     $isActive && $isPlaying ? 'none' : 'all 0.15s ease'};
-  animation: ${({ $isActive, $isPlaying }) =>
-    $isActive && $isPlaying ? blockPulse : 'none'} 0.15s ease-out;
-  box-shadow: ${({ $isActive, $isPlaying, theme }) =>
-    $isActive && $isPlaying
-      ? theme.shadows.medium
-      : 'none'};
+  animation: ${({ $isActive, $isPlaying, $themeName }) =>
+    $isActive && $isPlaying ? BLOCK_PULSE_MAP[$themeName] : 'none'}
+    ${({ $themeName }) => BLOCK_PULSE_DURATION[$themeName]} ease-out;
+  box-shadow: ${({ $isActive, $isPlaying, $themeName, theme }) => {
+    const bt = METRONOME_BLOCK_THEMES[$themeName];
+    if ($isActive && $isPlaying) {
+      return bt.boxShadowActive?.(theme.colors) ?? theme.shadows.medium;
+    }
+    return bt.boxShadowInactive ?? 'none';
+  }};
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  ${({ $themeName, theme }) => {
+    const bt = METRONOME_BLOCK_THEMES[$themeName];
+    return bt.extraCss?.(theme.colors) ?? '';
+  }}
 `;
 
-const BeatNumber = styled.span<{ $isActive: boolean; $isPlaying: boolean; $isLarge: boolean }>`
+const BeatNumber = styled.span<{ $isActive: boolean; $isPlaying: boolean; $isLarge: boolean; $themeName: ThemeName }>`
   font-size: ${({ $isLarge }) => $isLarge ? '24px' : '16px'};
   font-weight: 700;
-  color: ${({ $isActive, $isPlaying, theme }) =>
-    $isActive && $isPlaying ? '#fff' : theme.colors.border};
+  color: ${({ $isActive, $isPlaying, $themeName, theme }) => {
+    const bt = METRONOME_BLOCK_THEMES[$themeName];
+    if ($isActive && $isPlaying) {
+      return bt.numberActiveColor ?? '#fff';
+    }
+    return bt.numberColor?.(theme.colors) ?? theme.colors.border;
+  }};
   transition: color 0.15s;
+  ${({ $themeName }) => {
+    const bt = METRONOME_BLOCK_THEMES[$themeName];
+    return bt.numberExtraCss ?? '';
+  }}
 `;
 
 // Unified control pill
@@ -522,7 +683,7 @@ const DebugOverlay = styled.div`
   color: lime;
   font-family: monospace;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
   z-index: 9999;
   max-width: 300px;
   max-height: 300px;
@@ -1473,8 +1634,9 @@ const Metronome: FC<LoaderProps> = ({
                                                 key={beat}
                                                 $isActive={currentBeat === beat}
                                                 $isPlaying={metronomePlaying}
+                                                $themeName={themeName}
                                             >
-                                                <BeatNumber $isActive={currentBeat === beat} $isPlaying={metronomePlaying} $isLarge={isLargeBlock}>
+                                                <BeatNumber $isActive={currentBeat === beat} $isPlaying={metronomePlaying} $isLarge={isLargeBlock} $themeName={themeName}>
                                                     {beat + 1}
                                                 </BeatNumber>
                                             </StyledBeatBlock>
