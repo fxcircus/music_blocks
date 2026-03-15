@@ -265,6 +265,11 @@ interface BlockRendererDndProps {
   globalBpm?: string; // For BPM synchronization
   globalTimeSignature?: string; // For time signature synchronization
   generatorRoot?: string; // For Varispeed linking
+  generatorNotes?: string[]; // For Visualize block
+  generatorScale?: string; // For Visualize block
+  generatorSelectedChord?: number | null; // For Visualize block
+  generatorIsSeventhMode?: boolean; // For Visualize block
+  onUpdateGeneratorState?: (updates: Record<string, any>) => void; // For Visualize block -> Generator
   dragHandleProps?: any; // Props for the drag handle
   isRecentlyDragged?: boolean; // Show controls after drag
 }
@@ -280,6 +285,11 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   globalBpm,
   globalTimeSignature,
   generatorRoot,
+  generatorNotes,
+  generatorScale,
+  generatorSelectedChord,
+  generatorIsSeventhMode,
+  onUpdateGeneratorState,
   dragHandleProps,
   isRecentlyDragged = false,
 }) => {
@@ -405,6 +415,34 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           setShowTips={setShowTips}
           diceMode={diceMode}
           setDiceMode={handleSetDiceMode}
+          selectedChord={block.state.selectedChord ?? null}
+          setSelectedChord={(chord: number | null) => updateBlockState({ selectedChord: chord })}
+          isSeventhMode={block.state.isSeventhMode ?? false}
+          setIsSeventhMode={(mode: boolean) => updateBlockState({ isSeventhMode: mode })}
+        />
+      );
+      break;
+
+    case 'visualize':
+      blockContent = (
+        <BlockComponent
+          generatorNotes={generatorNotes || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']}
+          generatorRoot={generatorRoot || 'C'}
+          generatorScale={generatorScale || 'Major'}
+          generatorBpm={globalBpm || '100'}
+          generatorSelectedChord={generatorSelectedChord ?? null}
+          generatorIsSeventhMode={generatorIsSeventhMode ?? false}
+          showPiano={block.state.showPiano ?? true}
+          showGuitar={block.state.showGuitar ?? false}
+          showProgressions={block.state.showProgressions ?? false}
+          onStateChange={(updates: Record<string, any>) => updateBlockState(updates)}
+          onSelectChord={(chord: number | null) => {
+            if (onUpdateGeneratorState) {
+              onUpdateGeneratorState({ selectedChord: chord });
+            }
+          }}
+          showTips={showTips}
+          setShowTips={setShowTips}
         />
       );
       break;
@@ -607,8 +645,8 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         canRemove={canRemove}
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
-        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
-        alignTop={block.type === 'inspirationGenerator'}
+        onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed' || block.type === 'visualize') ? () => setShowTips(true) : undefined}
+        alignTop={block.type === 'inspirationGenerator' || block.type === 'visualize'}
         additionalControls={block.type === 'inspirationGenerator' ? (
           <div ref={settingsRef} style={{ position: 'relative' }}>
             <SettingsIconBtn

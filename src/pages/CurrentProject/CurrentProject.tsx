@@ -141,6 +141,11 @@ interface SortableBlockItemProps {
   globalBpm: string;
   globalTimeSignature: string;
   generatorRoot: string;
+  generatorNotes: string[];
+  generatorScale: string;
+  generatorSelectedChord: number | null;
+  generatorIsSeventhMode: boolean;
+  onUpdateGeneratorState: (updates: Record<string, any>) => void;
   activeId: string | null;
   isRecentlyDragged: boolean;
 }
@@ -153,6 +158,11 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
   globalBpm,
   globalTimeSignature,
   generatorRoot,
+  generatorNotes,
+  generatorScale,
+  generatorSelectedChord,
+  generatorIsSeventhMode,
+  onUpdateGeneratorState,
   activeId,
   isRecentlyDragged,
 }) => {
@@ -194,6 +204,11 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
         globalBpm={globalBpm}
         globalTimeSignature={globalTimeSignature}
         generatorRoot={generatorRoot}
+        generatorNotes={generatorNotes}
+        generatorScale={generatorScale}
+        generatorSelectedChord={generatorSelectedChord}
+        generatorIsSeventhMode={generatorIsSeventhMode}
+        onUpdateGeneratorState={onUpdateGeneratorState}
         dragHandleProps={{
           ref: setActivatorNodeRef,
           ...attributes,
@@ -374,6 +389,15 @@ const CurrentProject: FC<LoaderProps> = () => {
     const globalBpm = inspirationState.bpmEl;
     const globalTimeSignature = inspirationState.timeSignatureEl || '4/4';
     const generatorRoot = inspirationState.rootEl;
+    const generatorNotes = inspirationState.tonesArrEl || ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+    const generatorScale = inspirationState.scaleEl || 'Major';
+    const generatorSelectedChord = inspirationState.selectedChord ?? null;
+    const generatorIsSeventhMode = inspirationState.isSeventhMode ?? false;
+
+    // Handler for updating generator state from other blocks (e.g., Visualize -> Generator)
+    const handleUpdateGeneratorState = (updates: Record<string, any>) => {
+        handleBlockStateUpdate('inspirationGenerator', updates);
+    };
 
     // Drag and drop handlers
     const handleDragStart = (event: DragStartEvent) => {
@@ -452,6 +476,11 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     globalBpm={globalBpm}
                                     globalTimeSignature={globalTimeSignature}
                                     generatorRoot={generatorRoot}
+                                    generatorNotes={generatorNotes}
+                                    generatorScale={generatorScale}
+                                    generatorSelectedChord={generatorSelectedChord}
+                                    generatorIsSeventhMode={generatorIsSeventhMode}
+                                    onUpdateGeneratorState={handleUpdateGeneratorState}
                                     activeId={activeId}
                                     isRecentlyDragged={recentlyDraggedIds.has(block.instanceId)}
                                 />
@@ -469,6 +498,11 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     globalBpm={globalBpm}
                                     globalTimeSignature={globalTimeSignature}
                                     generatorRoot={generatorRoot}
+                                    generatorNotes={generatorNotes}
+                                    generatorScale={generatorScale}
+                                    generatorSelectedChord={generatorSelectedChord}
+                                    generatorIsSeventhMode={generatorIsSeventhMode}
+                                    onUpdateGeneratorState={() => {}}
                                 />
                             </SortableItemWrapper>
                         )}

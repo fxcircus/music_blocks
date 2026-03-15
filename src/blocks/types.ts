@@ -121,6 +121,14 @@ export interface InspirationGeneratorState {
   tonesArrEl: string[];
   bpmEl: string;
   soundEl: string;
+  selectedChord: number | null;
+  isSeventhMode: boolean;
+}
+
+export interface VisualizeState {
+  showPiano: boolean;
+  showGuitar: boolean;
+  showProgressions: boolean;
 }
 
 export interface MetronomeState {

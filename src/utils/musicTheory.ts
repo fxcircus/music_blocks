@@ -414,6 +414,27 @@ export function isCorrectlySpelledScale(scale: string[]): boolean {
 // EXPORTS FOR TESTING
 // ============================================================================
 
+/**
+ * Number of notes per scale type (used by Generator and Visualize blocks)
+ */
+export const scaleNoteCounts: Record<string, number> = {
+  "Pentatonic Major": 5,
+  "Pentatonic Minor": 5,
+  "Blues": 6,
+  "Major": 7,
+  "Minor": 7,
+  "Dorian": 7,
+  "Phrygian": 7,
+  "Lydian": 7,
+  "Mixolydian": 7,
+  "Locrian": 7,
+  "Harmonic Minor": 7,
+  "Melodic Minor": 7,
+  "Hungarian Minor": 7,
+  "Double Harmonic": 7,
+  "Phrygian Dominant": 7,
+};
+
 export const MusicTheory = {
   getChromaticIndex,
   normalizeNote,

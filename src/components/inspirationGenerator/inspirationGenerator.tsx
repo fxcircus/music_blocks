@@ -4,17 +4,16 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import styled, { useTheme, keyframes, css } from 'styled-components';
 import { ThemeName, useTheme as useAppTheme } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
-import { FaDice, FaLock, FaUnlock, FaPlay, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
-import { GiPianoKeys } from 'react-icons/gi';
-import { MdQueueMusic, MdAutoAwesome } from 'react-icons/md';
+import { FaDice, FaLock, FaUnlock, FaPlay, FaVolumeUp, FaStop, FaMinus, FaPlus } from 'react-icons/fa';
+import { MdAutoAwesome } from 'react-icons/md';
 import { Card } from '../common/StyledComponents';
 import { Icon } from '../../utils/IconHelper';
 import {
   generateDiatonicScale,
   getChromaticIndex,
-  getCorrectNoteSpelling
+  getCorrectNoteSpelling,
+  scaleNoteCounts,
 } from '../../utils/musicTheory';
-import NotesVisualizer from '../NotesVisualizer';
 import TipsModal from '../common/TipsModal';
 import { useSoundSettings } from '../../context/SoundSettingsContext';
 import { getSequenceProfile } from '../../utils/audioProfiles';
@@ -41,25 +40,6 @@ const chordQualities: Record<string, (string | null)[]> = {
 
 // Roman numeral for chord degrees
 const romanNumerals = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
-
-// Scale note count mapping
-const scaleNoteCounts: Record<string, number> = {
-  "Pentatonic Major": 5,
-  "Pentatonic Minor": 5,
-  "Blues": 6,
-  "Major": 7,
-  "Minor": 7,
-  "Dorian": 7,
-  "Phrygian": 7,
-  "Lydian": 7,
-  "Mixolydian": 7,
-  "Locrian": 7,
-  "Harmonic Minor": 7,
-  "Melodic Minor": 7,
-  "Hungarian Minor": 7,
-  "Double Harmonic": 7,
-  "Phrygian Dominant": 7,
-};
 
 const TIME_SIGNATURE_OPTIONS = ['2/4', '3/4', '4/4', '5/4', '6/8', '7/4'];
 
@@ -94,6 +74,10 @@ interface componentProps {
   setShowTips?: (show: boolean) => void;
   diceMode?: boolean;
   setDiceMode?: (diceMode: boolean) => void;
+  selectedChord?: number | null;
+  setSelectedChord?: (chord: number | null) => void;
+  isSeventhMode?: boolean;
+  setIsSeventhMode?: (mode: boolean) => void;
 }
 
 // Styled components
@@ -641,44 +625,6 @@ const PlayButton = styled.button<{ $isPlaying: boolean }>`
   }
 `;
 
-const VisualizerSegmentedRow = styled.div`
-  display: flex;
-  justify-content: center;
-  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
-`;
-
-const SegmentedGroup = styled.div`
-  display: inline-flex;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const VisualizerSegment = styled.button<{ $isActive: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  border: none;
-  border-right: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary : 'transparent'};
-  color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.buttonText : theme.colors.textSecondary};
-  cursor: pointer;
-  transition: background ${({ theme }) => theme.transitions.fast}, color ${({ theme }) => theme.transitions.fast};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: 500;
-
-  &:last-child {
-    border-right: none;
-  }
-
-  &:hover {
-    background: ${({ $isActive, theme }) =>
-      $isActive ? theme.colors.primary : `${theme.colors.primary}22`};
-  }
-`;
 
 // Update ScaleToneNote to support seventh highlighting and playback
 const ScaleToneNoteUpdated = styled.div<{
@@ -1487,6 +1433,10 @@ export default function InspirationGenerator({
   setShowTips: setShowTipsExternal,
   diceMode: diceModeExternal,
   setDiceMode: setDiceModeExternal,
+  selectedChord: selectedChordExternal,
+  setSelectedChord: setSelectedChordExternal,
+  isSeventhMode: isSeventhModeExternal,
+  setIsSeventhMode: setIsSeventhModeExternal,
 }: componentProps & { onBatchUpdate?: (updates: Record<string, any>) => void }) {
   const { effectiveInstrumentTheme, instrumentVolume } = useSoundSettings();
 
@@ -1505,15 +1455,27 @@ export default function InspirationGenerator({
   const setDiceMode = setDiceModeExternal || setDiceModeInternal;
   const [allRolling, setAllRolling] = useState(false);
 
-  // Add state for selected chord
-  const [selectedChord, setSelectedChord] = useState<number | null>(null);
+  // Selected chord state (prefer external props, fallback to internal)
+  const [selectedChordInternal, setSelectedChordInternal] = useState<number | null>(null);
+  const selectedChord = selectedChordExternal !== undefined ? selectedChordExternal : selectedChordInternal;
+  const setSelectedChord = setSelectedChordExternal || setSelectedChordInternal;
 
-  // Add state for seventh chord mode
-  const [isSeventhMode, setIsSeventhMode] = useState<boolean>(() => localStorage.getItem('tilesIsSeventhMode') === 'true');
+  // Seventh chord mode state (prefer external props, fallback to internal)
+  const [isSeventhModeInternal, setIsSeventhModeInternal] = useState<boolean>(() => localStorage.getItem('tilesIsSeventhMode') === 'true');
+  const isSeventhMode = isSeventhModeExternal !== undefined ? isSeventhModeExternal : isSeventhModeInternal;
+  const setIsSeventhMode = setIsSeventhModeExternal || setIsSeventhModeInternal;
 
   // Add state for audio playback
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [playingNoteIndex, setPlayingNoteIndex] = useState<number>(-1);
+  const [playingNoteIndex, setPlayingNoteIndexRaw] = useState<number>(-1);
+  // Dispatch CustomEvent so the Visualize block can sync
+  const setPlayingNoteIndex = useCallback((indexOrUpdater: number | ((prev: number) => number)) => {
+    setPlayingNoteIndexRaw((prev) => {
+      const next = typeof indexOrUpdater === 'function' ? indexOrUpdater(prev) : indexOrUpdater;
+      window.dispatchEvent(new CustomEvent('generatorPlayingNote', { detail: { index: next } }));
+      return next;
+    });
+  }, []);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef<boolean>(false);
   const activeNotesRef = useRef<{ oscillator: OscillatorNode; masterGain: GainNode }[]>([]);
@@ -1531,17 +1493,6 @@ export default function InspirationGenerator({
   const [showTipsInternal, setShowTipsInternal] = useState(false);
   const showTips = showTipsExternal !== undefined ? showTipsExternal : showTipsInternal;
   const setShowTips = setShowTipsExternal || setShowTipsInternal;
-
-  // Visualizer toggle state
-  const [showPiano, setShowPiano] = useState(() => localStorage.getItem('tilesShowPiano') === 'true');
-  const [showGuitar, setShowGuitar] = useState(() => localStorage.getItem('tilesShowGuitar') === 'true');
-  const [showProgressions, setShowProgressions] = useState(() => localStorage.getItem('tilesShowProgressions') === 'true');
-
-  // Chord progression persistence
-  const savedProgressionIndex = parseInt(localStorage.getItem('tilesProgression') || '0', 10);
-  const handleProgressionChange = useCallback((index: number) => {
-    localStorage.setItem('tilesProgression', String(index));
-  }, []);
 
   // BPM manual input
   const [bpmInput, setBpmInput] = useState(bpmEl);
@@ -1624,18 +1575,6 @@ export default function InspirationGenerator({
   useEffect(() => {
     localStorage.setItem('tilesTimeSignatureEl', timeSignatureEl);
   }, [timeSignatureEl]);
-
-  useEffect(() => {
-    localStorage.setItem('tilesShowPiano', String(showPiano));
-  }, [showPiano]);
-
-  useEffect(() => {
-    localStorage.setItem('tilesShowGuitar', String(showGuitar));
-  }, [showGuitar]);
-
-  useEffect(() => {
-    localStorage.setItem('tilesShowProgressions', String(showProgressions));
-  }, [showProgressions]);
 
   useEffect(() => {
     localStorage.setItem('tilesIsSeventhMode', String(isSeventhMode));
@@ -2531,7 +2470,7 @@ export default function InspirationGenerator({
     isPlayingRef.current = false;
     setIsPlaying(false);
     setPlayingNoteIndex(-1);
-  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, bpmEl]);
+  }, [selectedChord, scaleEl, isSeventhMode, tonesArrEl, playNote, getNoteChromatic, bpmEl, setPlayingNoteIndex]);
 
   // Play a single scale tone when its pill is clicked
   const handlePillClick = useCallback((index: number) => {
@@ -2552,7 +2491,7 @@ export default function InspirationGenerator({
     playNote(frequency, beatDuration).then(() => {
       setPlayingNoteIndex(prev => prev === index ? -1 : prev);
     });
-  }, [tonesArrEl, getNoteChromatic, playNote, bpmEl]);
+  }, [tonesArrEl, getNoteChromatic, playNote, bpmEl, setPlayingNoteIndex]);
 
   return (
     <div style={{ overflow: 'visible' }}>
@@ -3078,61 +3017,8 @@ export default function InspirationGenerator({
               </ExtendedInfoCell>
             </TableRow>
 
-            {/* Visualizer toggle buttons row */}
-            <tr>
-              <td colSpan={4} style={{ padding: 0 }}>
-                <VisualizerSegmentedRow>
-                  <SegmentedGroup>
-                    <VisualizerSegment
-                      $isActive={showProgressions}
-                      onClick={() => setShowProgressions(!showProgressions)}
-                      title="Toggle chord progressions panel"
-                    >
-                      <Icon icon={MdQueueMusic} size={16} />
-                      Chord Progressions
-                    </VisualizerSegment>
-                    <VisualizerSegment
-                      $isActive={showPiano}
-                      onClick={() => setShowPiano(!showPiano)}
-                      title="Toggle piano visualization"
-                    >
-                      <Icon icon={GiPianoKeys} size={16} />
-                      Piano
-                    </VisualizerSegment>
-                    <VisualizerSegment
-                      $isActive={showGuitar}
-                      onClick={() => setShowGuitar(!showGuitar)}
-                      title="Toggle guitar fretboard visualization"
-                    >
-                      <Icon icon={FaGuitar} size={14} />
-                      Fretboard
-                    </VisualizerSegment>
-                  </SegmentedGroup>
-                </VisualizerSegmentedRow>
-              </td>
-            </tr>
           </tbody>
         </StyledTable>
-
-        {/* Notes Visualizer - Piano, Guitar, and Chord Progressions */}
-        <NotesVisualizer
-          activeNotes={tonesArrEl}
-          scaleNotes={tonesArrEl}
-          selectedChord={selectedChord}
-          root={rootEl}
-          scale={scaleEl}
-          isSeventhMode={isSeventhMode}
-          visualizerType="both"
-          playingNoteIndex={playingNoteIndex}
-          showPiano={showPiano}
-          showGuitar={showGuitar}
-          showProgressions={showProgressions}
-          bpm={parseInt(bpmEl) || 120}
-          scaleNoteCount={scaleNoteCounts[scaleEl] || 7}
-          initialProgressionIndex={savedProgressionIndex}
-          onSelectChord={setSelectedChord}
-          onProgressionChange={handleProgressionChange}
-        />
         <TipsModal
           isOpen={showTips}
           onClose={() => setShowTips(false)}
@@ -3157,39 +3043,8 @@ export default function InspirationGenerator({
               </p>
               <p>
                 <Icon icon={FaVolumeUp} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                Press the play button next to "Scale Tones" to hear the scale or selected chord played back.
+                Press the play button next to "Scale Tones" to hear the scale or selected chord played back. Use the cogwheel icon to adjust volume and instrument sound.
               </p>
-              <p>
-                <Icon icon={GiPianoKeys} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                Use the piano and guitar icons in the Scale Tones row to toggle interactive visualizations. Click any highlighted note on either instrument to hear it played.
-              </p>
-              <p>
-                <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                The guitar fretboard uses the CAGED system — five overlapping positions (E, D, C, A, G shapes) that cover the entire neck. Use the arrow buttons to navigate between positions and see where scale notes fall across all 12 frets.
-              </p>
-              <p>
-                <Icon icon={MdQueueMusic} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                Use the chord progressions icon in the Scale Tones row to open the progressions panel. Browse 66 named progressions across 7 genres (Pop, Rock, Jazz, Blues, Emotional, EDM, Classical) using the dropdown. Click the dice to pick a random progression, hit play to hear all chords played simultaneously in sequence, or click any chord pill to hear it individually. Piano and guitar visualizations update in real time as chords play.
-              </p>
-              <p>
-                <Icon icon={FaDownload} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                Export any chord progression as a MIDI file using the download button. The file is named with the key, scale, and progression (e.g., "A Minor - Anthem - I V vi IV.mid") and can be dragged directly into a DAW like Ableton. Each chord gets one full bar, and the clip will follow your project tempo.
-              </p>
-              <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <p style={{ fontWeight: 600, marginBottom: 6 }}>
-                  <Icon icon={FaGuitar} size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                  Tips for Practicing with the CAGED Fretboard:
-                </p>
-                <ul style={{ paddingLeft: 18, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <li>Pick one chord (like the I chord) and navigate through all five positions using the arrows. Notice how the same notes appear in different shapes — this builds your fretboard map.</li>
-                  <li>In each position, look at where the root notes (cyan dots marked "R") fall. These are your anchor points. Learn to spot them instantly — they tell you where you are on the neck.</li>
-                  <li>The five shapes always appear in the same order: E → D → C → A → G ascending the neck, then repeat. Once you memorize this sequence, you can find any chord anywhere.</li>
-                  <li>Practice connecting positions: play the scale in one position, then slide into the next position without stopping. The overlapping frets between positions are your "bridge" notes.</li>
-                  <li>Try playing the same chord progression in different positions. The voicings will sound different even though the chords are the same — this is how pros add variety to their parts.</li>
-                  <li>Start with the E and A shapes — these are the most common barre chord forms you already know. Then gradually add G, C, and D shapes to unlock the full neck.</li>
-                </ul>
-              </div>
             </>
           }
         />

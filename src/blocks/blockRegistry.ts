@@ -15,10 +15,11 @@ import Notepad from '../components/Notepad/Notepad';
 import Varispeed from '../components/Varispeed';
 import ArrangementTool from '../components/ArrangementTool/ArrangementTool';
 import Tuner from '../components/Tuner/Tuner';
+import VisualizeBlock from '../components/VisualizeBlock/VisualizeBlock';
 
 // Import icons
 import { GiTomato, GiMetronome, GiGuitarHead } from 'react-icons/gi';
-import { FaWaveSquare, FaChartBar } from 'react-icons/fa';
+import { FaEye, FaWaveSquare, FaChartBar } from 'react-icons/fa';
 import { IoMdDocument } from 'react-icons/io';
 import { MdAutoAwesome } from 'react-icons/md';
 
@@ -60,9 +61,24 @@ export const BLOCK_REGISTRY: BlockType[] = [
       bpmEl: '100',
       timeSignatureEl: '4/4',
       soundEl: 'Electric Guitar',
+      selectedChord: null,
+      isSeventhMode: false,
     },
     category: 'music',
     description: 'Generate random musical ideas and parameters',
+  },
+  {
+    id: 'visualize',
+    name: 'Visualize',
+    icon: FaEye,
+    component: VisualizeBlock,
+    defaultState: {
+      showPiano: true,
+      showGuitar: false,
+      showProgressions: false,
+    },
+    category: 'music',
+    description: 'Piano, guitar fretboard, and chord progression visualizations',
   },
   {
     id: 'metronome',
