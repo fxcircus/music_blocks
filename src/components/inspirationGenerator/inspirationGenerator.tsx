@@ -827,13 +827,23 @@ const DieLabel = styled.span`
 `;
 
 const DieSvgWrapper = styled.div<{ $rolling?: boolean; $accent?: string }>`
-  width: 17%;
-  aspect-ratio: 1;
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
   ${({ $rolling }) => $rolling && diceShakeAnimation}
   filter: ${({ $rolling, $accent }) =>
     $rolling ? `drop-shadow(0 0 16px ${$accent}bb)` : `drop-shadow(0 0 4px ${$accent}33)`};
   transition: filter 0.3s;
+
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+
+  @media (max-width: 480px) {
+    width: 72px;
+    height: 72px;
+  }
 `;
 
 const DicePickerDropdown = styled.div`
