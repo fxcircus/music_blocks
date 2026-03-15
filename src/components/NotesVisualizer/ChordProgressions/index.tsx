@@ -558,10 +558,14 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
     [currentProgression.degrees, scaleNoteCount]
   );
 
+  // Stable ref for onProgressionChange to avoid re-firing on every render
+  const onProgressionChangeRef = useRef(onProgressionChange);
+  onProgressionChangeRef.current = onProgressionChange;
+
   // Notify parent when progression changes (for persistence)
   useEffect(() => {
-    onProgressionChange?.(globalIndex);
-  }, [globalIndex, onProgressionChange]);
+    onProgressionChangeRef.current?.(globalIndex);
+  }, [globalIndex]);
 
   // Close dropdown on outside click
   useEffect(() => {

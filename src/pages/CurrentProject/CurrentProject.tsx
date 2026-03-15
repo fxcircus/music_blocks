@@ -361,26 +361,35 @@ const CurrentProject: FC<LoaderProps> = () => {
     }, []); // Only run on mount
 
     // Handler for block state updates from BlockRenderer
+    // Uses functional updater to always work with the latest state (avoids stale closures)
     const handleBlockStateUpdate = (instanceId: string, newState: Record<string, any>) => {
-        console.log('[CurrentProject] Received state update for', instanceId, ':', newState);
-        const updatedBlockState = updateBlockStateUtil(blockState, instanceId, newState);
-        console.log('[CurrentProject] Updated block state:', updatedBlockState);
-        setBlockState(updatedBlockState);
-        saveBlockState(updatedBlockState);
+        setBlockState(prev => {
+            // Skip updates for blocks that have been removed
+            if (!prev.blocks.some(b => b.instanceId === instanceId)) {
+                return prev;
+            }
+            const updated = updateBlockStateUtil(prev, instanceId, newState);
+            saveBlockState(updated);
+            return updated;
+        });
     };
 
     // Handler for removing a block
     const handleRemoveBlock = (instanceId: string) => {
-        const updatedBlockState = removeBlock(blockState, instanceId);
-        setBlockState(updatedBlockState);
-        saveBlockState(updatedBlockState);
+        setBlockState(prev => {
+            const updated = removeBlock(prev, instanceId);
+            saveBlockState(updated);
+            return updated;
+        });
     };
 
     // Handler for adding a new block
     const handleAddBlock = (blockTypeId: string) => {
-        const updatedBlockState = addBlock(blockState, blockTypeId);
-        setBlockState(updatedBlockState);
-        saveBlockState(updatedBlockState);
+        setBlockState(prev => {
+            const updated = addBlock(prev, blockTypeId);
+            saveBlockState(updated);
+            return updated;
+        });
     };
 
     // Get visible blocks sorted by order
