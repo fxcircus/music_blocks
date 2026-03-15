@@ -396,9 +396,6 @@ const OptionDesc = styled.span`
   font-size: 10px;
   color: ${({ theme }) => theme.colors.textSecondary};
   opacity: 0.7;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 const HeardInLabel = styled.span`
@@ -808,7 +805,7 @@ const ChordProgressions: React.FC<ChordProgressionsProps> = ({
           <ThemeProvider theme={theme}>
             <DropdownPanel
               ref={dropdownPanelRef}
-              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+              style={{ top: dropdownPos.top, left: dropdownPos.left, minWidth: dropdownPos.width, width: 'max-content', maxWidth: 400 }}
             >
               {CATEGORIES.map(cat => (
                 <React.Fragment key={cat.key}>
