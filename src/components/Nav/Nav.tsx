@@ -458,12 +458,12 @@ const Nav: FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.span 
+          <motion.span
             initial={{ rotate: -10 }}
             animate={{ rotate: [0, -10, 0] }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity, 
+            transition={{
+              duration: 2,
+              repeat: Infinity,
               repeatType: "reverse",
               ease: "easeInOut"
             }}
@@ -471,6 +471,20 @@ const Nav: FC = () => {
             🎵
           </motion.span>
           Blocks
+          <NavIconButton
+            as={motion.a}
+            href="https://buymeacoffee.com/fxcircus"
+            target="_blank"
+            rel="noopener noreferrer"
+            $variant="coffee"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            title="Support this project (on Buy Me Coffee)"
+          >
+            <IconWrapper>
+              <Icon icon={BiCoffeeTogo} size={16} />
+            </IconWrapper>
+          </NavIconButton>
         </NavBrand>
         
         <motion.div
@@ -516,21 +530,6 @@ const Nav: FC = () => {
               </IconWrapper>
             </NavIconButton>
             
-            <NavIconButton
-              as={motion.a}
-              href="https://buymeacoffee.com/fxcircus"
-              target="_blank"
-              rel="noopener noreferrer"
-              $variant="coffee"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              title="Support this project (on Buy Me Coffee)"
-            >
-              <IconWrapper>
-                <Icon icon={BiCoffeeTogo} size={16} />
-              </IconWrapper>
-            </NavIconButton>
-
             {/* Legacy JSON export option. Can be re-enabled if needed.
             <ActionButton 
               onClick={exportProject}

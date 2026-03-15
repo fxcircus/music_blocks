@@ -101,14 +101,31 @@ interface SlashCommandMenuProps {
   items: SlashCommandItem[];
   command: (item: SlashCommandItem) => void;
   clientRect: (() => DOMRect | null) | null;
+  onClose?: () => void;
 }
 
 const SlashCommandMenu = forwardRef<SlashCommandMenuRef, SlashCommandMenuProps>(
-  ({ items, command, clientRect }, ref) => {
+  ({ items, command, clientRect, onClose }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const theme = useTheme();
     const menuRef = useRef<HTMLDivElement>(null);
     const selectedRef = useRef<HTMLButtonElement>(null);
+
+    // Close on outside click
+    useEffect(() => {
+      if (!onClose) return;
+      const handler = (e: MouseEvent | TouchEvent) => {
+        if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+          onClose();
+        }
+      };
+      document.addEventListener('mousedown', handler);
+      document.addEventListener('touchstart', handler);
+      return () => {
+        document.removeEventListener('mousedown', handler);
+        document.removeEventListener('touchstart', handler);
+      };
+    }, [onClose]);
 
     // Reset selection when items change
     useEffect(() => {
