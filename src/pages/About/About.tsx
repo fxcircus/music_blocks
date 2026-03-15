@@ -9,11 +9,11 @@ import { Container, Card, CardHeader, CardTitle } from '../../components/common/
 import { Icon } from '../../utils/IconHelper';
 
 const AboutContainer = styled(Container)`
-  padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.xxl}`};
-  max-width: 900px;
-  
+  padding: ${({ theme }) => `${theme.spacing.xl} ${theme.spacing.md} ${theme.spacing.xxl}`};
+  max-width: 1200px;
+
   @media (max-width: 768px) {
-    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.xl}`};
+    padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.sm} ${theme.spacing.xl}`};
   }
 `;
 
@@ -138,7 +138,7 @@ const AboutPage = () => {
           <SectionTitle>Features</SectionTitle>
           <List>
             <ListItem>
-              <Strong><IconContainer><Icon icon={GiTomato} size={16} /></IconContainer> Flow Timer:</Strong>
+              <Strong><IconContainer><Icon icon={GiTomato} size={16} /></IconContainer> Flow:</Strong>
               <NestedList>
                 <ListItem>A feature-rich Pomodoro timer with 25-minute focus sessions, 5-minute breaks, and 15-minute long breaks (all customizable).</ListItem>
                 <ListItem>Automatic session cycling through 4 work-break sequences with visual progress dots and a dynamic color-changing progress ring.</ListItem>
@@ -146,7 +146,7 @@ const AboutPage = () => {
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong><IconContainer><Icon icon={MdAutoAwesome} size={16} /></IconContainer> Inspiration Generator:</Strong>
+              <Strong><IconContainer><Icon icon={MdAutoAwesome} size={16} /></IconContainer> Generator:</Strong>
               <NestedList>
                 <ListItem>Randomize scales, BPM, and sounds. Lock in what you like and shuffle the rest.</ListItem>
                 <ListItem>Interactive chord degrees with highlighting and seventh chord support.</ListItem>
@@ -156,12 +156,12 @@ const AboutPage = () => {
             <ListItem>
               <Strong><IconContainer><Icon icon={GiMetronome} size={16} /></IconContainer> Metronome:</Strong>
               <NestedList>
-                <ListItem>Follows the BPM from the Inspiration Generator, with manual adjustment in 1-step increments.</ListItem>
+                <ListItem>Follows the BPM from the Generator, with manual adjustment in 1-step increments.</ListItem>
                 <ListItem>Click the dial to jump to specific BPM values.</ListItem>
               </NestedList>
             </ListItem>
             <ListItem>
-              <Strong><IconContainer><Icon icon={FaWaveSquare} size={16} /></IconContainer> Varispeed Calculator:</Strong>
+              <Strong><IconContainer><Icon icon={FaWaveSquare} size={16} /></IconContainer> Varispeed:</Strong>
               <NestedList>
                 <ListItem>Calculate pitch shifts for varispeed recording and tape manipulation.</ListItem>
                 <ListItem>Shows BPM changes when recording at different pitches.</ListItem>

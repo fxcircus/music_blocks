@@ -941,7 +941,7 @@ const Metronome: FC<LoaderProps> = ({
 
             debugLog(`Tap tempo: ${clampedBpm} BPM (from ${currentTaps.length} taps)`);
 
-            // Update local BPM only — do NOT sync back to Inspiration Generator
+            // Update local BPM only — do NOT sync back to Generator
             ignoreExternalUpdatesRef.current = true;
             setBpm(clampedBpm);
 

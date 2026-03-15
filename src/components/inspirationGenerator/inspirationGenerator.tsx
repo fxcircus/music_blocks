@@ -2518,7 +2518,7 @@ export default function InspirationGenerator({
         <TipsModal
           isOpen={showTips}
           onClose={() => setShowTips(false)}
-          title="About the Inspiration Generator"
+          title="About the Generator"
           content={
             <>
               <p>

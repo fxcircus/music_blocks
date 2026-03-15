@@ -36,7 +36,7 @@ import { MdAutoAwesome } from 'react-icons/md';
 export const BLOCK_REGISTRY: BlockType[] = [
   {
     id: 'flowTimer',
-    name: 'Flow Timer',
+    name: 'Flow',
     icon: GiTomato,
     component: PomodoroTimer,
     defaultState: {
@@ -48,7 +48,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
   },
   {
     id: 'inspirationGenerator',
-    name: 'Inspiration Generator',
+    name: 'Generator',
     icon: MdAutoAwesome,
     component: InspirationGenerator,
     defaultState: {
@@ -90,7 +90,7 @@ export const BLOCK_REGISTRY: BlockType[] = [
   },
   {
     id: 'varispeed',
-    name: 'Varispeed Calculator',
+    name: 'Varispeed',
     icon: FaWaveSquare,
     component: Varispeed,
     defaultState: {

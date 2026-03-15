@@ -554,7 +554,7 @@ export default function PomodoroTimer({
 
   return (
     <ToolCardDnd
-      title="Flow Timer"
+      title="Flow"
       icon={GiTomato}
       onRemove={onRemove}
       dragHandleProps={dragHandleProps}
@@ -770,7 +770,7 @@ export default function PomodoroTimer({
       <TipsModal
         isOpen={showTips}
         onClose={() => setShowTips(false)}
-        title="How the Flow Timer Works"
+        title="How Flow Works"
         content={
           <>
             <p>

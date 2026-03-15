@@ -497,7 +497,7 @@ const Varispeed: FC<VarispeedProps> = ({
           onClick={() => setIsLinked(!isLinked)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          title={isLinked ? "Unlink from Inspiration Generator" : "Link to Inspiration Generator"}
+          title={isLinked ? "Unlink from Generator" : "Link to Generator"}
         >
           <Icon icon={isLinked ? FaLink : FaUnlink} size={14} />
         </LinkToggle>
@@ -701,7 +701,7 @@ const Varispeed: FC<VarispeedProps> = ({
       <TipsModal
         isOpen={showTips}
         onClose={() => setShowTips(false)}
-        title="How to Use the Varispeed Calculator"
+        title="How to Use Varispeed"
         content={
           <>
             <p>
