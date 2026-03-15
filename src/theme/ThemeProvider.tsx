@@ -37,13 +37,17 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+// Per-theme border radius tokens — each theme gets its own corner style
+const borderRadiusTokens: Record<ThemeName, { small: string; medium: string; large: string; round: string }> = {
+  light:   { small: '4px',  medium: '8px',  large: '16px', round: '50%' },
+  dark:    { small: '4px',  medium: '8px',  large: '16px', round: '50%' },
+  vintage: { small: '3px',  medium: '6px',  large: '10px', round: '50%' },
+  indie:   { small: '2px',  medium: '4px',  large: '8px',  round: '50%' },
+  disco:   { small: '8px',  medium: '14px', large: '24px', round: '50%' },
+  hiphop:  { small: '0px',  medium: '2px',  large: '4px',  round: '50%' },
+};
+
 const sharedTokens = {
-  borderRadius: {
-    small: '4px',
-    medium: '8px',
-    large: '16px',
-    round: '50%',
-  },
   fontSizes: {
     xs: '0.75rem',
     sm: '0.875rem',
@@ -73,6 +77,7 @@ const defaultFontFamily = "'Inter', 'Roboto', -apple-system, BlinkMacSystemFont,
 
 export const lightTheme = {
   fontFamily: defaultFontFamily,
+  borderRadius: borderRadiusTokens.light,
   colors: {
     background: '#e8e4df',
     card: '#f5f2ed',
@@ -105,6 +110,7 @@ export const lightTheme = {
 
 export const darkTheme = {
   fontFamily: defaultFontFamily,
+  borderRadius: borderRadiusTokens.dark,
   colors: {
     background: '#121212',
     card: '#1e1e1e',
@@ -151,6 +157,7 @@ export const darkTheme = {
 //   primary #c47840 on card #382e22       — copper pops on dark ✓
 export const vintageTheme = {
   fontFamily: "'Righteous', 'Trebuchet MS', sans-serif",
+  borderRadius: borderRadiusTokens.vintage,
   colors: {
     background: '#2a2218',       // dark speaker grille
     card: '#382e22',             // slightly lifted grille panel
@@ -196,6 +203,7 @@ export const vintageTheme = {
 //   primary #e8a832 on card #3d6380       — gold pops on blue ✓
 export const indieTheme = {
   fontFamily: "'VT323', 'Courier New', monospace",
+  borderRadius: borderRadiusTokens.indie,
   colors: {
     background: '#2e4558',       // deep navy-steel
     card: '#3d6380',             // brighter steel blue — clear lift from bg
@@ -253,6 +261,7 @@ export const indieTheme = {
 //   primary #ff2d9b on card #2a1238      — neon on dark ✓
 export const discoTheme = {
   fontFamily: "'Fredoka', 'Baloo 2', 'Trebuchet MS', sans-serif",
+  borderRadius: borderRadiusTokens.disco,
   colors: {
     background: '#110614',       // deeper black-purple void
     card: '#2a1238',             // dark purple — clear lift from bg
@@ -289,6 +298,7 @@ export const discoTheme = {
 // Hip Hop — TR-808 drum machine, dark charcoal, warm amber/orange
 export const hiphopTheme = {
   fontFamily: "'Chakra Petch', 'Rajdhani', 'Arial Narrow', sans-serif",
+  borderRadius: borderRadiusTokens.hiphop,
   colors: {
     background: '#1f1f1f',       // hsl(0,0%,12%) dark charcoal
     card: '#292929',             // hsl(0,0%,16%) panel base

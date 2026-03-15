@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled, { useTheme, keyframes, css } from 'styled-components';
+import { ThemeName, useTheme as useAppTheme } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 import { FaDice, FaLock, FaUnlock, FaPlay, FaVolumeUp, FaStop, FaGuitar, FaDownload, FaMinus, FaPlus } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
@@ -893,37 +894,213 @@ const DiceBpmPicker = styled(DicePickerDropdown)`
   padding: 8px;
 `;
 
+// ── Per-Theme Dice Styles ────────────────────────────────────────────
+
+interface DiceThemeStyle {
+  strokeWidth: number;
+  strokeLinejoin: 'round' | 'miter' | 'bevel';
+  strokeDasharray?: string;
+  fillOpacity: number;
+  d6Rx: number;
+  filters?: (id: string, color: string) => React.ReactNode;
+  decorations?: (color: string) => React.ReactNode;
+  textExtra?: (value: string) => { prefix: string; suffix: string };
+}
+
+const DICE_THEME_STYLES: Record<ThemeName, DiceThemeStyle> = {
+  light: {
+    strokeWidth: 2.5,
+    strokeLinejoin: 'round',
+    fillOpacity: 0,
+    d6Rx: 8,
+  },
+  dark: {
+    strokeWidth: 2,
+    strokeLinejoin: 'round',
+    fillOpacity: 0,
+    d6Rx: 8,
+    filters: (id, color) => (
+      <filter id={`neon-glow-${id}`} x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    ),
+  },
+  vintage: {
+    strokeWidth: 3,
+    strokeLinejoin: 'round',
+    fillOpacity: 0.06,
+    d6Rx: 8,
+    filters: (id, color) => (
+      <>
+        <radialGradient id={`vintage-fill-${id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.08" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </radialGradient>
+        <filter id={`vintage-grain-${id}`} x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise" />
+          <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+          <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" />
+        </filter>
+      </>
+    ),
+  },
+  indie: {
+    strokeWidth: 2,
+    strokeLinejoin: 'round',
+    strokeDasharray: '4 3',
+    fillOpacity: 0,
+    d6Rx: 8,
+    decorations: (color) => (
+      <g opacity="0.05" stroke={color} strokeWidth="0.5">
+        {Array.from({ length: 5 }, (_, i) => (
+          <React.Fragment key={`grid-${i}`}>
+            <line x1={i * 20 + 10} y1="0" x2={i * 20 + 10} y2="100" />
+            <line x1="0" y1={i * 20 + 10} x2="100" y2={i * 20 + 10} />
+          </React.Fragment>
+        ))}
+      </g>
+    ),
+    textExtra: (value) => ({ prefix: '[', suffix: ']' }),
+  },
+  disco: {
+    strokeWidth: 2.5,
+    strokeLinejoin: 'round',
+    fillOpacity: 0.12,
+    d6Rx: 8,
+    filters: (id, color) => (
+      <>
+        <linearGradient id={`disco-stroke-${id}`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ff2d9b" />
+          <stop offset="50%" stopColor="#00e8c6" />
+          <stop offset="100%" stopColor="#ff2d9b" />
+        </linearGradient>
+        <linearGradient id={`disco-fill-${id}`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ff2d9b" stopOpacity="0.1" />
+          <stop offset="50%" stopColor="#00e8c6" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#ff2d9b" stopOpacity="0.1" />
+        </linearGradient>
+      </>
+    ),
+    decorations: (color) => (
+      <g>
+        <circle cx="30" cy="25" r="1.5" fill={color} opacity="0">
+          <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite" begin="0s" />
+        </circle>
+        <circle cx="72" cy="35" r="1.2" fill={color} opacity="0">
+          <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" repeatCount="indefinite" begin="0.7s" />
+        </circle>
+        <circle cx="55" cy="75" r="1.5" fill={color} opacity="0">
+          <animate attributeName="opacity" values="0;0.7;0" dur="1.8s" repeatCount="indefinite" begin="1.2s" />
+        </circle>
+      </g>
+    ),
+  },
+  hiphop: {
+    strokeWidth: 2.5,
+    strokeLinejoin: 'miter',
+    fillOpacity: 0.05,
+    d6Rx: 0,
+    decorations: (color) => (
+      <g stroke={color} strokeWidth="1" opacity="0.15">
+        <line x1="50" y1="10" x2="50" y2="13" />
+        <line x1="50" y1="87" x2="50" y2="90" />
+        <line x1="10" y1="50" x2="13" y2="50" />
+        <line x1="87" y1="50" x2="90" y2="50" />
+      </g>
+    ),
+  },
+};
+
 // ── Die Shape SVG Components ──────────────────────────────────────────
 
-function D4Shape({ color }: { color: string }) {
-  return <polygon points="50,8 92,82 8,82" fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+interface DieShapeProps {
+  color: string;
+  themeStyle: DiceThemeStyle;
+  paramKey: string;
 }
 
-function D6Shape({ color }: { color: string }) {
-  return <rect x="14" y="14" width="72" height="72" rx="8" fill="none" stroke={color} strokeWidth="2.5" />;
+function D4Shape({ color, themeStyle, paramKey }: DieShapeProps) {
+  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+  return (
+    <polygon
+      points="50,8 92,82 8,82"
+      fill={fill}
+      fillOpacity={themeStyle.fillOpacity}
+      stroke={color}
+      strokeWidth={themeStyle.strokeWidth}
+      strokeLinejoin={themeStyle.strokeLinejoin}
+      strokeDasharray={themeStyle.strokeDasharray}
+    />
+  );
 }
 
-function D8Shape({ color }: { color: string }) {
-  return <polygon points="50,6 94,50 50,94 6,50" fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+function D6Shape({ color, themeStyle, paramKey }: DieShapeProps) {
+  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+  return (
+    <rect
+      x="14" y="14" width="72" height="72"
+      rx={themeStyle.d6Rx}
+      fill={fill}
+      fillOpacity={themeStyle.fillOpacity}
+      stroke={color}
+      strokeWidth={themeStyle.strokeWidth}
+      strokeDasharray={themeStyle.strokeDasharray}
+    />
+  );
 }
 
-function D12Shape({ color }: { color: string }) {
+function D8Shape({ color, themeStyle, paramKey }: DieShapeProps) {
+  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+  return (
+    <polygon
+      points="50,6 94,50 50,94 6,50"
+      fill={fill}
+      fillOpacity={themeStyle.fillOpacity}
+      stroke={color}
+      strokeWidth={themeStyle.strokeWidth}
+      strokeLinejoin={themeStyle.strokeLinejoin}
+      strokeDasharray={themeStyle.strokeDasharray}
+    />
+  );
+}
+
+function D12Shape({ color, themeStyle, paramKey }: DieShapeProps) {
   const cx = 50, cy = 50, r = 42;
   const pts = Array.from({ length: 5 }, (_, i) => {
     const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
     return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
   }).join(" ");
-  return <polygon points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />;
+  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
+  return (
+    <polygon
+      points={pts}
+      fill={fill}
+      fillOpacity={themeStyle.fillOpacity}
+      stroke={color}
+      strokeWidth={themeStyle.strokeWidth}
+      strokeLinejoin={themeStyle.strokeLinejoin}
+      strokeDasharray={themeStyle.strokeDasharray}
+    />
+  );
 }
 
-function D20Shape({ color }: { color: string }) {
+function D20Shape({ color, themeStyle, paramKey }: DieShapeProps) {
   const cx = 50, cy = 50, r = 44;
+  const fill = themeStyle.fillOpacity > 0 ? color : 'none';
   return (
     <>
       <polygon points={Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
         return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      }).join(" ")} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" />
+      }).join(" ")}
+        fill={fill}
+        fillOpacity={themeStyle.fillOpacity}
+        stroke={color}
+        strokeWidth={themeStyle.strokeWidth}
+        strokeLinejoin={themeStyle.strokeLinejoin}
+        strokeDasharray={themeStyle.strokeDasharray}
+      />
       {Array.from({ length: 6 }, (_, i) => {
         const a1 = (Math.PI * 2 * i) / 6 - Math.PI / 2;
         const a2 = (Math.PI * 2 * ((i + 1) % 6)) / 6 - Math.PI / 2;
@@ -935,7 +1112,7 @@ function D20Shape({ color }: { color: string }) {
   );
 }
 
-const DIE_SHAPES: Record<string, React.FC<{ color: string }>> = {
+const DIE_SHAPES: Record<string, React.FC<DieShapeProps>> = {
   d4: D4Shape, d6: D6Shape, d8: D8Shape, d12: D12Shape, d20: D20Shape,
 };
 
@@ -980,6 +1157,8 @@ function DieComponent({
   renderPicker?: (onClose: () => void) => React.ReactNode;
 }) {
   const theme = useTheme() as any;
+  const { themeName } = useAppTheme();
+  const themeStyle = DICE_THEME_STYLES[themeName];
   const [displayValue, setDisplayValue] = useState(value);
   const [washKey, setWashKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -1031,6 +1210,17 @@ function DieComponent({
   const hasMulti = displayValue.includes(" ");
   const fontSize = hasMulti ? "12" : "17";
 
+  // Build display text with optional theme-specific prefix/suffix
+  const textExtra = themeStyle.textExtra?.(displayValue);
+  const displayText = textExtra
+    ? `${textExtra.prefix}${displayValue}${textExtra.suffix}`
+    : displayValue;
+
+  // Determine stroke color — disco uses gradient
+  const strokeColor = themeName === 'disco' && !locked
+    ? `url(#disco-stroke-${paramKey})`
+    : accent;
+
   return (
     <DieContainer
       ref={containerRef}
@@ -1067,12 +1257,14 @@ function DieComponent({
                 <animate attributeName="x" from="-40" to="100" dur="0.4s" fill="freeze" key={washKey} />
               </rect>
             </mask>
+            {themeStyle.filters?.(paramKey, accent)}
           </defs>
-          {Shape && <Shape color={accent} />}
-          <DieTextSvg value={displayValue} die={dieType} fill={textColor} fontSize={fontSize} />
+          {themeStyle.decorations?.(accent)}
+          {Shape && <Shape color={strokeColor} themeStyle={themeStyle} paramKey={paramKey} />}
+          <DieTextSvg value={displayText} die={dieType} fill={textColor} fontSize={fontSize} />
           {!rolling && washKey > 0 && (
             <g key={`w-${washKey}`} mask={`url(#dwm-${paramKey}-${washKey})`}>
-              <DieTextSvg value={displayValue} die={dieType} fill={`url(#dwg-${paramKey})`} fontSize={fontSize} />
+              <DieTextSvg value={displayText} die={dieType} fill={`url(#dwg-${paramKey})`} fontSize={fontSize} />
             </g>
           )}
         </svg>
