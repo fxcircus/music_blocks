@@ -373,6 +373,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.THEME, themeName);
     loadThemeFont(themeName);
+    // Sync body background with theme to prevent white flash on overscroll/short content
+    document.body.style.backgroundColor = themes[themeName].colors.background;
+    document.documentElement.style.backgroundColor = themes[themeName].colors.background;
   }, [themeName]);
 
   const setThemeName = (name: ThemeName) => {

@@ -356,7 +356,7 @@ export const ThemeToggle = styled(motion.button)`
 export const AppWrapper = styled.div`
   background-color: ${({ theme }) => theme.colors.background};
   ${({ theme }) => theme.backgroundPattern && `background-image: ${theme.backgroundPattern};`}
-  min-height: 100vh;
+  min-height: 100dvh;
   color: ${({ theme }) => theme.colors.text};
   transition: background-color ${({ theme }) => theme.transitions.normal}, color ${({ theme }) => theme.transitions.normal};
   font-family: ${({ theme }) => theme.fontFamily};
