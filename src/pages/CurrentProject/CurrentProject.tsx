@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from "react";
-import styled from 'styled-components';
-import { motion, LayoutGroup } from 'framer-motion';
+import styled, { keyframes } from 'styled-components';
+import { motion } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
 import { decodeURLToAppState, hasStateParams } from "../../utils/urlSharing";
 import { AppState, BlockInstance } from "../../blocks/types";
@@ -86,16 +86,24 @@ const AddBlockButton = styled(Button)`
   }
 `;
 
+const expandPulse = keyframes`
+  0%   { opacity: 1; }
+  35%  { opacity: 0.3; }
+  100% { opacity: 1; }
+`;
+
 // Styled component for sortable item wrapper
-const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverlay?: boolean; $expanded?: boolean; $transitioning?: boolean }>`
+const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverlay?: boolean; $expanded?: boolean }>`
   height: 100%;
   display: flex;
   position: relative;
   opacity: ${({ $isDragging, $isOverlay }) => $isOverlay ? 1 : $isDragging ? 0.5 : 1};
   cursor: ${({ $isDragging }) => $isDragging ? 'grabbing' : 'default'};
   ${({ $expanded }) => $expanded ? 'grid-column: 1 / -1;' : ''}
-  filter: ${({ $transitioning }) => $transitioning ? 'blur(4px)' : 'blur(0px)'};
-  transition: filter 0.15s ease-out;
+
+  &.expand-pulse {
+    animation: ${expandPulse} 0.3s ease-out;
+  }
 
   @media (max-width: 1024px) {
     grid-column: span 1;
@@ -199,29 +207,41 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
 
   const isActive = activeId === block.instanceId;
 
-  // Blur effect on expand/collapse transition
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  // Opacity pulse on expand/collapse transition
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const prevExpandedRef = useRef(isExpanded);
   useEffect(() => {
-    if (prevExpandedRef.current !== isExpanded) {
+    if (prevExpandedRef.current !== isExpanded && wrapperRef.current) {
       prevExpandedRef.current = isExpanded;
-      setIsTransitioning(true);
-      const timer = setTimeout(() => setIsTransitioning(false), 250);
-      return () => clearTimeout(timer);
+      const el = wrapperRef.current;
+      el.style.animation = 'none';
+      // Force reflow to restart animation
+      void el.offsetHeight;
+      el.style.animation = '';
+      el.classList.add('expand-pulse');
+      const onEnd = () => {
+        el.classList.remove('expand-pulse');
+        el.removeEventListener('animationend', onEnd);
+      };
+      el.addEventListener('animationend', onEnd);
     }
   }, [isExpanded]);
 
+  // Merge refs: dnd-kit's setNodeRef + our wrapperRef
+  const mergedRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    (wrapperRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+  };
+
   return (
     <SortableItemWrapper
-      ref={setNodeRef}
+      ref={mergedRef}
       style={style}
       $isDragging={isDragging}
       $expanded={isExpanded}
-      $transitioning={isTransitioning}
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, layout: { duration: 0.25, ease: 'easeInOut' } }}
+      transition={{ duration: 0.3 }}
     >
       <DropIndicator $isActive={isActive} />
       <BlockRenderer
@@ -572,7 +592,6 @@ const CurrentProject: FC<LoaderProps> = () => {
                         strategy={verticalListSortingStrategy}
                     >
                         <TwoColumnGrid>
-                          <LayoutGroup>
                             {visibleBlocks.map((block) => (
                                 <SortableBlockItem
                                     key={block.instanceId}
@@ -595,7 +614,6 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     expandDisabled={!block.state?.expanded && autoExpandSet.has(block.instanceId)}
                                 />
                             ))}
-                          </LayoutGroup>
                         </TwoColumnGrid>
                     </SortableContext>
 
