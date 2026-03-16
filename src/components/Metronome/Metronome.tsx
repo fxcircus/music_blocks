@@ -45,6 +45,9 @@ interface LoaderProps {
     dragHandleProps?: any;
     isRecentlyDragged?: boolean;
     onBpmChange?: (bpm: number) => void;
+    isExpanded?: boolean;
+    onToggleExpand?: () => void;
+    expandDisabled?: boolean;
 }
 
 // Blocks mode helpers
@@ -1033,7 +1036,10 @@ const Metronome: FC<LoaderProps> = ({
     canRemove,
     dragHandleProps,
     isRecentlyDragged,
-    onBpmChange
+    onBpmChange,
+    isExpanded,
+    onToggleExpand,
+    expandDisabled
 }) => {
     const theme = useTheme();
     const { themeName } = useAppTheme();
@@ -1478,6 +1484,9 @@ const Metronome: FC<LoaderProps> = ({
             canRemove={canRemove}
             dragHandleProps={dragHandleProps}
             isRecentlyDragged={isRecentlyDragged}
+            isExpanded={isExpanded}
+            onToggleExpand={onToggleExpand}
+            expandDisabled={expandDisabled}
             additionalControls={
                 <>
                     <div ref={settingsRef} style={{ position: 'relative' }}>

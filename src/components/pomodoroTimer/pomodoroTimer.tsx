@@ -379,13 +379,19 @@ interface PomodoroTimerProps {
   canRemove?: boolean;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  expandDisabled?: boolean;
 }
 
 export default function PomodoroTimer({
   onRemove,
   canRemove,
   dragHandleProps,
-  isRecentlyDragged
+  isRecentlyDragged,
+  isExpanded,
+  onToggleExpand,
+  expandDisabled
 }: PomodoroTimerProps = {}) {
   const initialWork = (loadSettings()?.workMinutes ?? 25) * 60;
   const [time, setTime] = useState(initialWork);
@@ -627,6 +633,9 @@ export default function PomodoroTimer({
       dragHandleProps={dragHandleProps}
       isRecentlyDragged={isRecentlyDragged}
       canRemove={canRemove}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      expandDisabled={expandDisabled}
       additionalControls={
         <>
           <div ref={settingsRef} style={{ position: 'relative' }}>

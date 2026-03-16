@@ -272,6 +272,9 @@ interface BlockRendererDndProps {
   onUpdateGeneratorState?: (updates: Record<string, any>) => void; // For Visualize block -> Generator
   dragHandleProps?: any; // Props for the drag handle
   isRecentlyDragged?: boolean; // Show controls after drag
+  isExpanded?: boolean; // Whether block is expanded to full width
+  onToggleExpand?: () => void; // Toggle expand/collapse
+  expandDisabled?: boolean; // Whether expand toggle is disabled (auto-expanded)
 }
 
 /**
@@ -292,6 +295,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
   onUpdateGeneratorState,
   dragHandleProps,
   isRecentlyDragged = false,
+  isExpanded,
+  onToggleExpand,
+  expandDisabled,
 }) => {
   const [animate, setAnimate] = useState(false);
   const [showArrangementHelp, setShowArrangementHelp] = useState(false);
@@ -379,6 +385,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           canRemove={canRemove}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          expandDisabled={expandDisabled}
         />
       );
       break;
@@ -475,6 +484,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           canRemove={canRemove}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          expandDisabled={expandDisabled}
           onBpmChange={(newBpm: number) => {
             if (onUpdateGeneratorState) {
               onUpdateGeneratorState({ bpmEl: String(newBpm) });
@@ -523,6 +535,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
           canRemove={canRemove}
           dragHandleProps={dragHandleProps}
           isRecentlyDragged={isRecentlyDragged}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          expandDisabled={expandDisabled}
         />
       );
       break;
@@ -650,6 +665,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         dragHandleProps={dragHandleProps}
         isRecentlyDragged={isRecentlyDragged}
         onShowHelp={(block.type === 'inspirationGenerator' || block.type === 'varispeed') ? () => setShowTips(true) : undefined}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        expandDisabled={expandDisabled}
       >
         {blockContent}
       </CardComponent>
@@ -667,6 +685,9 @@ const BlockRendererDnd: React.FC<BlockRendererDndProps> = ({
         isRecentlyDragged={isRecentlyDragged}
         onShowHelp={block.type === 'arrangementTool' ? () => setShowArrangementHelp(true) : (block.type === 'notes' || block.type === 'inspirationGenerator' || block.type === 'varispeed' || block.type === 'visualize' || block.type === 'progressions') ? () => setShowTips(true) : undefined}
         alignTop={block.type === 'inspirationGenerator' || block.type === 'visualize' || block.type === 'progressions'}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        expandDisabled={expandDisabled}
         additionalControls={block.type === 'inspirationGenerator' ? (
           <div ref={settingsRef} style={{ position: 'relative' }}>
             <SettingsIconBtn

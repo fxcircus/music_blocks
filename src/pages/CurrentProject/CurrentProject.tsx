@@ -1,6 +1,6 @@
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useRef } from "react";
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import { Container } from '../../components/common/StyledComponents';
 import { decodeURLToAppState, hasStateParams } from "../../utils/urlSharing";
 import { AppState, BlockInstance } from "../../blocks/types";
@@ -49,9 +49,9 @@ const PageContainer = styled(Container)`
   }
 `;
 
-const TwoColumnGrid = styled.div<{ $singleBlock?: boolean }>`
+const TwoColumnGrid = styled.div`
   display: grid;
-  grid-template-columns: ${({ $singleBlock }) => $singleBlock ? '1fr' : '1fr 1fr'};
+  grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
 
   @media (max-width: 1024px) {
@@ -87,12 +87,19 @@ const AddBlockButton = styled(Button)`
 `;
 
 // Styled component for sortable item wrapper
-const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverlay?: boolean }>`
+const SortableItemWrapper = styled(motion.div)<{ $isDragging: boolean; $isOverlay?: boolean; $expanded?: boolean; $transitioning?: boolean }>`
   height: 100%;
   display: flex;
   position: relative;
   opacity: ${({ $isDragging, $isOverlay }) => $isOverlay ? 1 : $isDragging ? 0.5 : 1};
   cursor: ${({ $isDragging }) => $isDragging ? 'grabbing' : 'default'};
+  ${({ $expanded }) => $expanded ? 'grid-column: 1 / -1;' : ''}
+  filter: ${({ $transitioning }) => $transitioning ? 'blur(4px)' : 'blur(0px)'};
+  transition: filter 0.15s ease-out;
+
+  @media (max-width: 1024px) {
+    grid-column: span 1;
+  }
 
   & > * {
     flex: 1;
@@ -148,6 +155,9 @@ interface SortableBlockItemProps {
   onUpdateGeneratorState: (updates: Record<string, any>) => void;
   activeId: string | null;
   isRecentlyDragged: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  expandDisabled: boolean;
 }
 
 const SortableBlockItem: FC<SortableBlockItemProps> = ({
@@ -165,6 +175,9 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
   onUpdateGeneratorState,
   activeId,
   isRecentlyDragged,
+  isExpanded,
+  onToggleExpand,
+  expandDisabled,
 }) => {
   const {
     attributes,
@@ -186,14 +199,29 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
 
   const isActive = activeId === block.instanceId;
 
+  // Blur effect on expand/collapse transition
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevExpandedRef = useRef(isExpanded);
+  useEffect(() => {
+    if (prevExpandedRef.current !== isExpanded) {
+      prevExpandedRef.current = isExpanded;
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isExpanded]);
+
   return (
     <SortableItemWrapper
       ref={setNodeRef}
       style={style}
       $isDragging={isDragging}
+      $expanded={isExpanded}
+      $transitioning={isTransitioning}
+      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, layout: { duration: 0.25, ease: 'easeInOut' } }}
     >
       <DropIndicator $isActive={isActive} />
       <BlockRenderer
@@ -215,6 +243,9 @@ const SortableBlockItem: FC<SortableBlockItemProps> = ({
           ...listeners,
         }}
         isRecentlyDragged={isRecentlyDragged}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        expandDisabled={expandDisabled}
       />
     </SortableItemWrapper>
   );
@@ -414,6 +445,66 @@ const CurrentProject: FC<LoaderProps> = () => {
         handleBlockStateUpdate('inspirationGenerator', updates);
     };
 
+    // Handler for toggling expand state on a block
+    const handleToggleExpand = (instanceId: string) => {
+        const block = visibleBlocks.find(b => b.instanceId === instanceId);
+        if (block) {
+            handleBlockStateUpdate(instanceId, { expanded: !block.state?.expanded });
+        }
+    };
+
+    // Compute which blocks should auto-expand (alone in their row)
+    // Two-pass: first assign rows, then find rows with a single non-expanded block
+    const autoExpandSet = (() => {
+        const set = new Set<string>();
+        if (visibleBlocks.length <= 1) {
+            if (visibleBlocks.length === 1) set.add(visibleBlocks[0].instanceId);
+            return set;
+        }
+
+        // Assign each block to a row based on expanded state
+        // Expanded blocks always get their own full row
+        const rowAssignments: { row: number; instanceId: string; manualExpanded: boolean }[] = [];
+        let row = 0;
+        let col = 0;
+        for (const block of visibleBlocks) {
+            if (block.state?.expanded) {
+                // If col > 0, the expanded block moves to a new row
+                if (col > 0) row++;
+                rowAssignments.push({ row, instanceId: block.instanceId, manualExpanded: true });
+                row++;
+                col = 0;
+            } else {
+                rowAssignments.push({ row, instanceId: block.instanceId, manualExpanded: false });
+                col++;
+                if (col === 2) {
+                    row++;
+                    col = 0;
+                }
+            }
+        }
+
+        // Find rows that have exactly one non-expanded block
+        const rowCounts = new Map<number, string[]>();
+        for (const a of rowAssignments) {
+            if (!a.manualExpanded) {
+                const list = rowCounts.get(a.row) || [];
+                list.push(a.instanceId);
+                rowCounts.set(a.row, list);
+            }
+        }
+        for (const [, ids] of rowCounts) {
+            if (ids.length === 1) set.add(ids[0]);
+        }
+        return set;
+    })();
+
+    // Determine if a block is expanded (manual or auto)
+    const isBlockExpanded = (block: BlockInstance): boolean => {
+        if (block.state?.expanded) return true;
+        return autoExpandSet.has(block.instanceId);
+    };
+
     // Drag and drop handlers
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
@@ -480,7 +571,8 @@ const CurrentProject: FC<LoaderProps> = () => {
                         items={visibleBlocks.map(block => block.instanceId)}
                         strategy={verticalListSortingStrategy}
                     >
-                        <TwoColumnGrid $singleBlock={visibleBlocks.length === 1}>
+                        <TwoColumnGrid>
+                          <LayoutGroup>
                             {visibleBlocks.map((block) => (
                                 <SortableBlockItem
                                     key={block.instanceId}
@@ -498,8 +590,12 @@ const CurrentProject: FC<LoaderProps> = () => {
                                     onUpdateGeneratorState={handleUpdateGeneratorState}
                                     activeId={activeId}
                                     isRecentlyDragged={recentlyDraggedIds.has(block.instanceId)}
+                                    isExpanded={isBlockExpanded(block)}
+                                    onToggleExpand={() => handleToggleExpand(block.instanceId)}
+                                    expandDisabled={!block.state?.expanded && autoExpandSet.has(block.instanceId)}
                                 />
                             ))}
+                          </LayoutGroup>
                         </TwoColumnGrid>
                     </SortableContext>
 

@@ -318,6 +318,9 @@ interface TunerProps {
   canRemove?: boolean;
   dragHandleProps?: any;
   isRecentlyDragged?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  expandDisabled?: boolean;
 }
 
 const Tuner: React.FC<TunerProps> = ({
@@ -325,6 +328,9 @@ const Tuner: React.FC<TunerProps> = ({
   canRemove,
   dragHandleProps,
   isRecentlyDragged,
+  isExpanded,
+  onToggleExpand,
+  expandDisabled,
 }) => {
   const theme = useTheme() as any;
 
@@ -625,6 +631,9 @@ const Tuner: React.FC<TunerProps> = ({
       canRemove={canRemove}
       dragHandleProps={dragHandleProps}
       isRecentlyDragged={isRecentlyDragged}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
+      expandDisabled={expandDisabled}
       onShowHelp={() => setShowTips(true)}
       additionalControls={
         <SettingsWrapper ref={settingsRef}>

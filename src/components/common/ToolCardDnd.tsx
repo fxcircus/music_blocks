@@ -6,6 +6,7 @@ import { IconType } from 'react-icons';
 import { FaTimes } from 'react-icons/fa';
 import DragHandle from './DragHandle';
 import HelpButton from './HelpButton';
+import ExpandToggle from './ExpandToggle';
 
 interface ToolCardDndProps {
   title: string;
@@ -22,6 +23,9 @@ interface ToolCardDndProps {
   isRecentlyDragged?: boolean;
   onShowHelp?: () => void;
   alignTop?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  expandDisabled?: boolean;
 }
 
 const StyledToolCard = styled(Card)`
@@ -57,6 +61,21 @@ const DraggableCardHeader = styled.div`
   user-select: none;
   min-height: 32px;
   width: 100%;
+`;
+
+const LeftControls = styled.div`
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  z-index: 10;
+
+  @media (max-width: 768px) {
+    left: 4px;
+  }
 `;
 
 const ControlButtons = styled.div`
@@ -112,7 +131,10 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
   dragHandleProps,
   isRecentlyDragged = false,
   onShowHelp,
-  alignTop = false
+  alignTop = false,
+  isExpanded,
+  onToggleExpand,
+  expandDisabled = false
 }) => {
   const handleRemoveClick = () => {
     if (onRemove) {
@@ -151,7 +173,12 @@ const ToolCardDnd: React.FC<ToolCardDndProps> = ({
 
       {!hideHeader && (
         <DraggableCardHeader>
-          <DragHandle dragHandleProps={dragHandleProps} />
+          <LeftControls>
+            <DragHandle dragHandleProps={dragHandleProps} inline />
+            {onToggleExpand && isExpanded !== undefined && (
+              <ExpandToggle isExpanded={isExpanded} onToggle={onToggleExpand} disabled={expandDisabled} />
+            )}
+          </LeftControls>
           <CardIconWrapper>
             <Icon icon={icon} size={20} />
           </CardIconWrapper>

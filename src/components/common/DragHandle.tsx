@@ -3,11 +3,13 @@ import styled from 'styled-components';
 import { MdDragIndicator } from 'react-icons/md';
 import { Icon } from '../../utils/IconHelper';
 
-const DragHandleWrapper = styled.div<{ $isDraggable?: boolean }>`
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+const DragHandleWrapper = styled.div<{ $isDraggable?: boolean; $inline?: boolean }>`
+  ${({ $inline }) => $inline ? '' : `
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+  `}
   cursor: ${({ $isDraggable }) => $isDraggable ? 'grab' : 'default'};
   color: ${({ theme }) => theme.colors.textSecondary};
   opacity: 0.4;
@@ -30,20 +32,23 @@ const DragHandleWrapper = styled.div<{ $isDraggable?: boolean }>`
     opacity: 1;
   }
 
-  @media (max-width: 768px) {
-    left: 4px;
-  }
+  ${({ $inline }) => $inline ? '' : `
+    @media (max-width: 768px) {
+      left: 4px;
+    }
+  `}
 `;
 
 interface DragHandleProps {
   dragHandleProps?: any;
+  inline?: boolean;
 }
 
-const DragHandle: React.FC<DragHandleProps> = ({ dragHandleProps }) => {
+const DragHandle: React.FC<DragHandleProps> = ({ dragHandleProps, inline }) => {
   if (!dragHandleProps) return null;
 
   return (
-    <DragHandleWrapper {...dragHandleProps} $isDraggable={true}>
+    <DragHandleWrapper {...dragHandleProps} $isDraggable={true} $inline={inline}>
       <Icon icon={MdDragIndicator} size={20} />
     </DragHandleWrapper>
   );
